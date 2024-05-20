@@ -1,5 +1,8 @@
 {
-    "notebook.formatOnSave.enabled": true,
+    "editor.defaultFormatter": "ms-python.black-formatter",
     "editor.formatOnSave": true,
-    "editor.defaultFormatter": "ms-python.black-formatter"
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter"
+    },
+    "git.terminalAuthentication": false
 }
