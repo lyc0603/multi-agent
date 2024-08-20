@@ -2,9 +2,11 @@
 Script to prepare the fine-tuning dataset for crypto news.
 """
 
+import json
+
 import pandas as pd
 
-from environ.constants import DATA_PATH
+from environ.constants import DATA_PATH, PROCESSED_DATA_PATH
 from scripts.process.crypto_weekly import df_weekly
 
 news_dataset = []
@@ -41,7 +43,7 @@ for year in range(2022, 2023):
                         "role": "user",
                         "content": "Analyze the following news headlines to determine if the price of "
                         + ", ".join(df_week["name"].values)
-                        + " will ascend or descend next week. Please response with crypto name and either Rise or Fall:\n"
+                        + " will ascend or descend next week. Please respond with crypto name and either Rise or Fall:\n"
                         + news,
                     },
                     {
@@ -56,3 +58,9 @@ for year in range(2022, 2023):
                 ],
             }
         )
+
+# save in jsonl format
+with open(f"{PROCESSED_DATA_PATH}/news_dataset.jsonl", "w", encoding="utf-8") as f:
+    for line in news_dataset:
+        json_line = json.dumps(line)
+        f.write(json_line + "\n")
