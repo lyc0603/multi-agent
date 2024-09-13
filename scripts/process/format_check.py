@@ -9,7 +9,9 @@ from environ.constants import DATASETS, PROCESSED_DATA_PATH
 for dataset_name in DATASETS:
     dataset = []
     with open(
-        f"{PROCESSED_DATA_PATH}/{dataset_name}_dataset.jsonl", "r", encoding="utf-8"
+        f"{PROCESSED_DATA_PATH}/train/{dataset_name}.jsonl",
+        "r",
+        encoding="utf-8",
     ) as f:
         for line in f:
             dataset.append(json.loads(line))

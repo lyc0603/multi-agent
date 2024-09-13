@@ -10,7 +10,9 @@ from environ.process.token_counter import cost_calculation, warnings_and_token_c
 for dataset_name in DATASETS:
     dataset = []
     with open(
-        f"{PROCESSED_DATA_PATH}/{dataset_name}_dataset.jsonl", "r", encoding="utf-8"
+        f"{PROCESSED_DATA_PATH}/train/{dataset_name}.jsonl",
+        "r",
+        encoding="utf-8",
     ) as f:
         for line in f:
             dataset.append(json.loads(line))

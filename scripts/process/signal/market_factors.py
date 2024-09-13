@@ -1,0 +1,93 @@
+"""
+Script to process the market factors
+"""
+
+import json
+
+import pandas as pd
+
+from environ.constants import DATA_PATH, PROCESSED_DATA_PATH
+
+
+def load_attn(path: str) -> pd.DataFrame:
+    """
+    Function to load the google trend index for a given token
+    """
+    df = pd.read_csv(path, skiprows=1)
+    df.columns = ["time", "google"]
+    df["time"] = pd.to_datetime(df["time"])
+    df.sort_values("time", ascending=True, inplace=True)
+    df.replace("<1", 0, inplace=True)
+    return df
+
+
+df = pd.DataFrame()
+
+# network factor from blockchain.io
+NET_FAC_BLC = [
+    # "payments",
+    # "transactions",
+    "unique-addresses",
+]
+for idx, name in enumerate(NET_FAC_BLC):
+    with open(DATA_PATH / "blockchain" / f"n-{name}.json", "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    dfn = pd.DataFrame(data[f"n-{name}"])
+    dfn.rename(columns={"x": "time", "y": name}, inplace=True)
+    dfn["time"] = pd.to_datetime(dfn["time"], unit="ms")
+    if idx == 0:
+        df = dfn.copy()
+    else:
+        df = pd.merge(df, dfn, on="time", how="outer")
+
+df[["year", "week", "day"]] = df["time"].dt.isocalendar()
+df.sort_values(["year", "week", "day"], ascending=True, inplace=True)
+df.drop_duplicates(subset=["year", "week"], keep="last", inplace=True)
+df = df[["year", "week"] + NET_FAC_BLC]
+df[NET_FAC_BLC] = df[NET_FAC_BLC].diff()
+df.rename(columns={name: f"net_{name}" for name in NET_FAC_BLC}, inplace=True)
+df.rename(columns={"net_unique-addresses": "net_unique_addresses"}, inplace=True)
+
+# network factor from crypto metrics
+NET_FAC_NAME = {
+    "AdrActCnt": "net_active_addresses",
+    "TxCnt": "net_transactions",
+    "TxTfrCnt": "net_payments",
+}
+
+df_metrics = pd.read_csv(DATA_PATH / "btc.csv")
+df_metrics = df_metrics[["time"] + list(NET_FAC_NAME.keys())]
+df_metrics.rename(
+    columns=NET_FAC_NAME,
+    inplace=True,
+)
+
+df_metrics["time"] = pd.to_datetime(df_metrics["time"])
+df_metrics[["year", "week", "day"]] = df_metrics["time"].dt.isocalendar()
+df_metrics.sort_values(["year", "week", "day"], ascending=True, inplace=True)
+df_metrics.drop_duplicates(subset=["year", "week"], keep="last", inplace=True)
+df_metrics = df_metrics[["year", "week", "time"] + list(NET_FAC_NAME.values())]
+
+df_metrics[list(NET_FAC_NAME.values())] = df_metrics[list(NET_FAC_NAME.values())].diff()
+
+# attention factor
+df_attn = load_attn(DATA_PATH / "attention.csv")
+df_attn.sort_values("time", ascending=True, inplace=True)
+df_attn["google_l1w"] = df_attn["google"].rolling(4).mean()
+df_attn["google_l1w"] = df_attn["google_l1w"].shift(1)
+df_attn.dropna(inplace=True)
+df_attn["google"] = df_attn["google"].apply(float) - df_attn["google_l1w"].apply(float)
+df_attn.drop(columns=["google_l1w"], inplace=True)
+df_attn.sort_values("time", ascending=True, inplace=True)
+# add six days to refect the end of the period
+df_attn["time"] = df_attn["time"] + pd.DateOffset(days=6)
+df_attn[["year", "week", "day"]] = df_attn["time"].dt.isocalendar()
+df_attn.drop(columns=["day"], inplace=True)
+df_attn = df_attn[["year", "week", "google"]]
+df_attn.rename(columns={"google": "attn_google"}, inplace=True)
+
+# merge the two dataframes
+df = pd.merge(df, df_attn, on=["year", "week"], how="inner")
+df = pd.merge(df, df_metrics, on=["year", "week"], how="inner")
+market_factors = df.dropna()

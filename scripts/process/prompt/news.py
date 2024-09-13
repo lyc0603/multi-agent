@@ -7,30 +7,33 @@ import json
 import pandas as pd
 
 from environ.constants import DATA_PATH, PROCESSED_DATA_PATH
+from scripts.process.crypto_news import crypto_news
 from scripts.process.crypto_weekly import df_weekly
+from scripts.process.macro_news import macro_news
 
-news_dataset = []
+news_agg = {
+    "crypto": crypto_news,
+    **macro_news,
+}
 
-dfn = pd.read_csv(f"{DATA_PATH}/cryptonews.csv")
-dfn = dfn[dfn["source"] == "CoinTelegraph"]
-dfn = dfn[["date", "title"]]
-dfn["date"] = pd.to_datetime(dfn["date"])
-dfn[["year", "week", "day"]] = dfn["date"].dt.isocalendar()
+for idx, (news_nanme, news_df) in enumerate(news_agg.items()):
 
-# aggregate the title by week
-dfn = dfn.groupby(["year", "week"])["title"].apply("\n".join).reset_index()
+    if idx == 0:
+        news_date = set(zip(news_df["year"], news_df["week"]))
+    else:
+        # take the intersection of the two datasets
+        news_date = news_date.intersection(set(zip(news_df["year"], news_df["week"])))
 
 # iterate through 2022
-for year in range(2022, 2023):
-    for week in range(1, 53):
-        try:
-            news = dfn[(dfn["year"] == year) & (dfn["week"] == week)]["title"].values[0]
-            df_week = df_weekly[
-                (df_weekly["year"] == year) & (df_weekly["week"] == week)
-            ].copy()
-
-        except IndexError:
-            continue
+for news_nanme, news_df in news_agg.items():
+    news_dataset = []
+    for year, week in news_date:
+        news = news_df[(news_df["year"] == year) & (news_df["week"] == week)][
+            "title"
+        ].values[0]
+        df_week = df_weekly[
+            (df_weekly["year"] == year) & (df_weekly["week"] == week)
+        ].copy()
 
         news_dataset.append(
             {
@@ -59,8 +62,10 @@ for year in range(2022, 2023):
             }
         )
 
-# save in jsonl format
-with open(f"{PROCESSED_DATA_PATH}/news_dataset.jsonl", "w", encoding="utf-8") as f:
-    for line in news_dataset:
-        json_line = json.dumps(line)
-        f.write(json_line + "\n")
+    # save in jsonl format
+    with open(
+        f"{PROCESSED_DATA_PATH}/{news_nanme}_news_dataset.jsonl", "w", encoding="utf-8"
+    ) as f:
+        for line in news_dataset:
+            json_line = json.dumps(line)
+            f.write(json_line + "\n")
