@@ -29,7 +29,7 @@ of zero and a standard deviation of one)",
 
 for strategy in ["attn", "net"]:
     market_factor_train_dataset = []
-    market_factor_test_dataset = []
+    market_factor_test_dataset = {}
     for idx, row in tqdm(
         market_factors.loc[
             (market_factors["time"] >= "2023-06-01")
@@ -71,7 +71,7 @@ Medium, or Low. Please respond with the tercile:\n"
         if row["year"] < 2024:
             market_factor_train_dataset.append(prompt)
         else:
-            market_factor_test_dataset.append(prompt)
+            market_factor_test_dataset[str(row["year"]) + str(row["week"])] = prompt
 
     with open(
         f"{PROCESSED_DATA_PATH}/train/{strategy}_dataset.jsonl", "w", encoding="utf-8"
@@ -81,10 +81,8 @@ Medium, or Low. Please respond with the tercile:\n"
             f.write(json_line + "\n")
 
     with open(
-        f"{PROCESSED_DATA_PATH}/test/{strategy}_dataset.jsonl",
+        f"{PROCESSED_DATA_PATH}/test/{strategy}_dataset.json",
         "w",
         encoding="utf-8",
     ) as f:
-        for line in market_factor_test_dataset:
-            json_line = json.dumps(line)
-            f.write(json_line + "\n")
+        json.dump(market_factor_test_dataset, f)

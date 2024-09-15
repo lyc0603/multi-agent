@@ -10,12 +10,12 @@ for dataset in [
     # "size",
     # "attn",
     # "net",
-    # "crypto_news",
+    "crypto_news",
     # "WASH",
     # "MCE",
     # "GVD",
     # "FED",
-    "ECI",
+    # "ECI",
 ]:
     job = fine_tuning(
         dataset_path=f"{PROCESSED_DATA_PATH}/train/{dataset}_dataset.jsonl",

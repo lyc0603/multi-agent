@@ -26,7 +26,7 @@ news_agg = {
 
 for news_nanme, news_df in news_agg.items():
     news_train_dataset = []
-    news_test_dataset = []
+    news_test_dataset = {}
     for idx, row in tqdm(
         crypto_news.iterrows(),
         total=len(crypto_news),
@@ -51,8 +51,8 @@ on crypto news data.",
                     {
                         "role": "user",
                         "content": f"Analyze the following headline data to \
-determine whether the closing price of {crypto} will ascend or descend in a week. \
-Please respond with either Rise or Fall:\n"
+determine strength of {crypto}'s return in a week. Please respond \
+with Very Low, Low, Medium, High, or Very High:\n"
                         + news,
                     },
                     {
@@ -64,7 +64,10 @@ Please respond with either Rise or Fall:\n"
             if row["year"] < 2024:
                 news_train_dataset.append(prompt)
             else:
-                news_test_dataset.append(prompt)
+                key = str(row["year"]) + str(row["week"])
+                if key not in news_test_dataset:
+                    news_test_dataset[key] = {}
+                news_test_dataset[key][crypto] = prompt
 
     with open(
         f"{PROCESSED_DATA_PATH}/train/crypto_news_dataset.jsonl", "w", encoding="utf-8"
@@ -74,8 +77,6 @@ Please respond with either Rise or Fall:\n"
             f.write(json_line + "\n")
 
     with open(
-        f"{PROCESSED_DATA_PATH}/test/crypto_news_dataset.jsonl", "w", encoding="utf-8"
+        f"{PROCESSED_DATA_PATH}/test/crypto_news_dataset.json", "w", encoding="utf-8"
     ) as f:
-        for line in news_test_dataset:
-            json_line = json.dumps(line)
-            f.write(json_line + "\n")
+        json.dump(news_test_dataset, f)

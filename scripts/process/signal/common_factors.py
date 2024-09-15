@@ -38,4 +38,5 @@ df.drop(
     inplace=True,
 )
 
+
 df.to_csv(f"{PROCESSED_DATA_PATH}/signal/weekly_features.csv", index=False)

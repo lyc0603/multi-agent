@@ -26,7 +26,7 @@ FACTOR_DESCRIPTION_MAPPING = {
 
 for strategy in ["size", "mom"]:
     common_factor_train_dataset = []
-    common_factor_test_dataset = []
+    common_factor_test_dataset = {}
     for idx, row in tqdm(
         df_features.loc[
             (df_features["time"] >= "2023-06-01") & (df_features["time"] < "2024-09-01")
@@ -56,8 +56,8 @@ specializing in predicting next week's price trend of a cryptocurrency based on 
                 {
                     "role": "user",
                     "content": f"Analyze the following {strategy_name} data of {crypto} \
-to determine whether its closing price will ascend or descend in a week. Please respond \
-with either Rise or Fall:\n"
+to determine strength of its return in a week. Please respond \
+with Very Low, Low, Medium, High, or Very High:\n"
                     + "".join(
                         [
                             f"{FACTOR_DESCRIPTION_MAPPING[factor]}: {row[factor]}\n"
@@ -75,7 +75,10 @@ with either Rise or Fall:\n"
         if row["year"] < 2024:
             common_factor_train_dataset.append(prompt)
         else:
-            common_factor_test_dataset.append(prompt)
+            key = str(row["year"]) + str(row["week"])
+            if key not in common_factor_test_dataset:
+                common_factor_test_dataset[key] = {}
+            common_factor_test_dataset[key][crypto] = prompt
 
     # save in jsonl format
     with open(
@@ -86,8 +89,8 @@ with either Rise or Fall:\n"
             f.write(json_line + "\n")
 
     with open(
-        f"{PROCESSED_DATA_PATH}/test/{strategy}_dataset.jsonl", "w", encoding="utf-8"
+        f"{PROCESSED_DATA_PATH}/test/{strategy}_dataset.json",
+        "w",
+        encoding="utf-8",
     ) as f:
-        for line in common_factor_test_dataset:
-            json_line = json.dumps(line)
-            f.write(json_line + "\n")
+        json.dump(common_factor_test_dataset, f)

@@ -46,7 +46,7 @@ coin_list = pd.read_csv(f"{DATA_PATH}/coin_list.csv")
 df_weekly = pd.merge(df_weekly, coin_list, on="id")
 
 # dropna
-df_weekly.dropna(subset=["ret"], how="any", inplace=True)
+df_weekly.dropna(how="any", inplace=True)
 
 # only keep the weeks with 10 coins
 df_10_count = df_weekly.groupby(["year", "week"])["id"].count().reset_index().copy()
@@ -56,12 +56,33 @@ for i, row in df_10_count.iterrows():
         ~((df_weekly["year"] == row["year"]) & (df_weekly["week"] == row["week"]))
     ]
 
-# # sort the return into quintile
-# df_weekly.sort_values(["year", "week"], ascending=True)
-# df_weekly["quintile"] = df_weekly.groupby(["year", "week"])["ret"].transform(
-#     lambda x: pd.qcut(x, 5, labels=[1, 2, 3, 4, 5])
-# )
+# convert the variables into quitiles
+for var in [
+    "size_mcap",
+    "size_prc",
+    "size_maxdprc",
+    "mom_1_0",
+    "mom_2_0",
+    "mom_3_0",
+    "mom_4_0",
+    "mom_4_1",
+    "ret",
+]:
+    df_weekly[f"{var}"] = df_weekly.groupby(["year", "week"])[var].transform(
+        lambda x: pd.qcut(
+            x,
+            5,
+            labels=[
+                "Very Low",
+                "Low",
+                "Medium",
+                "High",
+                "Very High",
+            ],
+        )
+    )
 
-df_weekly["ret_signal"] = df_weekly["ret"].apply(lambda x: "Rise" if x > 0 else "Fall")
+# df_weekly["ret_signal"] = df_weekly["ret"].apply(lambda x: "Rise" if x > 0 else "Fall")
+df_weekly["ret_signal"] = df_weekly["ret"]
 df_weekly.drop(columns=["_id", "daily_ret"], inplace=True)
 df_weekly.to_csv(f"{PROCESSED_DATA_PATH}/signal/gecko_signal.csv", index=False)

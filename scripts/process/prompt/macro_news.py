@@ -41,7 +41,7 @@ for idx, (news_name, news_df) in enumerate(news_agg.items()):
 # iterate through 2022
 for news_name, news_df in news_agg.items():
     news_train_dataset = []
-    news_test_dataset = []
+    news_test_dataset = {}
     for year, week in news_date:
         news = news_df[(news_df["year"] == year) & (news_df["week"] == week)][
             "title"
@@ -80,7 +80,7 @@ exceeds the {MAX_TOKENS_PER_EXAMPLE}, the token is {token_count}"
         if year < 2024:
             news_train_dataset.append(prompt)
         else:
-            news_test_dataset.append(prompt)
+            news_test_dataset[str(year) + str(week)] = prompt
 
     # save in jsonl format
     with open(
@@ -91,10 +91,8 @@ exceeds the {MAX_TOKENS_PER_EXAMPLE}, the token is {token_count}"
             f.write(json_line + "\n")
 
     with open(
-        f"{PROCESSED_DATA_PATH}/test/{news_name}_dataset.jsonl",
+        f"{PROCESSED_DATA_PATH}/test/{news_name}_dataset.json",
         "w",
         encoding="utf-8",
     ) as f:
-        for line in news_test_dataset:
-            json_line = json.dumps(line)
-            f.write(json_line + "\n")
+        json.dump(news_test_dataset, f)

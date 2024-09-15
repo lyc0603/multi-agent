@@ -47,5 +47,9 @@ df_crypto[["year", "week", "day"]] = df_crypto["time"].dt.isocalendar()
 df_crypto.sort_values(["id", "year", "week", "day"], ascending=True, inplace=True)
 
 
+# add the name of the coin
+coin_list = pd.read_csv(f"{DATA_PATH}/coin_list.csv")
+df_crypto = pd.merge(df_crypto, coin_list, on="id")
+
 # save the daily data
 df_crypto.to_csv(PROCESSED_DATA_PATH / "signal" / "gecko_daily.csv", index=False)
