@@ -14,13 +14,11 @@ PLOT_PARAM_MAP = {
         "label": "Command",
         "color": "orangered",
         "linestyle": "-",
-        "alpha": 1,
     },
     "cmkt": {
         "label": "Crypto Market",
         "color": "black",
         "linestyle": "-",
-        "alpha": 1,
     },
 }
 
@@ -36,6 +34,7 @@ for col in ["long_short_adj", "cmkt"]:
         label=PLOT_PARAM_MAP[col]["label"],
         color=PLOT_PARAM_MAP[col]["color"],
         linestyle=PLOT_PARAM_MAP[col]["linestyle"],
+        linewidth=2,
     )
 
 plt.legend(frameon=False, fontsize=FONT_SIZE)
