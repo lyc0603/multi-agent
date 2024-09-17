@@ -10,9 +10,14 @@ from environ.constants import PROCESSED_DATA_PATH, FIGURE_PATH
 FONT_SIZE = 14
 
 PLOT_PARAM_MAP = {
-    "long_short_adj": {
-        "label": "Command",
+    "parallel": {
+        "label": "Parallel",
         "color": "orangered",
+        "linestyle": "-",
+    },
+    "chain": {
+        "label": "Chain",
+        "color": "royalblue",
         "linestyle": "-",
     },
     "cmkt": {
@@ -29,7 +34,7 @@ df_res.set_index("time", inplace=True)
 
 plt.figure(figsize=(7, 5))
 
-for col in ["long_short_adj", "cmkt"]:
+for col in ["parallel", "chain", "cmkt"]:
     df_res[col].plot(
         label=PLOT_PARAM_MAP[col]["label"],
         color=PLOT_PARAM_MAP[col]["color"],

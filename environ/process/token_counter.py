@@ -111,3 +111,22 @@ def print_distribution(values, name):
     print(f"min / max: {min(values)}, {max(values)}")
     print(f"mean / median: {np.mean(values)}, {np.median(values)}")
     print(f"p5 / p95: {np.quantile(values, 0.1)}, {np.quantile(values, 0.9)}")
+
+
+def winsorize(prompt: dict[str, list]) -> dict[str, list]:
+    """
+    Function to winsorize the prompt.
+    """
+
+    while num_tokens_from_messages(prompt["messages"]) >= MAX_TOKENS_PER_EXAMPLE:
+        new_prompt = {"messages": []}
+        new_prompt["messages"].append(prompt["messages"][0])
+        user_message_content = prompt["messages"][1]["content"]
+        user_message_content_new = user_message_content[:-100]
+        new_prompt["messages"].append(
+            {"role": "user", "content": user_message_content_new}
+        )
+        new_prompt["messages"].append(prompt["messages"][2])
+        prompt = new_prompt
+
+    return prompt

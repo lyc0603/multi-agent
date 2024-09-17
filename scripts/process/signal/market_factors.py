@@ -91,3 +91,37 @@ df_attn.rename(columns={"google": "attn_google"}, inplace=True)
 df = pd.merge(df, df_attn, on=["year", "week"], how="inner")
 df = pd.merge(df, df_metrics, on=["year", "week"], how="inner")
 market_factors = df.dropna()
+
+df_full = market_factors.copy()
+
+for idx, row in df_full.loc[df_full["year"] >= 2022].iterrows():
+    year = row["year"]
+    week = row["week"]
+    current_date = df_full[(df_full["year"] == year) & (df_full["week"] == week)][
+        "time"
+    ].values[0]
+    df_sample = df_full[
+        (df_full["time"] <= current_date)
+        & (df_full["time"] >= current_date - pd.DateOffset(years=2))
+    ].copy()
+
+    for factor in [
+        "net_unique_addresses",
+        "attn_google",
+        "net_active_addresses",
+        "net_transactions",
+        "net_payments",
+    ]:
+        # cut the cmkt into terciles
+        df_sample[factor] = pd.qcut(
+            df_sample[factor],
+            5,
+            labels=["Very Low", "Low", "Medium", "High", "Very High"],
+        )
+
+        market_factors.loc[
+            (market_factors["year"] == year) & (market_factors["week"] == week),
+            factor,
+        ] = df_sample[df_sample["time"] == current_date][factor].values[0]
+
+market_factors = market_factors.loc[market_factors["year"] >= 2022]

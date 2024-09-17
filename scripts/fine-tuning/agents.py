@@ -10,11 +10,11 @@ for dataset in [
     # "size",
     # "attn",
     # "net",
-    "crypto_news",
+    # "crypto_news",
     # "WASH",
-    # "MCE",
-    # "GVD",
-    # "FED",
+    "MCE",
+    "GVD",
+    "FED",
     # "ECI",
 ]:
     job = fine_tuning(

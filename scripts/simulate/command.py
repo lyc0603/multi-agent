@@ -12,17 +12,20 @@ from environ.constants import DATASETS, MODEL_ID, PROCESSED_DATA_PATH
 from environ.simulate.agent import Agent
 
 OPTION_LIST = {
-    "cross-sectional": ["Very Low", "Low", "Medium", "High", "Very High"],
-    "market": ["Low", "Medium", "High"],
+    **{
+        _: ["Very Low", "Low", "Medium", "High", "Very High"]
+        for _ in ["cross-sectional", "market"]
+    },
 }
 
-for dataset in tqdm(["ECI_dataset"]):
+for dataset in tqdm(DATASETS):
 
     df_res = []
 
     agent = Agent(
         MODEL_ID[dataset[:-8]]["id"],
         MODEL_ID[dataset[:-8]]["model"],
+        agent_name=MODEL_ID[dataset[:-8]]["agent"],
     )
 
     with open(
@@ -45,7 +48,7 @@ for dataset in tqdm(["ECI_dataset"]):
                     iteration += 1
                     if iteration > 5:
                         raise ValueError("Too many errors")
-                    response = agent.send_message(prompt["messages"])
+                    response = agent.send_message(prompt["messages"], temperature=0)
                     option = response.content
 
                 df_res.append(
@@ -65,7 +68,7 @@ for dataset in tqdm(["ECI_dataset"]):
             while option not in OPTION_LIST[agent_type]:
                 if iteration > 5:
                     raise ValueError("Too many errors")
-                response = agent.send_message(prompt["messages"])
+                response = agent.send_message(prompt["messages"], temperature=0)
                 option = response.content
 
             df_res.append(
@@ -78,6 +81,6 @@ for dataset in tqdm(["ECI_dataset"]):
 
     df_res = pd.DataFrame(df_res)
     df_res.to_csv(
-        PROCESSED_DATA_PATH / "simulate" / "command" / f"{dataset}.csv",
+        PROCESSED_DATA_PATH / "simulate" / "parallel" / f"{dataset}.csv",
         index=False,
     )
