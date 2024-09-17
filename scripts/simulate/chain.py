@@ -13,9 +13,12 @@ from scripts.process.market_data import market_data_dict
 from environ.process.token_counter import winsorize
 
 OPTION_LIST = {
-    "cross-sectional": ["Very Low", "Low", "Medium", "High", "Very High"],
-    "market": ["Low", "Medium", "High"],
+    **{
+        _: ["Very Low", "Low", "Medium", "High", "Very High"]
+        for _ in ["cross-sectional", "market"]
+    },
 }
+
 DATASET_NAME = [
     "ECI_dataset",
     "FED_dataset",

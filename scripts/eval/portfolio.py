@@ -9,6 +9,7 @@ from environ.constants import (DATA_PATH, DATASETS, MODEL_ID,
                                PROCESSED_DATA_PATH)
 
 TYPOLOGY= ["parallel", "chain"]
+INDEX = ["cmkt", "btc"]
 
 for typo_idx, typology in enumerate(TYPOLOGY):
 
@@ -116,7 +117,21 @@ portfolio = pd.merge(
     on=["time"],
     how="inner",
 )
-portfolio["cmkt"] = (1 + portfolio["cmkt"]).cumprod()
-portfolio = portfolio[["year", "week", "cmkt", "time"] + TYPOLOGY]
+
+dfc = pd.read_csv(PROCESSED_DATA_PATH / "signal" / "gecko_daily.csv")
+btc = dfc.loc[dfc["id"] == "bitcoin", ["time", "daily_ret"]]
+btc["time"] = pd.to_datetime(btc["time"])
+btc.rename(columns={"daily_ret": "btc"}, inplace=True)
+
+portfolio = pd.merge(
+    portfolio,
+    btc[["time", "btc"]],
+    on=["time"],
+    how="inner",
+)
+
+for index in INDEX:
+    portfolio[index] = (1 + portfolio[index]).cumprod()
+portfolio = portfolio[["year", "week", "time"] + TYPOLOGY + INDEX]
 portfolio.to_csv(f"{PROCESSED_DATA_PATH}/eval/portfolio.csv", index=False)  
 

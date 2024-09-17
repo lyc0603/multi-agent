@@ -23,7 +23,12 @@ PLOT_PARAM_MAP = {
     "cmkt": {
         "label": "Crypto Market",
         "color": "black",
-        "linestyle": "-",
+        "linestyle": "--",
+    },
+    "btc": {
+        "label": "Bitcoin",
+        "color": "orange",
+        "linestyle": "--",
     },
 }
 
@@ -34,7 +39,7 @@ df_res.set_index("time", inplace=True)
 
 plt.figure(figsize=(7, 5))
 
-for col in ["parallel", "chain", "cmkt"]:
+for col in ["parallel", "chain", "cmkt", "btc"]:
     df_res[col].plot(
         label=PLOT_PARAM_MAP[col]["label"],
         color=PLOT_PARAM_MAP[col]["color"],
@@ -42,7 +47,7 @@ for col in ["parallel", "chain", "cmkt"]:
         linewidth=2,
     )
 
-plt.legend(frameon=False, fontsize=FONT_SIZE)
+plt.legend(frameon=False, fontsize=FONT_SIZE, ncol=2)
 plt.grid()
 plt.ylabel("Cumulative Return", fontsize=FONT_SIZE)
 plt.xlabel("Time", fontsize=FONT_SIZE)
