@@ -12,11 +12,13 @@ NAMING_MAP = {
     **{k: v["name"] for k, v in MODEL_ID.items()},
     "cross": "Cross-section",
     "market": "Market",
+    "parallel": "Parallel",
+    "chain": "Chain",
 }
 
 with open(TABLE_PATH / "metrics.tex", "w", encoding="utf-8") as f:
     f.write(
-        r"\begin{tabularx}{\textwidth}{*{"
+        r"\begin{tabularx}{\linewidth}{*{"
         + str(metrics_num * len(TYPOLOGY) + 1)
         + r"}{X}}"
         + "\n"
@@ -26,7 +28,11 @@ with open(TABLE_PATH / "metrics.tex", "w", encoding="utf-8") as f:
         r"& "
         + " & ".join(
             [
-                r"\multicolumn{" + str(metrics_num) + r"}{c}" + f"{{typology}}"
+                r"\multicolumn{"
+                + str(metrics_num)
+                + r"}{c}{"
+                + str(NAMING_MAP[typology])
+                + "}"
                 for typology in TYPOLOGY
             ]
         )
@@ -56,3 +62,4 @@ with open(TABLE_PATH / "metrics.tex", "w", encoding="utf-8") as f:
                 f.write(r"\\")
         f.write("\n")
     f.write(r"\hline" + "\n")
+    f.write(r"\end{tabularx}" + "\n")
