@@ -1,20 +1,21 @@
-\begin{tabularx}{\linewidth}{*{5}{X}}
-\hline
-& \multicolumn{2}{c}{Parallel} & \multicolumn{2}{c}{Chain}\\
-\hline
-& ACC & MCC& ACC & MCC\\
-\hline
-SIZE & 0.21 & 0.02 & 0.24 & 0.06\\
-WASH & 0.38 & 0.39 & 0.18 & 0.2\\
-FED & 0.65 & 0.63 & 0.41 & 0.43\\
-MOM & 0.38 & 0.25 & 0.33 & 0.19\\
-ECI & 0.32 & 0.38 & 0.32 & 0.38\\
-ATTN & 0.06 & 0.0 & 0.06 & 0.0\\
-MCE & 0.18 & 0.09 & 0.5 & 0.47\\
-CRYPTO & 0.2 & 0.0 & 0.2 & 0.0\\
-NET & 0.5 & 0.42 & 0.59 & 0.53\\
-GVD & 0.53 & 0.48 & 0.38 & 0.37\\
-Cross-section & 0.31 & 0.19 & 0.31 & 0.17\\
-Market & 0.32 & 0.33 & 0.24 & 0.27\\
-\hline
+\begin{tabularx}{\linewidth}{*{6}{X}}
+\toprule
+\multirow{2}{*}{Task} & \multirow{2}{*}{Agent} & \multicolumn{2}{c}{Parallel} & \multicolumn{2}{c}{Chain}\\
+\cline{3-4}\cline{5-6}
+ &  & ACC & MCC & ACC & MCC\\
+\midrule
+\multirow{4}{*}{\makecell{Cross-\\sectional}} & MOM & {\cellcolor[HTML]{F7593F}} \color[HTML]{F1F1F1} 0.38 & {\cellcolor[HTML]{92C4DE}} \color[HTML]{000000} 0.25  & {\cellcolor[HTML]{FB7555}} \color[HTML]{F1F1F1} 0.33 & {\cellcolor[HTML]{B4D3E9}} \color[HTML]{000000} 0.19 \\
+ & SIZE & {\cellcolor[HTML]{FCB79C}} \color[HTML]{000000} 0.21 & {\cellcolor[HTML]{F1F7FD}} \color[HTML]{000000} 0.02  & {\cellcolor[HTML]{FCAB8F}} \color[HTML]{000000} 0.24 & {\cellcolor[HTML]{E6F0F9}} \color[HTML]{000000} 0.06 \\
+ & CRYPTO & {\cellcolor[HTML]{FCBEA5}} \color[HTML]{000000} 0.20 & {\cellcolor[HTML]{F7FBFF}} \color[HTML]{000000} 0.00  & {\cellcolor[HTML]{FCBEA5}} \color[HTML]{000000} 0.20 & {\cellcolor[HTML]{F7FBFF}} \color[HTML]{000000} 0.00 \\
+ & \textbf{Vote} & {\cellcolor[HTML]{FC8262}} \color[HTML]{F1F1F1} 0.31 & {\cellcolor[HTML]{B3D3E8}} \color[HTML]{000000} 0.19  & {\cellcolor[HTML]{FC7F5F}} \color[HTML]{F1F1F1} 0.31 & {\cellcolor[HTML]{BDD7EC}} \color[HTML]{000000} 0.17 \\
+\midrule
+\multirow{8}{*}{\multirow{Market}} & ATTN & {\cellcolor[HTML]{FFF5F0}} \color[HTML]{000000} 0.06 & {\cellcolor[HTML]{F7FBFF}} \color[HTML]{000000} 0.00  & {\cellcolor[HTML]{FFF5F0}} \color[HTML]{000000} 0.06 & {\cellcolor[HTML]{F7FBFF}} \color[HTML]{000000} 0.00 \\
+ & NET & {\cellcolor[HTML]{CA181D}} \color[HTML]{F1F1F1} 0.50 & {\cellcolor[HTML]{3585BF}} \color[HTML]{F1F1F1} 0.42  & {\cellcolor[HTML]{980C13}} \color[HTML]{F1F1F1} 0.59 & {\cellcolor[HTML]{0E58A2}} \color[HTML]{F1F1F1} 0.53 \\
+ & WASH & {\cellcolor[HTML]{F6583E}} \color[HTML]{F1F1F1} 0.38 & {\cellcolor[HTML]{4292C6}} \color[HTML]{F1F1F1} 0.39  & {\cellcolor[HTML]{FDCAB5}} \color[HTML]{000000} 0.18 & {\cellcolor[HTML]{AED1E7}} \color[HTML]{000000} 0.20 \\
+ & MCE & {\cellcolor[HTML]{FDCAB5}} \color[HTML]{000000} 0.18 & {\cellcolor[HTML]{DAE8F6}} \color[HTML]{000000} 0.09  & {\cellcolor[HTML]{CA181D}} \color[HTML]{F1F1F1} 0.50 & {\cellcolor[HTML]{2070B4}} \color[HTML]{F1F1F1} 0.47 \\
+ & GVD & {\cellcolor[HTML]{BC141A}} \color[HTML]{F1F1F1} 0.53 & {\cellcolor[HTML]{1F6EB3}} \color[HTML]{F1F1F1} 0.48  & {\cellcolor[HTML]{F6583E}} \color[HTML]{F1F1F1} 0.38 & {\cellcolor[HTML]{4B98CA}} \color[HTML]{F1F1F1} 0.37 \\
+ & FED & {\cellcolor[HTML]{67000D}} \color[HTML]{F1F1F1} 0.65 & {\cellcolor[HTML]{08306B}} \color[HTML]{F1F1F1} 0.63  & {\cellcolor[HTML]{F14432}} \color[HTML]{F1F1F1} 0.41 & {\cellcolor[HTML]{3383BE}} \color[HTML]{F1F1F1} 0.43 \\
+ & ECI & {\cellcolor[HTML]{FB7A5A}} \color[HTML]{F1F1F1} 0.32 & {\cellcolor[HTML]{4997C9}} \color[HTML]{F1F1F1} 0.38  & {\cellcolor[HTML]{FB7A5A}} \color[HTML]{F1F1F1} 0.32 & {\cellcolor[HTML]{4997C9}} \color[HTML]{F1F1F1} 0.38 \\
+ & \textbf{Vote} & {\cellcolor[HTML]{FB7A5A}} \color[HTML]{F1F1F1} 0.32 & {\cellcolor[HTML]{60A7D2}} \color[HTML]{F1F1F1} 0.33  & {\cellcolor[HTML]{FCAB8F}} \color[HTML]{000000} 0.24 & {\cellcolor[HTML]{89BEDC}} \color[HTML]{000000} 0.27 \\
+\bottomrule
 \end{tabularx}

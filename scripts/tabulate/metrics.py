@@ -2,7 +2,7 @@
 Script to tabulate the metrics
 """
 
-from scripts.eval.metrics import matrics_dict
+from scripts.eval.metrics import matrics_dict, metrics_style_df
 from environ.constants import TABLE_PATH, TYPOLOGY, MODEL_ID
 
 agent_num = len(matrics_dict["chain"].keys())
@@ -19,13 +19,13 @@ NAMING_MAP = {
 with open(TABLE_PATH / "metrics.tex", "w", encoding="utf-8") as f:
     f.write(
         r"\begin{tabularx}{\linewidth}{*{"
-        + str(metrics_num * len(TYPOLOGY) + 1)
+        + str(metrics_num * len(TYPOLOGY) + 2)
         + r"}{X}}"
         + "\n"
     )
-    f.write(r"\hline" + "\n")
+    f.write(r"\toprule" + "\n")
     f.write(
-        r"& "
+        r"\multirow{2}{*}{Task} & \multirow{2}{*}{Agent} & "
         + " & ".join(
             [
                 r"\multicolumn{"
@@ -39,20 +39,63 @@ with open(TABLE_PATH / "metrics.tex", "w", encoding="utf-8") as f:
         + r"\\"
         + "\n"
     )
-    f.write(r"\hline" + "\n")
+    f.write(r"\cline{3-4}" + r"\cline{5-6}" + "\n")
+    f.write(" & ")
     for _ in TYPOLOGY:
-        f.write(r"& " + r" & ".join([_ for _ in matrics_dict["chain"]["cross"].keys()]))
+        f.write(
+            r" & " + r" & ".join([_ for _ in matrics_dict["chain"]["cross"].keys()])
+        )
 
     f.write(r"\\" + "\n")
-    f.write(r"\hline" + "\n")
-    for agent in matrics_dict[TYPOLOGY[0]].keys():
-        f.write(str(NAMING_MAP[agent]) + " & ")
+    f.write(r"\midrule" + "\n")
+
+    for task_id, task in enumerate(["Cross-sectional", "Market"]):
+        task_agent = [k for k, v in MODEL_ID.items() if (v["task"] == task)]
+
+        f.write(
+            r"\multirow{"
+            + str(len(task_agent) + 1)
+            + (
+                r"}{*}{\makecell{Cross-\\sectional}}"
+                if task == "Cross-sectional"
+                else r"}{*}{\multirow{Market}}"
+            )
+        )
+        for agent in task_agent:
+            f.write(" & " + str(NAMING_MAP[agent]) + " & ")
+            for typology_idx, typology in enumerate(TYPOLOGY):
+                f.write(
+                    " & ".join(
+                        [
+                            metrics_style_df.loc[
+                                (metrics_style_df["typology"] == typology)
+                                & (metrics_style_df["dataset"] == agent),
+                                _,
+                            ].values[0]
+                            for _ in ["ACC", "MCC"]
+                        ]
+                    )
+                )
+                if typology_idx != len(TYPOLOGY) - 1:
+                    f.write(" & ")
+                else:
+                    f.write(r"\\")
+            f.write("\n")
+
+        # Majoirity vote
+        # f.write(r"\cline{2-6}" + "\n")
+        f.write(" & " + r"\textbf{Vote}" + " & ")
+        agent = "cross" if task == "Cross-sectional" else "market"
         for typology_idx, typology in enumerate(TYPOLOGY):
             f.write(
                 " & ".join(
                     [
-                        str(round(matrics_dict[typology][agent][metric], 2))
-                        for metric in matrics_dict[typology][agent].keys()
+                        metrics_style_df.loc[
+                            (metrics_style_df["typology"] == typology)
+                            & (metrics_style_df["dataset"] == agent),
+                            _,
+                        ].values[0]
+                        for _ in ["ACC", "MCC"]
                     ]
                 )
             )
@@ -61,5 +104,9 @@ with open(TABLE_PATH / "metrics.tex", "w", encoding="utf-8") as f:
             else:
                 f.write(r"\\")
         f.write("\n")
-    f.write(r"\hline" + "\n")
+
+        if task_id != len(["Cross-sectional", "Market"]) - 1:
+            f.write(r"\midrule" + "\n")
+
+    f.write(r"\bottomrule" + "\n")
     f.write(r"\end{tabularx}" + "\n")
