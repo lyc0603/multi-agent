@@ -58,7 +58,7 @@ with open(TABLE_PATH / "metrics.tex", "w", encoding="utf-8") as f:
             + (
                 r"}{*}{\makecell{Cross-\\sectional}}"
                 if task == "Cross-sectional"
-                else r"}{*}{\multirow{Market}}"
+                else r"}{*}{Market}"
             )
         )
         for agent in task_agent:
