@@ -15,7 +15,12 @@ NAMING_MAP = {
 }
 
 with open(TABLE_PATH / "metrics.tex", "w", encoding="utf-8") as f:
-    f.write(r"\begin{tabularx}{\textwidth}{*{" + str(agent_num + 1) + r"}{X}}" + "\n")
+    f.write(
+        r"\begin{tabularx}{\textwidth}{*{"
+        + str(metrics_num * len(TYPOLOGY) + 1)
+        + r"}{X}}"
+        + "\n"
+    )
     f.write(r"\hline" + "\n")
     f.write(
         r"& "
