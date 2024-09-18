@@ -6,9 +6,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 from environ.constants import (DATA_PATH, DATASETS, MODEL_ID,
-                               PROCESSED_DATA_PATH)
+                               PROCESSED_DATA_PATH, TYPOLOGY)
 
-TYPOLOGY= ["parallel", "chain"]
 INDEX = ["cmkt", "btc"]
 
 for typo_idx, typology in enumerate(TYPOLOGY):
@@ -86,10 +85,10 @@ for typo_idx, typology in enumerate(TYPOLOGY):
     for idx, row in df_market.iterrows():
         market = row["market"]
         match market:
-            case "High":
+            case "Very High":
                 for port in ["long_short", "long"]:
                     df_res.loc[(df_res["year"] == row["year"])&(df_res["week"] == row["week"]), f"{port}_adj"] *= 2
-            case "Low":
+            case "Very Low":
                 for port in ["long_short", "long"]:
                     df_res.loc[(df_res["year"] == row["year"])&(df_res["week"] == row["week"]), f"{port}_adj"] *= 0.5
             case _:
