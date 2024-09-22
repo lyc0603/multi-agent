@@ -17,14 +17,7 @@ OPTION_LIST = {
     },
 }
 
-for dataset in tqdm(
-    [
-        "mom_dataset",
-        "size_dataset",
-        "volume_dataset",
-        "vol_dataset",
-    ]
-):
+for dataset in tqdm(DATASETS):
 
     df_res = []
 

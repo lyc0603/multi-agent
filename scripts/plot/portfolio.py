@@ -12,22 +12,22 @@ FONT_SIZE = 14
 PLOT_PARAM_MAP = {
     "parallel": {
         "label": "Parallel",
-        "color": "orangered",
+        "color": "#5baeff",
         "linestyle": "-",
     },
     "chain": {
         "label": "Chain",
-        "color": "royalblue",
+        "color": "#4c9390",
         "linestyle": "-",
     },
     "cmkt": {
         "label": "Crypto Market",
-        "color": "black",
+        "color": "#d65d48",
         "linestyle": "--",
     },
     "btc": {
         "label": "Bitcoin",
-        "color": "orange",
+        "color": "#f6aa54",
         "linestyle": "--",
     },
 }

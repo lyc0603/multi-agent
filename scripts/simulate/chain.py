@@ -20,17 +20,17 @@ OPTION_LIST = {
 }
 
 DATASET_NAME = [
-    "ECI_dataset",
     "FED_dataset",
     "GVD_dataset",
-    "MCE_dataset",
     "WASH_dataset",
+    "ECI_dataset",
+    "MCE_dataset",
     "net_dataset",
     "attn_dataset",
-    "size_dataset",
     "mom_dataset",
-    "volume_dataset",
+    "size_dataset",
     "vol_dataset",
+    "volume_dataset",
 ]
 res_dict = {
     **{_: [] for _ in DATASET_NAME},

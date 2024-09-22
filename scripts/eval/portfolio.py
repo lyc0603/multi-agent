@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 from environ.constants import (
-    DATA_PATH,
     DATASETS,
     MODEL_ID,
     PROCESSED_DATA_PATH,
