@@ -8,9 +8,9 @@ from environ.fine_tuning.agents import fine_tuning
 for dataset in [
     # "mom",
     # "size",
-    # "volume",
-    # "vol",
-    "attn",
+    "volume",
+    "vol",
+    # "attn",
     # "net",
     # "crypto_news",
     # "WASH",

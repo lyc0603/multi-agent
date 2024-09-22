@@ -42,6 +42,21 @@ formation week",
 the portfolio formation week",
 }
 
+EXCLUDE_LIST = [
+    "size_age",
+    "mom_8_0",
+    "mom_16_0",
+    "mom_50_0",
+    "mom_100_0",
+    "volume_vol",
+    "vol_beta2",
+    "vol_idiovol",
+    "vol_retvol",
+    "vol_delay",
+    "vol_damihud",
+]
+
+
 cross_sectional_data_dict = {}
 
 crypto_news = pd.read_csv(f"{DATA_PATH}/cointelegraph.csv")
@@ -79,7 +94,11 @@ for idx, row in crypto_news.iterrows():
         ] = row_crypto["ret_signal"]
 
         for strategy in ["size", "mom", "volume", "vol"]:
-            factors = [_ for _ in df_features.columns if f"{strategy}_" in _]
+            factors = [
+                _
+                for _ in df_features.columns
+                if (f"{strategy}_" in _) & (_ not in EXCLUDE_LIST)
+            ]
             cross_sectional_data_dict[str(row["year"]) + str(row["week"])][strategy][
                 row_crypto["name"]
             ] = "".join(
