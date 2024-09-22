@@ -14,11 +14,20 @@ class Agent:
     Class for agent
     """
 
-    def __init__(self, agent_id: str, model: str, agent_name: str) -> None:
+    def __init__(
+        self, agent_id: str, model: str, agent_name: str, agent_task: str
+    ) -> None:
         self.agent_id = agent_id
         self.model = model
         self.agent_name = agent_name
+        self.agent_task = agent_task
         self.client = OpenAI(api_key=OPEN_AI_API_KEY)
+
+    def get_agent_task(self) -> str:
+        """
+        Get the agent task
+        """
+        return self.agent_task
 
     def get_agent_id(self) -> str:
         """

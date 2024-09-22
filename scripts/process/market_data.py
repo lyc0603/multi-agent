@@ -16,8 +16,11 @@ market_factors.sort_values(["year", "week"], ascending=True, inplace=True)
 MACRO_NEWS = ["ECI", "FED", "GVD", "MCE", "WASH"]
 
 FACTOR_DESCRIPTION_MAPPING = {
-    "attn_google": "Google search measure (google search data for the word Bitcoin minus its \
+    "attn_btc": "Google search measure (google search data for the word Bitcoin minus its \
 average of the previous four weeks, and then normalized to have a mean \
+of zero and a standard deviation of one)",
+    "attn_crypto": "Google search measure (google search data for the word cryptocurrency \
+minus its average of the previous four weeks, and then normalized to have a mean \
 of zero and a standard deviation of one)",
     "net_unique_addresses": "Bitcoin wallet growth",
     "net_active_addresses": "Active Bitcoin addresses growth",

@@ -17,7 +17,7 @@ df_features.sort_values(["id", "time"], ascending=True, inplace=True)
 yw_list = [(_[:4], _[4:]) for _ in cross_sectional_data_dict.keys()]
 yw_list.sort(key=lambda x: (int(x[0]), int(x[1])))
 
-for strategy in ["size", "mom", "crypto_news"]:
+for strategy in ["size", "mom", "volume", "vol"]:
     train_dataset = []
     test_dataset = {}
     reasoning = {}
@@ -33,7 +33,9 @@ for strategy in ["size", "mom", "crypto_news"]:
                     if strategy != "crypto_news"
                     else cross_sectional_data_dict[f"{year}{week}"][strategy]
                 ),
-                "trend": cross_sectional_data_dict[f"{year}{week}"]["trend"][crypto],
+                "trend": str(
+                    cross_sectional_data_dict[f"{year}{week}"]["trend"][crypto]
+                ),
             }
 
             prompt_without_reasoning = cross_section(
@@ -66,9 +68,9 @@ for strategy in ["size", "mom", "crypto_news"]:
         ) as f:
             json.dump(v, f, indent=4)
 
-    # with open(
-    #     f"{PROCESSED_DATA_PATH}/train/{strategy}_dataset.jsonl", "w", encoding="utf-8"
-    # ) as f:
-    #     for line in train_dataset:
-    #         json_line = json.dumps(line)
-    #         f.write(json_line + "\n")
+    with open(
+        f"{PROCESSED_DATA_PATH}/train/{strategy}_dataset.jsonl", "w", encoding="utf-8"
+    ) as f:
+        for line in train_dataset:
+            json_line = json.dumps(line)
+            f.write(json_line + "\n")

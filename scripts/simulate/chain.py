@@ -8,9 +8,9 @@ import pandas as pd
 from tqdm import tqdm
 
 from environ.constants import MODEL_ID, PROCESSED_DATA_PATH
+from environ.process.token_counter import winsorize
 from environ.simulate.agent import Agent
 from scripts.process.market_data import market_data_dict
-from environ.process.token_counter import winsorize
 
 OPTION_LIST = {
     **{
@@ -27,9 +27,10 @@ DATASET_NAME = [
     "WASH_dataset",
     "net_dataset",
     "attn_dataset",
-    "crypto_news_dataset",
     "size_dataset",
     "mom_dataset",
+    "volume_dataset",
+    "vol_dataset",
 ]
 res_dict = {
     **{_: [] for _ in DATASET_NAME},
@@ -42,9 +43,10 @@ for year, week in tqdm(yw_list):
     history_content = []
     for idx, dataset in enumerate(DATASET_NAME):
         agent = Agent(
-            agent_id=MODEL_ID[dataset[:-8]]["id"],
-            model=MODEL_ID[dataset[:-8]]["model"],
+            MODEL_ID[dataset[:-8]]["id"],
+            MODEL_ID[dataset[:-8]]["model"],
             agent_name=MODEL_ID[dataset[:-8]]["agent"],
+            agent_task=MODEL_ID[dataset[:-8]]["task"],
         )
 
         with open(

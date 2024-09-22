@@ -14,10 +14,6 @@ from scripts.fetch.stablecoin import stablecoins
 df_crypto = pd.read_csv(f"{PROCESSED_DATA_PATH}/signal/weekly_features.csv")
 df_crypto["time"] = pd.to_datetime(df_crypto["time"])
 
-# remove stablecoins
-df_crypto = df_crypto[~df_crypto["id"].isin(stablecoins)]
-df_crypto.sort_values(["id", "time"], ascending=True, inplace=True)
-
 # remove nan
 df_crypto.dropna(
     subset=["prices", "market_caps", "total_volumes"], how="any", inplace=True
@@ -41,9 +37,9 @@ df_weekly["ret"] = df_weekly.groupby("id")["ret"].shift(-1)
 df_weekly.sort_values(["year", "week", "market_caps"], ascending=False, inplace=True)
 df_weekly = df_weekly.groupby(["year", "week"]).head(CROSS_SECTIONAL_CRYPTO_NUMBER)
 
-# add the name of the coin
-coin_list = pd.read_csv(f"{DATA_PATH}/coin_list.csv")
-df_weekly = pd.merge(df_weekly, coin_list, on="id")
+# # add the name of the coin
+# coin_list = pd.read_csv(f"{DATA_PATH}/coin_list.csv")
+# df_weekly = pd.merge(df_weekly, coin_list, on="id")
 
 # dropna
 df_weekly.dropna(how="any", inplace=True)
@@ -56,29 +52,19 @@ for i, row in df_10_count.iterrows():
         ~((df_weekly["year"] == row["year"]) & (df_weekly["week"] == row["week"]))
     ]
 
+PREFFIX_DICT = ["size", "mom", "vol", "volume"]
+
+VAR_DICT = {k: [_ for _ in df_weekly.columns if f"{k}_" in _] for k in PREFFIX_DICT}
+
+VAR_LIST = [var for var_list in VAR_DICT.values() for var in var_list]
+
 # convert the variables into quitiles
-for var in [
-    "size_mcap",
-    "size_prc",
-    "size_maxdprc",
-    "mom_1_0",
-    "mom_2_0",
-    "mom_3_0",
-    "mom_4_0",
-    "mom_4_1",
-    "ret",
-]:
+for var in VAR_LIST + ["ret"]:
     df_weekly[f"{var}"] = df_weekly.groupby(["year", "week"])[var].transform(
         lambda x: pd.qcut(
             x,
             5,
-            labels=[
-                "Very Low",
-                "Low",
-                "Medium",
-                "High",
-                "Very High",
-            ],
+            labels=(["Very Low", "Low", "Medium", "High", "Very High"]),
         )
     )
 

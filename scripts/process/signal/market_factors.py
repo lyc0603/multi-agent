@@ -7,19 +7,7 @@ import json
 import pandas as pd
 
 from environ.constants import DATA_PATH, PROCESSED_DATA_PATH
-
-
-def load_attn(path: str) -> pd.DataFrame:
-    """
-    Function to load the google trend index for a given token
-    """
-    df = pd.read_csv(path, skiprows=1)
-    df.columns = ["time", "google"]
-    df["time"] = pd.to_datetime(df["time"])
-    df.sort_values("time", ascending=True, inplace=True)
-    df.replace("<1", 0, inplace=True)
-    return df
-
+from environ.process.market_factors import load_attn
 
 df = pd.DataFrame()
 
@@ -72,23 +60,31 @@ df_metrics = df_metrics[["year", "week", "time"] + list(NET_FAC_NAME.values())]
 df_metrics[list(NET_FAC_NAME.values())] = df_metrics[list(NET_FAC_NAME.values())].diff()
 
 # attention factor
-df_attn = load_attn(DATA_PATH / "attention.csv")
-df_attn.sort_values("time", ascending=True, inplace=True)
-df_attn["google_l1w"] = df_attn["google"].rolling(4).mean()
-df_attn["google_l1w"] = df_attn["google_l1w"].shift(1)
-df_attn.dropna(inplace=True)
-df_attn["google"] = df_attn["google"].apply(float) - df_attn["google_l1w"].apply(float)
-df_attn.drop(columns=["google_l1w"], inplace=True)
-df_attn.sort_values("time", ascending=True, inplace=True)
-# add six days to refect the end of the period
-df_attn["time"] = df_attn["time"] + pd.DateOffset(days=6)
-df_attn[["year", "week", "day"]] = df_attn["time"].dt.isocalendar()
-df_attn.drop(columns=["day"], inplace=True)
-df_attn = df_attn[["year", "week", "google"]]
-df_attn.rename(columns={"google": "attn_google"}, inplace=True)
+for attn_idx, attn in enumerate(["btc", "crypto"]):
+    df_attn = load_attn(DATA_PATH / f"attn_{attn}.csv")
+    df_attn.sort_values("time", ascending=True, inplace=True)
+    df_attn["google_l1w"] = df_attn["google"].rolling(4).mean()
+    df_attn["google_l1w"] = df_attn["google_l1w"].shift(1)
+    df_attn.dropna(inplace=True)
+    df_attn["google"] = df_attn["google"].apply(float) - df_attn["google_l1w"].apply(
+        float
+    )
+    df_attn.drop(columns=["google_l1w"], inplace=True)
+    df_attn.sort_values("time", ascending=True, inplace=True)
+    # add six days to refect the end of the period
+    df_attn["time"] = df_attn["time"] + pd.DateOffset(days=6)
+    df_attn[["year", "week", "day"]] = df_attn["time"].dt.isocalendar()
+    df_attn.drop(columns=["day"], inplace=True)
+    df_attn = df_attn[["year", "week", "google"]]
+    df_attn.rename(columns={"google": f"attn_{attn}"}, inplace=True)
+    if attn_idx == 0:
+        df_attn_all = df_attn.copy()
+    else:
+        df_attn_all = pd.merge(df_attn_all, df_attn, on=["year", "week"], how="inner")
+
 
 # merge the two dataframes
-df = pd.merge(df, df_attn, on=["year", "week"], how="inner")
+df = pd.merge(df, df_attn_all, on=["year", "week"], how="inner")
 df = pd.merge(df, df_metrics, on=["year", "week"], how="inner")
 market_factors = df.dropna()
 
@@ -107,7 +103,8 @@ for idx, row in df_full.loc[df_full["year"] >= 2022].iterrows():
 
     for factor in [
         "net_unique_addresses",
-        "attn_google",
+        "attn_btc",
+        "attn_crypto",
         "net_active_addresses",
         "net_transactions",
         "net_payments",

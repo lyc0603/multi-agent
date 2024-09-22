@@ -14,7 +14,10 @@ from environ.process.prompt import market
 cmkt = pd.read_csv(PROCESSED_DATA_PATH / "market" / "cmkt.csv")
 
 FACTOR_DESCRIPTION_MAPPING = {
-    "attn_google": "Google search measure (google search data for the word Bitcoin minus its \
+    "attn_btc": "Google search measure (google search data for the word Bitcoin minus its \
+average of the previous four weeks, and then normalized to have a mean \
+of zero and a standard deviation of one)",
+    "attn_crypto": "Google search measure (google search data for the word cryptocurrency minus its \
 average of the previous four weeks, and then normalized to have a mean \
 of zero and a standard deviation of one)",
     "net_unique_addresses": "Bitcoin wallet growth",
@@ -35,7 +38,7 @@ for strategy in ["attn", "net"] + MACRO_NEWS:
             "agent": MODEL_ID[strategy]["agent"],
             "strategy_name": MODEL_ID[strategy]["strategy_name"],
             "data": market_data_dict[f"{year}{week}"][strategy],
-            "trend": market_data_dict[f"{year}{week}"]["trend"],
+            "trend": str(market_data_dict[f"{year}{week}"]["trend"]),
         }
 
         prompt_without_reasoning = market(

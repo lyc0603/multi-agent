@@ -13,9 +13,9 @@ from environ.constants import (
     MODEL_ID,
     PROCESSED_DATA_PATH,
     OPTION_LIST,
+    TYPOLOGY,
 )
 
-TYPOLOGY = ["parallel", "chain"]
 INDEX = ["cmkt", "btc"]
 
 matrics_dict = {}
@@ -38,7 +38,7 @@ for typo_idx, typology in enumerate(TYPOLOGY):
         res = pd.read_csv(f"{PROCESSED_DATA_PATH}/simulate/{typology}/{dataset}.csv")
         res.rename(columns={"response": dataset_name}, inplace=True)
 
-        if MODEL_ID[dataset_name]["id"][0] == "1":
+        if MODEL_ID[dataset_name]["task"] == "Cross-sectional":
             cross_idx += 1
             if cross_idx == 1:
                 df_cross = res

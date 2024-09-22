@@ -5,15 +5,20 @@ Script to evaluate the performance of the portfolio
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from environ.constants import (DATA_PATH, DATASETS, MODEL_ID,
-                               PROCESSED_DATA_PATH, TYPOLOGY)
+from environ.constants import (
+    DATA_PATH,
+    DATASETS,
+    MODEL_ID,
+    PROCESSED_DATA_PATH,
+    TYPOLOGY,
+)
 
 INDEX = ["cmkt", "btc"]
 
 for typo_idx, typology in enumerate(TYPOLOGY):
 
     cross_idx = 0
-    market_idx = 0  
+    market_idx = 0
     dfc = pd.read_csv(PROCESSED_DATA_PATH / "signal" / "gecko_daily.csv")
     cmkt = pd.read_csv(PROCESSED_DATA_PATH / "market" / "cmkt_daily_ret.csv")
 
@@ -38,7 +43,6 @@ for typo_idx, typology in enumerate(TYPOLOGY):
                 df_market = res
             else:
                 df_market = pd.merge(df_market, res, on=["year", "week"])
-
 
     # emsemble the results
     df_cross["cross"] = df_cross.iloc[:, 3:].mode(axis=1)[0]
@@ -79,7 +83,9 @@ for typo_idx, typology in enumerate(TYPOLOGY):
     df_res[["year", "week", "day"]] = df_res["time"].dt.isocalendar()
 
     # calculate the long short and long portfolio
-    df_res["long_short_adj"] = df_res["long_short"] = df_res["Very High"] - df_res["Very Low"]
+    df_res["long_short_adj"] = df_res["long_short"] = (
+        df_res["Very High"] - df_res["Very Low"]
+    )
     df_res["long_adj"] = df_res["long"] = df_res["Very High"]
 
     for idx, row in df_market.iterrows():
@@ -132,5 +138,4 @@ portfolio = pd.merge(
 for index in INDEX:
     portfolio[index] = (1 + portfolio[index]).cumprod()
 portfolio = portfolio[["year", "week", "time"] + TYPOLOGY + INDEX]
-portfolio.to_csv(f"{PROCESSED_DATA_PATH}/eval/portfolio.csv", index=False)  
-
+portfolio.to_csv(f"{PROCESSED_DATA_PATH}/eval/portfolio.csv", index=False)

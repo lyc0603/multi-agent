@@ -3,7 +3,6 @@ Script to simulate the command.
 """
 
 import json
-import time
 
 import pandas as pd
 from tqdm import tqdm
@@ -14,11 +13,11 @@ from environ.simulate.agent import Agent
 OPTION_LIST = {
     **{
         _: ["Very Low", "Low", "Medium", "High", "Very High"]
-        for _ in ["cross-sectional", "market"]
+        for _ in ["Cross-sectional", "Market"]
     },
 }
 
-for dataset in tqdm(DATASETS):
+for dataset in tqdm(["attn_dataset"]):
 
     df_res = []
 
@@ -26,6 +25,7 @@ for dataset in tqdm(DATASETS):
         MODEL_ID[dataset[:-8]]["id"],
         MODEL_ID[dataset[:-8]]["model"],
         agent_name=MODEL_ID[dataset[:-8]]["agent"],
+        agent_task=MODEL_ID[dataset[:-8]]["task"],
     )
 
     with open(
@@ -33,9 +33,9 @@ for dataset in tqdm(DATASETS):
     ) as f:
         data = json.load(f)
 
-    agent_type = agent.get_agent_type()
+    agent_task = agent.get_agent_task()
 
-    if agent_type == "cross-sectional":
+    if agent_task == "Cross-sectional":
         for yw, yw_info in tqdm(data.items()):
 
             year = int(yw[:4])
@@ -44,7 +44,7 @@ for dataset in tqdm(DATASETS):
             for crypto, prompt in yw_info.items():
                 option = "Unknown"
                 iteration = 0
-                while option not in OPTION_LIST[agent_type]:
+                while option not in OPTION_LIST[agent_task]:
                     iteration += 1
                     if iteration > 5:
                         raise ValueError("Too many errors")
@@ -65,7 +65,7 @@ for dataset in tqdm(DATASETS):
             week = int(yw[4:])
             option = "Unknown"
             iteration = 0
-            while option not in OPTION_LIST[agent_type]:
+            while option not in OPTION_LIST[agent_task]:
                 if iteration > 5:
                     raise ValueError("Too many errors")
                 response = agent.send_message(prompt["messages"], temperature=0)
