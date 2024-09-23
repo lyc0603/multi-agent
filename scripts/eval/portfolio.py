@@ -6,47 +6,22 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 from environ.constants import (
-    DATASETS,
-    MODEL_ID,
     PROCESSED_DATA_PATH,
     TYPOLOGY,
 )
+from scripts.eval.ensemble import ensemble_dict
 
 INDEX = ["cmkt", "btc"]
 
 for typo_idx, typology in enumerate(TYPOLOGY):
 
-    cross_idx = 0
-    market_idx = 0
     dfc = pd.read_csv(PROCESSED_DATA_PATH / "signal" / "gecko_daily.csv")
     cmkt = pd.read_csv(PROCESSED_DATA_PATH / "market" / "cmkt_daily_ret.csv")
-
     cmkt["time"] = pd.to_datetime(cmkt["time"])
 
-    for dataset in DATASETS:
-
-        dataset_name = dataset[:-8]
-
-        res = pd.read_csv(f"{PROCESSED_DATA_PATH}/simulate/{typology}/{dataset}.csv")
-        res.rename(columns={"response": dataset_name}, inplace=True)
-
-        if MODEL_ID[dataset_name]["id"][0] == "1":
-            cross_idx += 1
-            if cross_idx == 1:
-                df_cross = res
-            else:
-                df_cross = pd.merge(df_cross, res, on=["year", "week", "crypto"])
-        else:
-            market_idx += 1
-            if market_idx == 1:
-                df_market = res
-            else:
-                df_market = pd.merge(df_market, res, on=["year", "week"])
-
     # emsemble the results
-    df_cross["cross"] = df_cross.iloc[:, 3:].mode(axis=1)[0]
-    df_market["market"] = df_market.iloc[:, 3:].mode(axis=1)[0]
-
+    df_cross = ensemble_dict[typology]["cross"].copy()
+    df_market = ensemble_dict[typology]["market"].copy()
     df_cross.rename(columns={"crypto": "name"}, inplace=True)
 
     dfc = pd.merge(
@@ -78,8 +53,19 @@ for typo_idx, typology in enumerate(TYPOLOGY):
                 how="outer",
             )
 
+        # plot the cumulative return
+        plt.plot(
+            df_res["time"],
+            (1 + df_res[q]).cumprod(),
+            label=q,
+        )
+
+    plt.legend()
+    plt.show()
+
     df_res.fillna(0, inplace=True)
     df_res[["year", "week", "day"]] = df_res["time"].dt.isocalendar()
+
 
     # calculate the long short and long portfolio
     df_res["long_short_adj"] = df_res["long_short"] = (
