@@ -4,6 +4,8 @@ Script to evaluate the accuracy of the portfolio
 
 import pandas as pd
 from sklearn.metrics import matthews_corrcoef, accuracy_score
+import matplotlib.colors as colors
+
 
 from environ.constants import (
     DATASETS,
@@ -11,6 +13,11 @@ from environ.constants import (
     TYPOLOGY,
 )
 from scripts.eval.ensemble import ensemble_dict
+from matplotlib.colors import LinearSegmentedColormap
+
+colors = ["red", "white", "green"]  # 从红色到白色再到绿色
+cmap = LinearSegmentedColormap.from_list("custom_cmap", colors, N=512)
+
 
 INDEX = ["cmkt", "btc"]
 
@@ -96,8 +103,8 @@ metrics_df = (
             "MCC": "{:.2f}".format,
         }
     )
-    .background_gradient(cmap="Reds", subset=["ACC"])
-    .background_gradient(cmap="Blues", subset=["MCC"])
+    .background_gradient(cmap="Blues", subset=["ACC"])
+    .background_gradient(cmap=cmap, subset=["MCC"], vmin=-1, vmax=1)
 )
 
 metrics_style_df = []
