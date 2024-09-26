@@ -1,4 +1,4 @@
-<mxfile host="Electron" modified="2024-09-26T20:56:02.285Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/23.0.2 Chrome/120.0.6099.109 Electron/28.1.0 Safari/537.36" etag="lCRnjFoPeG1d4m9GXwa6" version="23.0.2" type="device">
+<mxfile host="Electron" modified="2024-09-26T22:31:44.726Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/23.0.2 Chrome/120.0.6099.109 Electron/28.1.0 Safari/537.36" etag="6ZagDQ2B4iVrdT8VDGWz" version="23.0.2" type="device">
   <diagram id="nPAHsuBVC_biOXkHt-TI" name="Page-1">
     <mxGraphModel dx="896" dy="633" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="700" math="0" shadow="0">
       <root>
@@ -121,11 +121,8 @@
         <mxCell id="hKUZ7SRIVkPXy3vvsNZo-129" value="Cross-section prediction" style="text;html=1;strokeColor=none;fillColor=default;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontStyle=1" vertex="1" parent="1">
           <mxGeometry x="513.74" y="488" width="172.51" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="hKUZ7SRIVkPXy3vvsNZo-133" value="Next Week&#39;s Bitcoin Return will be:&amp;nbsp;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;" vertex="1" parent="1">
-          <mxGeometry x="610" y="331" width="130" height="43" as="geometry" />
-        </mxCell>
-        <mxCell id="hKUZ7SRIVkPXy3vvsNZo-134" value="Next Week&#39;s Market Return will be:&amp;nbsp;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;" vertex="1" parent="1">
-          <mxGeometry x="610.5899999999999" y="172" width="128.82" height="30" as="geometry" />
+        <mxCell id="hKUZ7SRIVkPXy3vvsNZo-134" value="Next Week&#39;s Market Return will be:&amp;nbsp;&lt;u&gt;&amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp;&lt;/u&gt;" style="text;html=1;strokeColor=default;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=14;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry x="590" y="173" width="139" height="38" as="geometry" />
         </mxCell>
         <mxCell id="hKUZ7SRIVkPXy3vvsNZo-140" value="" style="endArrow=none;dashed=1;html=1;strokeWidth=2;rounded=0;dashPattern=12 12;entryX=1;entryY=0.5;entryDx=0;entryDy=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="hKUZ7SRIVkPXy3vvsNZo-3" target="hKUZ7SRIVkPXy3vvsNZo-3">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
@@ -144,6 +141,9 @@
         </mxCell>
         <mxCell id="hKUZ7SRIVkPXy3vvsNZo-179" value="Medium" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontStyle=4" vertex="1" parent="1">
           <mxGeometry x="640" y="450" width="70" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="hKUZ7SRIVkPXy3vvsNZo-186" value="Next Week&#39;s Bitcoin Return will be:&amp;nbsp;&lt;u&gt;&amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp;&lt;/u&gt;" style="text;html=1;strokeColor=default;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=14;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry x="590" y="342" width="139" height="38" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
