@@ -16,7 +16,9 @@ NAMING_MAP = {
     "chain": "Chain",
 }
 
+# search the max value in the metrics
 with open(TABLE_PATH / "metrics.tex", "w", encoding="utf-8") as f:
+    f.write(r"\renewcommand{\maxnum}{0.0210}" + "\n")
     f.write(
         r"\begin{tabularx}{\linewidth}{*{"
         + str(metrics_num * len(TYPOLOGY) + 2)

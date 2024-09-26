@@ -7,8 +7,11 @@ from scripts.eval.asset_pricing import res_dict, QUANTILE_LIST
 from environ.constants import TYPOLOGY, TABLE_PATH
 
 
+max = max([v_v for _, v in res_dict.items() for v_k, v_v in v.items() if "avg" in v_k])
+max = round(max, 4)
+
 with open(f"{TABLE_PATH}/asset_pricing.tex", "w", encoding="utf-8") as f:
-    f.write(r"\renewcommand{\maxnum}{0.0210}" + "\n")
+    f.write(r"\renewcommand{\maxnum}{" + str(max) + r"}" + "\n")
     f.write(r"\begin{tabularx}{\linewidth}{*{5}{X}}" + "\n")
     f.write(r"\toprule" + "\n")
     for typology in TYPOLOGY:
