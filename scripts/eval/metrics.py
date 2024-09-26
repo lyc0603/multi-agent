@@ -103,8 +103,8 @@ metrics_df = (
             "MCC": "{:.2f}".format,
         }
     )
-    .background_gradient(cmap="Blues", subset=["ACC"])
-    .background_gradient(cmap=cmap, subset=["MCC"], vmin=-1, vmax=1)
+    .background_gradient(cmap="Blues", subset=["ACC"], vmin=0, vmax=0.5)
+    .background_gradient(cmap=cmap, subset=["MCC"], vmin=-0.5, vmax=0.5)
 )
 
 metrics_style_df = []

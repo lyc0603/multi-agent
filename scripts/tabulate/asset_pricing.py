@@ -2,7 +2,7 @@
 Script to tabulate the asset pricing results
 """
 
-from scripts.eval.asset_pricing import res_dict
+from scripts.eval.asset_pricing import res_dict, QUANTILE_LIST
 
 from environ.constants import TYPOLOGY, TABLE_PATH
 
@@ -17,14 +17,9 @@ with open(f"{TABLE_PATH}/asset_pricing.tex", "w", encoding="utf-8") as f:
         f.write(r"\midrule" + "\n")
         f.write(r" & Mean & Std & t(Mean) & Sharpe \\" + "\n")
         f.write(r"\midrule" + "\n")
-        for _ in list(range(1, 6)) + ["5-1"]:
-            match _:
-                case 1:
-                    f.write("1 (Low)")
-                case 5:
-                    f.write("5 (High)")
-                case _:
-                    f.write(f"{_}")
+        for _ in QUANTILE_LIST:
+
+            f.write(f"{_}")
             f.write(
                 r" & "
                 + " & ".join(

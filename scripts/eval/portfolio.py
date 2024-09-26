@@ -52,6 +52,7 @@ for typo_idx, typology in enumerate(TYPOLOGY):
                 ],
                 how="outer",
             )
+        df_res.sort_values("time", ascending=True, inplace=True)
 
         # plot the cumulative return
         plt.plot(

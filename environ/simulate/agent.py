@@ -6,7 +6,8 @@ from typing import Any
 
 from openai import OpenAI
 
-from environ.constants import OPEN_AI_API_KEY
+from environ.constants import OPEN_AI_API_KEY, MODEL_ID, PROCESSED_DATA_PATH
+import json
 
 
 class Agent:
@@ -63,21 +64,21 @@ class Agent:
 
 
 if __name__ == "__main__":
-    # mom_agent = Agent(
-    #     "agent_1", "ft:gpt-3.5-turbo-0125:nanyang-technological-university:mom:A6nwqvLg"
-    # )
 
-    # response = mom_agent.send_message(
-    #     message=[
-    #         {
-    #             "role": "system",
-    #             "content": "You are a professional cryptocurrency factor analyst, specializing in predicting next week's price trend of a cryptocurrency based on its momentum data.",
-    #         },
-    #         {
-    #             "role": "user",
-    #             "content": "Analyze the following momentum data of Avalanche to determine whether its closing price will ascend or descend in a week. Please respond with either Rise or Fall:\nPast one-week return: -0.1288915257180468\nPast two-week return: -0.2975334944069014\nPast three-week return: -0.1753110510256073\nPast four-week return: -0.0934236663986058\nPast one-to-four-week return: 0.0407157780765212\n",
-    #         },
-    #         {"role": "assistant", "content": "Rise"},
-    #     ]
-    # )
-    pass
+    dataset = "mom_dataset"
+
+    agent = Agent(
+        MODEL_ID[dataset[:-8]]["id"],
+        MODEL_ID[dataset[:-8]]["model"],
+        agent_name=MODEL_ID[dataset[:-8]]["agent"],
+        agent_task=MODEL_ID[dataset[:-8]]["task"],
+    )
+    with open(
+        PROCESSED_DATA_PATH / "test" / f"{dataset}.json", "r", encoding="utf-8"
+    ) as f:
+        data = json.load(f)
+
+    prompt = data["20241"]["Bitcoin"]
+
+    response = agent.send_message(prompt["messages"][:2], temperature=0)
+    option = response.content

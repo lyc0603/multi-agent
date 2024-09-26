@@ -48,7 +48,7 @@ for dataset in tqdm(DATASETS):
                     iteration += 1
                     if iteration > 5:
                         raise ValueError("Too many errors")
-                    response = agent.send_message(prompt["messages"], temperature=0)
+                    response = agent.send_message(prompt["messages"][:2], temperature=0)
                     option = response.content
 
                 df_res.append(
@@ -68,7 +68,7 @@ for dataset in tqdm(DATASETS):
             while option not in OPTION_LIST[agent_task]:
                 if iteration > 5:
                     raise ValueError("Too many errors")
-                response = agent.send_message(prompt["messages"], temperature=0)
+                response = agent.send_message(prompt["messages"][:2], temperature=0)
                 option = response.content
 
             df_res.append(
