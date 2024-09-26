@@ -20,13 +20,13 @@ OPTION_LIST = {
 }
 
 DATASET_NAME = [
-    "FED_dataset",
+    "net_dataset",
+    "attn_dataset",
     "GVD_dataset",
+    "FED_dataset",
     "WASH_dataset",
     "ECI_dataset",
     "MCE_dataset",
-    "net_dataset",
-    "attn_dataset",
     "mom_dataset",
     "size_dataset",
     "vol_dataset",
@@ -84,7 +84,7 @@ cryptocurrencies based on the {dataset[:-8]} data are as follows:"
                         prompt["messages"] = message
 
                     prompt = winsorize(prompt)
-                    response = agent.send_message(prompt["messages"], temperature=0)
+                    response = agent.send_message(prompt["messages"][:3], temperature=0)
                     option = response.content
 
                 res_dict[dataset].append(
@@ -115,7 +115,7 @@ cryptocurrencies based on the {dataset[:-8]} data are as follows:"
                     )
                     prompt["messages"] = message
                 prompt = winsorize(prompt)
-                response = agent.send_message(prompt["messages"], temperature=0)
+                response = agent.send_message(prompt["messages"][:3], temperature=0)
                 option = response.content
 
             res_dict[dataset].append(

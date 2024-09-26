@@ -12,13 +12,7 @@ from scripts.process.signal.rf import rf
 
 INDEX = ["cmkt", "btc"]
 
-QUANTILE_NUM_DICT = {
-    "Very Low": 1,
-    "Low": 2,
-    "Medium": 3,
-    "High": 4,
-    "Very High": 5,
-}
+QUANTILE_LIST = ["Very Low", "Low", "Medium", "High", "Very High"]
 
 res_dict = {}
 
@@ -27,11 +21,7 @@ for typo_idx, typology in enumerate(TYPOLOGY):
     dfc = pd.read_csv(PROCESSED_DATA_PATH / "signal" / "gecko_daily.csv")
 
     # emsemble the results
-    df_cross = ensemble_dict[typology]["cross"].drop(columns=["label", "cross"]).copy()
-    df_cross.replace(QUANTILE_NUM_DICT, inplace=True)
-    df_cross["cross"] = df_cross[
-        [_ for _ in df_cross.columns if _ not in ["year", "week", "label", "name"]]
-    ].mean(axis=1)
+    df_cross = ensemble_dict[typology]["cross"][["year", "week", "crypto", "cross"]]
     df_cross.rename(columns={"crypto": "name"}, inplace=True)
 
     dfc = pd.merge(
@@ -41,20 +31,10 @@ for typo_idx, typology in enumerate(TYPOLOGY):
         how="inner",
     )
 
-    res = []
-    for year, week in dfc[["year", "week"]].drop_duplicates().values:
-        for idx, q in enumerate(range(1, 6)):
-            dfq = dfc.loc[(dfc["year"] == year) & (dfc["week"] == week)].copy()
-            quantile_size = dfq.shape[0] // 5
-            dfq.sort_values("cross", ascending=True, inplace=True)
-            dfp = dfq.iloc[quantile_size * (q - 1) : quantile_size * q].copy()
-            dfp["label"] = q
-            res.append(dfp)
+    for idx, q in enumerate(df_cross["cross"].unique()):
 
-    dfc = pd.concat(res)
-
-    for idx, q in enumerate(range(1, 6)):
-        dfq = dfc[dfc["label"] == q]
+        # isolate the quitile
+        dfq = dfc[dfc["cross"] == q]
         dfp = dfq.groupby(["time"])["daily_ret"].mean().reset_index()
         dfp.sort_values("time", ascending=True, inplace=True)
         dfp["time"] = pd.to_datetime(dfp["time"])
@@ -72,6 +52,13 @@ for typo_idx, typology in enumerate(TYPOLOGY):
                 ],
                 how="outer",
             )
+        df_res.sort_values("time", ascending=True, inplace=True)
+
+    for q in QUANTILE_LIST:
+        if q not in df_res.columns:
+            df_res[q] = 0
+
+    df_res.fillna(0, inplace=True)
 
     # risk-free rate
     dates = df_res["time"].drop_duplicates().to_frame()
@@ -82,7 +69,7 @@ for typo_idx, typology in enumerate(TYPOLOGY):
         rfm.reset_index(drop=True), on="time", how="left", validate="m:1"
     )
 
-    for _ in list(range(1, 6)):
+    for _ in list(QUANTILE_LIST):
         df_res[_] = df_res[_] - df_res["rf"]
         df_res[_] = df_res[_] + 1
 
@@ -93,13 +80,13 @@ for typo_idx, typology in enumerate(TYPOLOGY):
 
     df_res.drop(columns=["time", "rf", "day"], inplace=True)
     df_res = df_res.groupby(["year", "week"]).prod().reset_index()
-    for _ in list(range(1, 6)):
+    for _ in list(QUANTILE_LIST):
         df_res[_] = df_res[_] - 1
 
-    df_res["5-1"] = df_res[5] - df_res[1]
+    df_res["Very High - Very Low"] = df_res["Very High"] - df_res["Very Low"]
 
     # calculate the average return, t stats and asterisk
-    for _ in list(range(1, 6)) + ["5-1"]:
+    for _ in list(QUANTILE_LIST) + ["Very High - Very Low"]:
         res_dict[typology][f"{_}_avg"] = df_res[_].mean()
         res_dict[typology][f"{_}_std"] = df_res[_].std()
         res_dict[typology][f"{_}_t"] = (
