@@ -135,6 +135,29 @@ class DataLoader:
 
         return market_data
 
+    def get_cmkt_data(self) -> pd.DataFrame:
+        """
+        Get the market data
+        """
+
+        cmkt = pd.read_csv(PROCESSED_DATA_PATH / "market" / "cmkt_daily_ret.csv")
+        cmkt["time"] = pd.to_datetime(cmkt["time"])
+        cmkt.rename(columns={"cmkt": "CMKT"}, inplace=True)
+
+        return cmkt
+
+    def get_btc_data(self) -> pd.DataFrame:
+        """
+        Get the Bitcoin data
+        """
+
+        btc = pd.read_csv(f"{PROCESSED_DATA_PATH}/env/gecko_daily_env.csv")
+        btc = btc.loc[btc["id"] == "bitcoin", ["time", "daily_ret"]]
+        btc["time"] = pd.to_datetime(btc["time"])
+        btc.rename(columns={"daily_ret": "BTC"}, inplace=True)
+
+        return btc
+
 
 if __name__ == "__main__":
     dl = DataLoader()

@@ -27,20 +27,14 @@ with open(f"{PROCESSED_DATA_PATH}/train/cs.jsonl", "w", encoding="utf-8") as f:
         json_line = json.dumps(prompt)
         f.write(json_line + "\n")
 
-with open(f"{PROCESSED_DATA_PATH}/test/cs.json", "w", encoding="utf-8") as f:
+with open(f"{PROCESSED_DATA_PATH}/train/mkt.jsonl", "w", encoding="utf-8") as f:
 
-    logging.info("Generating cross-sectional prompts for testing")
+    logging.info("Generating market prompts for training")
 
-    test = {}
-
-    for yw, crypto, line in pg.get_cs_prompt(
-        start_date="2024-01-01",
-        end_date="2025-01-01",
-        train_test="test",
+    for _, prompt in pg.get_mkt_prompt(
+        start_date="2023-06-01",
+        end_date="2024-01-01",
+        train_test="train",
     ):
-        if yw not in test:
-            test[yw] = {}
-
-        test[yw][crypto] = line
-
-    json.dump(test, f, indent=4)
+        json_line = json.dumps(prompt)
+        f.write(json_line + "\n")

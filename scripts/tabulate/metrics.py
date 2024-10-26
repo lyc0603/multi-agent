@@ -2,8 +2,8 @@
 Script to tabulate the metrics
 """
 
+from environ.constants import MODEL_ID, TABLE_PATH, TYPOLOGY
 from scripts.eval.metrics import matrics_dict, metrics_style_df
-from environ.constants import TABLE_PATH, TYPOLOGY, MODEL_ID
 
 agent_num = len(matrics_dict["chain"].keys())
 metrics_num = len(matrics_dict["chain"]["cross"].keys())
