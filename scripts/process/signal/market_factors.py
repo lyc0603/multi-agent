@@ -3,11 +3,14 @@ Script to process the market factors
 """
 
 import json
+import warnings
 
 import pandas as pd
 
 from environ.constants import DATA_PATH, PROCESSED_DATA_PATH
 from environ.process.market_factors import load_attn
+
+warnings.filterwarnings("ignore")
 
 df = pd.DataFrame()
 

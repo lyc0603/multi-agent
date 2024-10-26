@@ -20,17 +20,8 @@ dependencies = [
   "pandas==1.5.3", 
   "matplotlib==3.6.3", 
   "requests==2.31.0", 
-  "web3==6.15.0",
   "openai==1.25.0",
-  "langchain==0.1.17",
-  "langchain_openai==0.1.6",
-  "langgraph==0.0.44",
-  "langchain_community==0.0.36",
-  "google-search-results==2.4.2",
-  "pypdf==4.2.0",
-  "faiss-cpu==1.8.0",
-  "langchain-experimental==0.0.58",
-  "langchainhub==0.1.15"
+  "tenacity==8.3.0",
 ]
 
 [project.optional-dependencies]
