@@ -44,7 +44,7 @@ for idx, row in dfm.loc[dfm["year"] >= 2022].iterrows():
 
     # cut the cmkt into terciles
     df_sample["tercile"] = pd.qcut(
-        df_sample["cmkt"], 5, labels=["Very Low", "Low", "Medium", "High", "Very High"]
+        df_sample["cmkt"], 3, labels=["Low", "Medium", "High"]
     )
 
     dfm.loc[(dfm["year"] == year) & (dfm["week"] == week), "tercile"] = df_sample[

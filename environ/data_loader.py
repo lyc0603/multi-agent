@@ -2,9 +2,13 @@
 Data Loader
 """
 
+import json
+from typing import Dict, Generator, List
+
 import pandas as pd
 
 from environ.constants import (
+    CROSS_SECTIONAL_CRYPTO_NUMBER,
     CS_FACTOR_DESCRIPTION_MAPPING,
     EXCLUDE_LIST,
     MKT_FACTOR_DESCRIPTION_MAPPING,
@@ -22,7 +26,7 @@ class DataLoader:
         self.cs_dir = cs_dir
 
     @staticmethod
-    def _strategy_list(strategy: str, data: pd.DataFrame) -> list[str]:
+    def _strategy_list(strategy: str, data: pd.DataFrame) -> List[str]:
         """
         Static method to get the list of strategies
         """
@@ -34,7 +38,7 @@ class DataLoader:
 
     @staticmethod
     def _strategy_descriptions(
-        strategy_list: list[str], data: pd.DataFrame | pd.Series, factor_mapping: dict
+        strategy_list: List[str], data: pd.DataFrame | pd.Series, factor_mapping: Dict
     ) -> str:
         """
         Static method to get the strategy descriptions
@@ -50,6 +54,14 @@ class DataLoader:
 
         env_data = pd.read_csv(f"{PROCESSED_DATA_PATH}/env/gecko_daily_env.csv")
         env_data["time"] = pd.to_datetime(env_data["time"])
+
+        # The test data is the next week data
+        env_data["time"] = env_data["time"] - pd.Timedelta(days=7)
+        env_data["year"], env_data["week"] = (
+            env_data["time"].dt.year,
+            env_data["time"].dt.isocalendar().week,
+        )
+
         for var in ["year", "week"]:
             env_data[var] = env_data[var].apply(str)
 
@@ -59,7 +71,7 @@ class DataLoader:
         self,
         start_date: str = "2023-06-01",
         end_date: str = "2024-09-01",
-    ) -> dict[str, dict[str, dict[str, str]]]:
+    ) -> Dict[str, Dict[str, Dict[str, str]]]:
         """
         Get cross-sectional data
         """
@@ -98,7 +110,7 @@ class DataLoader:
         self,
         start_date: str = "2023-06-01",
         end_date: str = "2024-09-01",
-    ) -> dict:
+    ) -> Dict:
         """
         Get market data
         """
@@ -135,6 +147,21 @@ class DataLoader:
 
         return market_data
 
+    def get_cs_prompt(
+        self, path: str = f"{PROCESSED_DATA_PATH}/train/cs.jsonl"
+    ) -> Generator:
+        """
+        Get the cs prompt
+        """
+
+        with open(path, "r", encoding="utf-8") as f:
+            prompt_list = []
+            for i, line in enumerate(f, 1):
+                prompt_list.append(json.loads(line))
+                if i % CROSS_SECTIONAL_CRYPTO_NUMBER == 0:
+                    yield prompt_list
+                    prompt_list = []
+
     def get_cmkt_data(self) -> pd.DataFrame:
         """
         Get the market data
@@ -161,4 +188,10 @@ class DataLoader:
 
 if __name__ == "__main__":
     dl = DataLoader()
-    d = dl.get_mkt_data()
+    # d = dl.get_mkt_data()
+    d = dl.get_cs_data(
+        start_date="2023-06-01",
+        end_date="2024-01-01",
+    )
+    # for i in dl.get_cs_prompt():
+    #     print(i)

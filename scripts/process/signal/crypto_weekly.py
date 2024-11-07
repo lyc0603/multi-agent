@@ -4,11 +4,7 @@ Script to create a fine-tuning dataset from the original dataset.
 
 import pandas as pd
 
-from environ.constants import (
-    CROSS_SECTIONAL_CRYPTO_NUMBER,
-    DATA_PATH,
-    PROCESSED_DATA_PATH,
-)
+from environ.constants import CROSS_SECTIONAL_CRYPTO_NUMBER, PROCESSED_DATA_PATH
 from scripts.fetch.stablecoin import stablecoins
 
 df_crypto = pd.read_csv(f"{PROCESSED_DATA_PATH}/signal/weekly_features.csv")
@@ -35,22 +31,22 @@ df_weekly.sort_values(["year", "week"], ascending=True, inplace=True)
 df_weekly["ret"] = df_weekly.groupby("id")["prices"].pct_change()
 df_weekly["ret"] = df_weekly.groupby("id")["ret"].shift(-1)
 df_weekly.sort_values(["year", "week", "market_caps"], ascending=False, inplace=True)
+# dropna
+df_weekly.dropna(how="any", inplace=True)
 df_weekly = df_weekly.groupby(["year", "week"]).head(CROSS_SECTIONAL_CRYPTO_NUMBER)
 
 # # add the name of the coin
 # coin_list = pd.read_csv(f"{DATA_PATH}/coin_list.csv")
 # df_weekly = pd.merge(df_weekly, coin_list, on="id")
 
-# dropna
-df_weekly.dropna(how="any", inplace=True)
-
+df_weekly = df_weekly.loc[df_weekly["time"] >= "2023-01-01"]
 # only keep the weeks with 10 coins
-df_10_count = df_weekly.groupby(["year", "week"])["id"].count().reset_index().copy()
-df_10_count = df_10_count[df_10_count["id"] != CROSS_SECTIONAL_CRYPTO_NUMBER]
-for i, row in df_10_count.iterrows():
-    df_weekly = df_weekly[
-        ~((df_weekly["year"] == row["year"]) & (df_weekly["week"] == row["week"]))
-    ]
+# df_10_count = df_weekly.groupby(["year", "week"])["id"].count().reset_index().copy()
+# df_10_count = df_10_count[df_10_count["id"] != CROSS_SECTIONAL_CRYPTO_NUMBER]
+# for i, row in df_10_count.iterrows():
+#     df_weekly = df_weekly[
+#         ~((df_weekly["year"] == row["year"]) & (df_weekly["week"] == row["week"]))
+#     ]
 
 PREFFIX_DICT = ["size", "mom", "vol", "volume"]
 
@@ -59,7 +55,7 @@ VAR_DICT = {k: [_ for _ in df_weekly.columns if f"{k}_" in _] for k in PREFFIX_D
 VAR_LIST = [var for var_list in VAR_DICT.values() for var in var_list]
 
 # convert the variables into quitiles
-for var in VAR_LIST + ["ret"]:
+for var in VAR_LIST:
     df_weekly[f"{var}"] = df_weekly.groupby(["year", "week"])[var].transform(
         lambda x: pd.qcut(
             x,
@@ -68,7 +64,8 @@ for var in VAR_LIST + ["ret"]:
         )
     )
 
-# df_weekly["ret_signal"] = df_weekly["ret"].apply(lambda x: "Rise" if x > 0 else "Fall")
-df_weekly["ret_signal"] = df_weekly["ret"]
+df_weekly["ret_signal"] = df_weekly["ret"].apply(lambda x: "Rise" if x > 0 else "Fall")
+print(df_weekly["ret_signal"].value_counts())
+# df_weekly["ret_signal"] = df_weekly["ret"]
 df_weekly.drop(columns=["_id", "daily_ret"], inplace=True)
 df_weekly.to_csv(f"{PROCESSED_DATA_PATH}/signal/gecko_signal.csv", index=False)

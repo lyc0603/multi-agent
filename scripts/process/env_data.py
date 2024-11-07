@@ -2,17 +2,17 @@
 Script to generate environment data
 """
 
-import json
-
 import pandas as pd
 
 from environ.constants import PROCESSED_DATA_PATH
 
 dfc = pd.read_csv(PROCESSED_DATA_PATH / "signal" / "gecko_daily.csv")
 
-with open(PROCESSED_DATA_PATH / "test" / "cs.json", "r", encoding="utf-8") as f:
-    test = json.load(f)
+dff = pd.read_csv(f"{PROCESSED_DATA_PATH}/signal/gecko_signal.csv").sort_values(
+    ["id", "time"], ascending=True
+)
 
-dfc = dfc.loc[dfc["name"].isin([i for k, v in test.items() for i, j in v.items()])]
+dfc = dfc.loc[dfc["id"].isin(dff["id"].unique())]
+dfc = dfc.loc[dfc["time"] >= "2023-06-01"]
 
 dfc.to_csv(PROCESSED_DATA_PATH / "env" / "gecko_daily_env.csv", index=False)

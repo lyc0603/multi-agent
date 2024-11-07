@@ -27,9 +27,14 @@ class OpenAIAgent:
     def __init__(self, model: str = "gpt-4o-2024-08-06") -> None:
         self.model = model
 
-    @retry(stop=stop_after_attempt(3), wait=wait_random_exponential(min=1, max=60))
+    # @retry(stop=stop_after_attempt(3), wait=wait_random_exponential(min=1, max=60))
     def __call__(
-        self, prompt: str, instruction: str | None = None, temperature: float = 0
+        self,
+        prompt: str,
+        instruction: str | None = None,
+        temperature: float = 0,
+        log_probs: bool = False,
+        top_logprobs: int | None = None,
     ) -> Any:
         """
         Send a message to the agent
@@ -44,14 +49,24 @@ class OpenAIAgent:
                 }
             ] + messages
 
-        return (
+        response = (
             OpenAI(api_key=OPEN_AI_API_KEY)
             .chat.completions.create(
-                model=self.model, messages=messages, temperature=temperature
+                model=self.model,
+                messages=messages,
+                temperature=temperature,
+                logprobs=log_probs,
+                top_logprobs=top_logprobs,
             )
             .choices[0]
-            .message.content
         )
+
+        if log_probs:
+            return (
+                response.message.content,
+                response.logprobs.content,
+            )
+        return response.message.content
 
 
 class FTAgent(OpenAIAgent):
@@ -90,13 +105,30 @@ class FTAgent(OpenAIAgent):
         self.model = model_id
         logging.info("Model loaded: %s", model_id)
 
-    def predict(self, assistant_msg: str, instruction: str | None = None) -> Any:
+    def predict(
+        self,
+        assistant_msg: str,
+        instruction: str | None = None,
+        log_probs: bool = False,
+        top_logprobs: int | None = None,
+    ) -> Any:
         """
         Predict the response
         """
-        return self(assistant_msg, instruction=instruction, temperature=0)
+        return self(
+            assistant_msg,
+            instruction=instruction,
+            temperature=0,
+            log_probs=log_probs,
+            top_logprobs=top_logprobs,
+        )
 
-    def predict_from_prompt(self, prompt: dict[str, list[dict[str, str]]]) -> Any:
+    def predict_from_prompt(
+        self,
+        prompt: dict[str, list[dict[str, str]]],
+        log_probs: bool = False,
+        top_logprobs: int | None = None,
+    ) -> Any:
         """
         Predict the response from the prompt
         """
@@ -104,7 +136,10 @@ class FTAgent(OpenAIAgent):
         msg = prompt["messages"]
 
         return self.predict(
-            assistant_msg=msg[1]["content"], instruction=msg[0]["content"]
+            assistant_msg=msg[1]["content"],
+            instruction=msg[0]["content"],
+            log_probs=log_probs,
+            top_logprobs=top_logprobs,
         )
 
     def fine_tuning(self, dataset_path: str) -> None:
@@ -133,11 +168,25 @@ if __name__ == "__main__":
     # print(agent("What is Bitcoin?"))
     # agent = FTAgent(model="gpt-4o-2024-08-06")
     # agent.fine_tuning(f"{PROCESSED_DATA_PATH}/train/cs.jsonl")
-    agent = FTAgent(model="gpt-4o-2024-08-06")
-    agent.load_model_from_id(
-        "ft:gpt-4o-2024-08-06:nanyang-technological-university::ALsxWTzK"
-    )
+    # agent = FTAgent(model="gpt-4o-2024-08-06")
+    # agent.load_model_from_id(
+    #     "ft:gpt-4o-2024-08-06:nanyang-technological-university::ALsxWTzK"
+    # )
 
-    # save the model
-    with open(f"{PROCESSED_DATA_PATH}/checkpoints/cs.pkl", "wb") as f:
-        pickle.dump(agent, f)
+    # # save the model
+    # with open(f"{PROCESSED_DATA_PATH}/checkpoints/cs.pkl", "wb") as f:
+    #     pickle.dump(agent, f)
+
+    with open(f"{PROCESSED_DATA_PATH}/checkpoints/cs_1106_b.pkl", "rb") as file:
+        agent = pickle.load(file)
+
+    from environ.prompt_generator import PromptGenerator
+
+    pg = PromptGenerator()
+    for yw, crypto, line in pg.get_cs_prompt(
+        start_date="2024-01-01",
+        end_date="2025-01-01",
+        train_test="test",
+    ):
+        res = agent.predict_from_prompt(prompt=line, log_probs=True, top_logprobs=2)
+        break

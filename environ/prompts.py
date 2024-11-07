@@ -2,51 +2,43 @@
 Prompts
 """
 
-CROSS_SECTIONAL_ANNOTATION_PROMPT = """Learn the following cryptocurrency investment knowledge. \
-Based on the knowledge, explain the predicted strength of {crypto} returns for the upcoming week \
-using the provided information. The data for the top 10 cryptocurrencies, including {crypto}, \
-and their respective predicted returns have been categorized into Very High, High, Medium, Low, \
-and Very Low. Ensure your explanation includes clear references to the provided knowledge.
-
-Investment knowledge: {knowledge}
-(End of knowledge)
+CROSS_SECTIONAL_ANNOTATION_PROMPT = """Explain the predicted {target} of \
+{crypto} for the upcoming week using the provided information. The data for \
+the top {num} cryptocurrencies, including {crypto}, have been categorized into Very \
+High, High, Medium, Low, and Very Low. Their respective predicted {target} has been \
+categorized into {categories}.
 
 Information: {info}
 (End of information)
 
-Return strength: {trend}
-(End of strength)"""
+{Target}: {trend}
+(End of {target})"""
 
-MARKET_ANNOTATION_PROMPT = """Learn the following cryptocurrency investment knowledge. \
-Based on the knowledge, explain the predicted market return for the upcoming week using \
+MARKET_ANNOTATION_PROMPT = """Explain the predicted {target} for the upcoming week using \
 the provided information. The market information data and return have been categorized \
-into Very High, High, Medium, Low, and Very Low.  We use first two years of data to \
-determine the quintile cutoffs for market return. Ensure your explanation includes \
-clear references to the provided knowledge.
-
-Investment knowledge: {knowledge}
-(End of knowledge)
+into {categories}. We use first two years of data to determine the quintile \
+cutoffs for market return.
 
 Information: {info}
 (End of information)
 
-Return strength: {trend}
-(End of strength)"""
+{Target}: {trend}
+(End of {target})"""
 
-CROSS_SECTIONAL_PROMPT = """Analyze the following information of {crypto} to determine strength \
-of its return in a week. Please respond with Very Low, Low, Medium, High, or Very High \
-and provide your reasoning for the prediction:
+CROSS_SECTIONAL_PROMPT = """Analyze the following information of {crypto} to determine its \
+{target} in a week. Please respond with {categories} and provide your reasoning for the \
+prediction:
 
 Information: {info}
 (End of information)"""
 
 MARKET_PROMPT = """Analyze the following market information to determine the strength of the \
-market return in a week. Please respond with Very Low, Low, Medium, High, or Very High \
-and provide your reasoning for the prediction:
+market return in a week. Please respond with High, Medium, or Low and provide your reasoning \
+for the prediction:
 
 Information: {info}
 (End of information)"""
 
-ANSWER = """Return strength: {trend}
+ANSWER = """{Target}: {trend}
 Explanation: {explanation}
 """

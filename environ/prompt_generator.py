@@ -5,22 +5,18 @@ Prompt generator
 import logging
 from typing import Any, Generator, Literal
 
+import pandas as pd
+
 from environ.agent import OpenAIAgent
-from environ.constants import DATA_PATH
 from environ.data_loader import DataLoader
-from environ.instructions import (
-    AGENT_ANNOTATION_INSTRUCTION,
-    CROSS_SECTIONAL_INSTRUCTION,
-    MARKET_INSTRUCTION,
-)
-from environ.prompts import (
-    ANSWER,
-    CROSS_SECTIONAL_ANNOTATION_PROMPT,
-    CROSS_SECTIONAL_PROMPT,
-    MARKET_ANNOTATION_PROMPT,
-    MARKET_PROMPT,
-)
-from environ.utils import get_pdf_text
+from environ.instructions import (AGENT_ANNOTATION_INSTRUCTION,
+                                  CROSS_SECTIONAL_INSTRUCTION,
+                                  MARKET_INSTRUCTION)
+from environ.prompts import (ANSWER, CROSS_SECTIONAL_ANNOTATION_PROMPT,
+                             CROSS_SECTIONAL_PROMPT, MARKET_ANNOTATION_PROMPT,
+                             MARKET_PROMPT)
+from environ.utils import predict_explain_split
+from environ.constants import CROSS_SECTIONAL_CRYPTO_NUMBER
 
 logging.basicConfig(
     level=logging.INFO,
@@ -55,29 +51,82 @@ class PromptGenerator:
             {"role": "assistant", "content": assistant_content},
         ]
 
+    def _get_train_yw(
+        self,
+        start_date: str = "2023-06-01",
+        end_date: str = "2024-01-01",
+    ) -> list:
+        """
+        Get the training year and week
+        """
+        return sorted(
+            [
+                (k[:4], k[4:])
+                for k, _ in dl.get_cs_data(
+                    start_date=start_date, end_date=end_date
+                ).items()
+            ]
+        )
+
+    def get_opt_prompt(self) -> Generator:
+        """
+        Generate the portfolio optimization prompt
+        """
+
+        env_data = dl.get_env_data()
+        for yw_idx, cs_prompt_yw in enumerate(self.data_loader.get_cs_prompt()):
+
+            info = []
+            long = []
+            short = []
+            df_ret = pd.DataFrame()
+            year, week = self._get_train_yw()[yw_idx]
+
+            for cs_prompt in cs_prompt_yw:
+                crypto_name = cs_prompt["messages"][1]["content"].split("of ")[1].split(" to")[0]
+                strength_explanation = cs_prompt["messages"][2]["content"]
+                strength = predict_explain_split(strength_explanation)
+                match strength:
+                    case "Very High":
+                        long.append(crypto_name)
+                        info.append(strength_explanation)
+                        df_port = env_data.query("year == @year & week == \
+@week & name == @crypto_name").copy()
+                        df_port = df_port[["time", "year", "week", "name", "daily_ret"]]
+                        df_ret = pd.concat([df_ret, df_port])
+
+                    case "Very Low":
+                        short.append(crypto_name)
+                        info.append(strength_explanation)
+                        df_port = env_data.query("year == @year & week == \
+@week & name == @crypto_name").copy()
+                        df_port["daily_ret"] = -df_port["daily_ret"]
+                        df_port = df_port[["time", "year", "week", "name", "daily_ret"]]
+                        df_ret = pd.concat([df_ret, df_port])
+
+            yield year, week, long, short, df_ret
+
     def get_cs_prompt(
         self,
-        knowledge: str = f"{DATA_PATH}/knowledge/liu_2022.pdf",
+        strategy: list[str] = ["mom", "size", "vol", "volume"],
         start_date: str = "2023-06-01",
         end_date: str = "2024-01-01",
         train_test: Literal["train", "test"] = "train",
+        target: Literal["return strength", "price trend"] = "price trend",
+        categories: Literal["Very High, High, Medium, Low, Very Low", "Rise or Fall"] = "Rise or Fall",
     ) -> Generator:
         """
         Generate cross-sectional prompt
         """
 
         cs_data = self.data_loader.get_cs_data(start_date=start_date, end_date=end_date)
-        knowledge = get_pdf_text(knowledge)
 
         for yw_counter, (yw, data) in enumerate(cs_data.items(), 1):
             for crypto_counter, (crypto, trend) in enumerate(data["trend"].items(), 1):
 
                 info = "".join(
                     [
-                        data["size"][crypto],
-                        data["mom"][crypto],
-                        data["volume"][crypto],
-                        data["vol"][crypto],
+                        data[strategy][crypto] for strategy in strategy
                     ]
                 )
 
@@ -86,35 +135,53 @@ class PromptGenerator:
                     logging.info(
                         "Processing crypto %s, item %d/%d in this week, week %d/%d",
                         crypto,
-                        yw_counter,
-                        len(data["trend"]),
                         crypto_counter,
+                        len(data["trend"]),
+                        yw_counter,
                         len(cs_data),
                     )
+
                     anno_prompt = CROSS_SECTIONAL_ANNOTATION_PROMPT.format(
-                        knowledge=knowledge,
                         crypto=crypto,
                         info=info,
                         trend=trend,
+                        num=CROSS_SECTIONAL_CRYPTO_NUMBER,
+                        target=target,
+                        Target=target.capitalize(),
+                        categories=categories
                     )
+                    print(anno_prompt)
                     explanation = self.agent(
-                        prompt=anno_prompt, instruction=AGENT_ANNOTATION_INSTRUCTION
+                        prompt=anno_prompt,
+                        instruction=AGENT_ANNOTATION_INSTRUCTION.format(
+                            target = target
+                        ),
                     )
 
                     ft_prompt = self._generate_ft_prompt(
-                        system_instruction=CROSS_SECTIONAL_INSTRUCTION,
+                        system_instruction=CROSS_SECTIONAL_INSTRUCTION.format(
+                            target=target
+                        ),
                         user_prompt=CROSS_SECTIONAL_PROMPT.format(
-                            crypto=crypto, info=info
+                            crypto=crypto,
+                            info=info,
+                            target=target,
+                            categories=categories
                         ),
                         assistant_content=ANSWER.format(
-                            trend=trend, explanation=explanation
+                            trend=trend, explanation=explanation, Target=target.capitalize()
                         ),
                     )
                 else:
                     ft_prompt = self._generate_ft_prompt(
-                        system_instruction=CROSS_SECTIONAL_INSTRUCTION,
+                        system_instruction=CROSS_SECTIONAL_INSTRUCTION.format(
+                            target=target
+                        ),
                         user_prompt=CROSS_SECTIONAL_PROMPT.format(
-                            crypto=crypto, info=info
+                            crypto=crypto,
+                            info=info,
+                            target=target,
+                            categories=categories
                         ),
                         assistant_content=trend,
                     )
@@ -123,10 +190,10 @@ class PromptGenerator:
 
     def get_mkt_prompt(
         self,
-        knowledge: str = f"{DATA_PATH}/knowledge/liu_2020.pdf",
         start_date: str = "2023-06-01",
         end_date: str = "2024-01-01",
         train_test: Literal["train", "test"] = "train",
+        target: Literal["market return", "market trend"] = "market return",
     ) -> Generator:
         """
         Generate cross-sectional prompt
@@ -135,7 +202,6 @@ class PromptGenerator:
         mkt_data = self.data_loader.get_mkt_data(
             start_date=start_date, end_date=end_date
         )
-        knowledge = get_pdf_text(knowledge)
 
         for yw_counter, (yw, data) in enumerate(mkt_data.items(), 1):
             info = "".join(
@@ -153,24 +219,29 @@ class PromptGenerator:
                     len(mkt_data),
                 )
                 anno_prompt = MARKET_ANNOTATION_PROMPT.format(
-                    knowledge=knowledge,
                     info=info,
                     trend=data["trend"],
                 )
                 explanation = self.agent(
-                    prompt=anno_prompt, instruction=AGENT_ANNOTATION_INSTRUCTION
+                    prompt=anno_prompt, instruction=AGENT_ANNOTATION_INSTRUCTION.format(
+                        target=target
+                    )
                 )
 
                 ft_prompt = self._generate_ft_prompt(
-                    system_instruction=MARKET_INSTRUCTION,
+                    system_instruction=MARKET_INSTRUCTION.format(
+                        target=target
+                    ),
                     user_prompt=MARKET_PROMPT.format(info=info),
                     assistant_content=ANSWER.format(
-                        trend=data["trend"], explanation=explanation
+                        trend=data["trend"], explanation=explanation, Target=target.capitalize()
                     ),
                 )
             else:
                 ft_prompt = self._generate_ft_prompt(
-                    system_instruction=MARKET_INSTRUCTION,
+                    system_instruction=MARKET_INSTRUCTION.format(
+                        target=target
+                    ),
                     user_prompt=MARKET_PROMPT.format(info=info),
                     assistant_content=data["trend"],
                 )
@@ -182,10 +253,15 @@ if __name__ == "__main__":
     # generate the first prompt from the interator
     pg = PromptGenerator()
 
-    # for pmt in pg.get_cs_prompt():
+    # print(pg._get_train_yw())
+
+    for pmt in pg.get_cs_prompt(train_test="train"):
+        print(pmt)
+        break
+
+    # for pmt in pg.get_mkt_prompt():
     #     print(pmt)
     #     break
 
-    for pmt in pg.get_mkt_prompt():
-        print(pmt)
-        break
+    # for pmt in pg.get_opt_prompt():
+    #     print(pmt)

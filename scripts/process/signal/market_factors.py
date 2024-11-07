@@ -4,6 +4,7 @@ Script to process the market factors
 
 import json
 import warnings
+from pathlib import Path
 
 import pandas as pd
 
@@ -64,7 +65,7 @@ df_metrics[list(NET_FAC_NAME.values())] = df_metrics[list(NET_FAC_NAME.values())
 
 # attention factor
 for attn_idx, attn in enumerate(["btc", "crypto"]):
-    df_attn = load_attn(DATA_PATH / f"attn_{attn}.csv")
+    df_attn = load_attn(f"{DATA_PATH}/attn_{attn}.csv")
     df_attn.sort_values("time", ascending=True, inplace=True)
     df_attn["google_l1w"] = df_attn["google"].rolling(4).mean()
     df_attn["google_l1w"] = df_attn["google_l1w"].shift(1)
@@ -115,8 +116,8 @@ for idx, row in df_full.loc[df_full["year"] >= 2022].iterrows():
         # cut the cmkt into terciles
         df_sample[factor] = pd.qcut(
             df_sample[factor],
-            5,
-            labels=["Very Low", "Low", "Medium", "High", "Very High"],
+            3,
+            labels=["Low", "Medium", "High"],
         )
 
         market_factors.loc[
