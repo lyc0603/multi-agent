@@ -65,7 +65,6 @@ for var in VAR_LIST:
     )
 
 df_weekly["ret_signal"] = df_weekly["ret"].apply(lambda x: "Rise" if x > 0 else "Fall")
-print(df_weekly["ret_signal"].value_counts())
 # df_weekly["ret_signal"] = df_weekly["ret"]
 df_weekly.drop(columns=["_id", "daily_ret"], inplace=True)
 df_weekly.to_csv(f"{PROCESSED_DATA_PATH}/signal/gecko_signal.csv", index=False)

@@ -13,6 +13,7 @@ dff = pd.read_csv(f"{PROCESSED_DATA_PATH}/signal/gecko_signal.csv").sort_values(
 )
 
 dfc = dfc.loc[dfc["id"].isin(dff["id"].unique())]
-dfc = dfc.loc[dfc["time"] >= "2023-06-01"]
+# Year: 2023 Week: 22
+dfc = dfc.loc[dfc["time"] >= "2023-01-01"]
 
 dfc.to_csv(PROCESSED_DATA_PATH / "env" / "gecko_daily_env.csv", index=False)
