@@ -61,7 +61,6 @@ for year, week in yw_list:
     ].copy()
 
     for id in df_yw["id"].unique():
-        id = "bitcoin"
         df = df_yw.loc[df_yw["id"] == id, :].copy()
         candlesticks = go.Candlestick(
             x=df["time"],
@@ -98,8 +97,8 @@ for year, week in yw_list:
         fig.add_trace(ma, row=1, col=1)
         fig.add_trace(volume_bars, row=2, col=1)
         fig.update_layout(
-            height=300,
-            width=400,
+            height=400,
+            width=500,
             plot_bgcolor="white",  # Black background for plot
             paper_bgcolor="white",  # Black background for the entire figure
             # Hide Plotly scrolling minimap below the price chart
@@ -125,9 +124,6 @@ for year, week in yw_list:
         )
 
         # Save the figure
-        # fig.write_image(
-        #     PROCESSED_DATA_PATH / "ohlc" / f"{id}_{year}_{week}.png", scale=2
-        # )
-        fig.write_image(f"{PROCESSED_DATA_PATH}/{id}_{year}_{week}.png", scale=2)
-        break
-    break
+        fig.write_image(
+            PROCESSED_DATA_PATH / "ohlc" / f"{id}_{year}_{week}.png", scale=2
+        )
