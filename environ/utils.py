@@ -4,8 +4,6 @@ Utility functions
 
 import warnings
 
-from environ.constants import DATA_PATH
-
 warnings.filterwarnings("ignore")
 
 

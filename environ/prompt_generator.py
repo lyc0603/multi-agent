@@ -11,10 +11,10 @@ from environ.agent import OpenAIAgent
 from environ.data_loader import DataLoader
 from environ.instructions import (AGENT_ANNOTATION_INSTRUCTION,
                                   CROSS_SECTIONAL_INSTRUCTION,
-                                  MARKET_INSTRUCTION)
+                                  MARKET_INSTRUCTION, VISION_INSTRUCTION)
 from environ.prompts import (ANSWER, CROSS_SECTIONAL_ANNOTATION_PROMPT,
                              CROSS_SECTIONAL_PROMPT, MARKET_ANNOTATION_PROMPT,
-                             MARKET_PROMPT)
+                             MARKET_PROMPT, VISION_PROMPT, VISION_ANNOTATION_PROMPT)
 from environ.utils import predict_explain_split
 from environ.constants import CROSS_SECTIONAL_CRYPTO_NUMBER
 
@@ -41,10 +41,33 @@ class PromptGenerator:
         system_instruction: str,
         user_prompt: str,
         assistant_content: str,
+        vision_url: str | None = None,
     ) -> list[dict[str, Any]]:
         """
         Static method to create the full prompt structure.
         """
+
+        if vision_url:
+            return [
+                {
+                    "role": "system",
+                    "content": system_instruction,
+                },
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": user_prompt},
+                        {
+                            "type": "image_url",
+                            "image_url": {"url": vision_url, "detail": "high"},
+                        },
+                    ],
+                },
+                {
+                    "role": "assistant",
+                    "content": assistant_content,
+                },
+            ]
         return [
             {"role": "system", "content": system_instruction},
             {"role": "user", "content": user_prompt},
@@ -108,7 +131,8 @@ class PromptGenerator:
 
     def get_cs_prompt(
         self,
-        strategy: list[str] = ["mom", "size", "vol", "volume"],
+        data_type: Literal["factor", "vision", "text"] = "factor",
+        strategy: list[str] | str = ["mom", "size", "vol", "volume"],
         start_date: str = "2023-06-01",
         end_date: str = "2024-01-01",
         train_test: Literal["train", "test"] = "train",
@@ -119,16 +143,31 @@ class PromptGenerator:
         Generate cross-sectional prompt
         """
 
-        cs_data = self.data_loader.get_cs_data(start_date=start_date, end_date=end_date)
+        match data_type:
+            case "factor":
+                cs_data = self.data_loader.get_cs_data(start_date=start_date, end_date=end_date)
+                pmt_instruc_map = {
+                    "annot_instruc": CROSS_SECTIONAL_INSTRUCTION,
+                    "annot_pmt": CROSS_SECTIONAL_ANNOTATION_PROMPT,
+                    "cs_instruc": CROSS_SECTIONAL_INSTRUCTION,
+                    "cs_pmt": CROSS_SECTIONAL_PROMPT
+                }
+            case "vision":
+                cs_data = self.data_loader.get_vision_data(start_date=start_date, end_date=end_date)
+                pmt_instruc_map = {
+                    "annot_instruc": AGENT_ANNOTATION_INSTRUCTION,
+                    "annot_pmt": VISION_ANNOTATION_PROMPT,
+                    "cs_instruc": VISION_INSTRUCTION,
+                    "cs_pmt": VISION_PROMPT
+                }
 
         for yw_counter, (yw, data) in enumerate(cs_data.items(), 1):
             for crypto_counter, (crypto, trend) in enumerate(data["trend"].items(), 1):
-
                 info = "".join(
                     [
                         data[strategy][crypto] for strategy in strategy
                     ]
-                )
+                ) if isinstance(strategy, list) else data[strategy][crypto]
 
                 if train_test == "train":
 
@@ -141,7 +180,7 @@ class PromptGenerator:
                         len(cs_data),
                     )
 
-                    anno_prompt = CROSS_SECTIONAL_ANNOTATION_PROMPT.format(
+                    anno_prompt = pmt_instruc_map["annot_pmt"].format(
                         crypto=crypto,
                         info=info,
                         trend=trend,
@@ -150,41 +189,86 @@ class PromptGenerator:
                         Target=target.capitalize(),
                         categories=categories
                     )
-                    print(anno_prompt)
-                    explanation = self.agent(
-                        prompt=anno_prompt,
-                        instruction=AGENT_ANNOTATION_INSTRUCTION.format(
-                            target = target
-                        ),
-                    )
 
-                    ft_prompt = self._generate_ft_prompt(
-                        system_instruction=CROSS_SECTIONAL_INSTRUCTION.format(
-                            target=target
-                        ),
-                        user_prompt=CROSS_SECTIONAL_PROMPT.format(
-                            crypto=crypto,
-                            info=info,
-                            target=target,
-                            categories=categories
-                        ),
-                        assistant_content=ANSWER.format(
-                            trend=trend, explanation=explanation, Target=target.capitalize()
-                        ),
-                    )
+                    if data_type == "vision":
+                        explanation = self.agent(
+                            prompt=anno_prompt,
+                            instruction=pmt_instruc_map["annot_instruc"].format(
+                                target = target
+                            ),
+                            vision_url=data["image_url"][crypto]
+                        )
+                    else:
+                        explanation = self.agent(
+                            prompt=anno_prompt,
+                            instruction=pmt_instruc_map["annot_instruc"].format(
+                                target = target
+                            ),
+                        )
+
+                    if data_type == "vision":
+                        ft_prompt = self._generate_ft_prompt(
+                            system_instruction=pmt_instruc_map["cs_instruc"].format(
+                                target = target,
+                                Target = target.capitalize()
+                            ),
+                            user_prompt=pmt_instruc_map["cs_pmt"].format(
+                                crypto=crypto,
+                                info=info,
+                                target=target,
+                                categories=categories
+                            ),
+                            assistant_content=ANSWER.format(
+                                trend=trend, explanation=explanation, Target=target.capitalize()
+                            ),
+                            vision_url=data["image_url"][crypto],
+                        )
+                    else:
+                        ft_prompt = self._generate_ft_prompt(
+                            system_instruction=pmt_instruc_map["cs_instruc"].format(
+                                target=target,
+                                Target=target.capitalize()
+                            ),
+                            user_prompt=pmt_instruc_map["cs_pmt"].format(
+                                crypto=crypto,
+                                info=info,
+                                target=target,
+                                categories=categories
+                            ),
+                            assistant_content=ANSWER.format(
+                                trend=trend, explanation=explanation, Target=target.capitalize()
+                            ),
+                        )
                 else:
-                    ft_prompt = self._generate_ft_prompt(
-                        system_instruction=CROSS_SECTIONAL_INSTRUCTION.format(
-                            target=target
-                        ),
-                        user_prompt=CROSS_SECTIONAL_PROMPT.format(
-                            crypto=crypto,
-                            info=info,
-                            target=target,
-                            categories=categories
-                        ),
-                        assistant_content=trend,
-                    )
+                    if data_type == "vision":
+                        ft_prompt = self._generate_ft_prompt(
+                            system_instruction=pmt_instruc_map["cs_instruc"].format(
+                                target=target,
+                                Target=target.capitalize()
+                            ),
+                            user_prompt=pmt_instruc_map["cs_pmt"].format(
+                                crypto=crypto,
+                                info=info,
+                                target=target,
+                                categories=categories
+                            ),
+                            assistant_content=trend,
+                            vision_url=data["image_url"][crypto],
+                        )
+                    else:
+                        ft_prompt = self._generate_ft_prompt(
+                            system_instruction=pmt_instruc_map["cs_instruc"].format(
+                                target=target,
+                                Target=target.capitalize()
+                            ),
+                            user_prompt=pmt_instruc_map["cs_pmt"].format(
+                                crypto=crypto,
+                                info=info,
+                                target=target,
+                                categories=categories
+                            ),
+                            assistant_content=trend,
+                        )
 
                 yield (yw, crypto, {"messages": ft_prompt})
 
@@ -192,8 +276,10 @@ class PromptGenerator:
         self,
         start_date: str = "2023-06-01",
         end_date: str = "2024-01-01",
+        strategy: list[str] | str = ["attn", "net"],
         train_test: Literal["train", "test"] = "train",
-        target: Literal["market return", "market trend"] = "market return",
+        target: Literal["market return", "market trend"] = "market trend",
+        categories: Literal["Very High, High, Medium, Low, Very Low", "Rise or Fall"] = "Rise or Fall"
     ) -> Generator:
         """
         Generate cross-sectional prompt
@@ -206,10 +292,9 @@ class PromptGenerator:
         for yw_counter, (yw, data) in enumerate(mkt_data.items(), 1):
             info = "".join(
                 [
-                    data["attn"],
-                    data["net"],
+                        data[strategy] for strategy in strategy
                 ]
-            )
+            ) if isinstance(strategy, list) else data[strategy]
 
             if train_test == "train":
 
@@ -221,7 +306,11 @@ class PromptGenerator:
                 anno_prompt = MARKET_ANNOTATION_PROMPT.format(
                     info=info,
                     trend=data["trend"],
+                    target=target,
+                    Target=target.capitalize(),
+                    categories=categories
                 )
+                print(anno_prompt)
                 explanation = self.agent(
                     prompt=anno_prompt, instruction=AGENT_ANNOTATION_INSTRUCTION.format(
                         target=target
@@ -230,9 +319,14 @@ class PromptGenerator:
 
                 ft_prompt = self._generate_ft_prompt(
                     system_instruction=MARKET_INSTRUCTION.format(
-                        target=target
+                        target = target,
+                        Target = target.capitalize()
                     ),
-                    user_prompt=MARKET_PROMPT.format(info=info),
+                    user_prompt=MARKET_PROMPT.format(
+                        info=info,
+                        target=target,
+                        categories=categories
+                    ),
                     assistant_content=ANSWER.format(
                         trend=data["trend"], explanation=explanation, Target=target.capitalize()
                     ),
@@ -240,9 +334,14 @@ class PromptGenerator:
             else:
                 ft_prompt = self._generate_ft_prompt(
                     system_instruction=MARKET_INSTRUCTION.format(
-                        target=target
+                        target=target,
+                        Target=target.capitalize()
                     ),
-                    user_prompt=MARKET_PROMPT.format(info=info),
+                    user_prompt=MARKET_PROMPT.format(
+                        info=info,
+                        target=target,
+                        categories=categories
+                    ),
                     assistant_content=data["trend"],
                 )
 
@@ -255,13 +354,17 @@ if __name__ == "__main__":
 
     # print(pg._get_train_yw())
 
-    for pmt in pg.get_cs_prompt(train_test="train"):
-        print(pmt)
-        break
-
-    # for pmt in pg.get_mkt_prompt():
+    # for pmt in pg.get_cs_prompt(train_test="train"):
     #     print(pmt)
     #     break
 
+    for pmt in pg.get_mkt_prompt(strategy="news"):
+        print(pmt)
+        break
+
     # for pmt in pg.get_opt_prompt():
     #     print(pmt)
+
+    # for pmt in pg.get_cs_prompt(data_type="vision", train_test="train", strategy="image_url"):
+    #     print(pmt)
+    #     break

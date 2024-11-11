@@ -11,6 +11,7 @@ from environ.constants import (
     CROSS_SECTIONAL_CRYPTO_NUMBER,
     CS_FACTOR_DESCRIPTION_MAPPING,
     EXCLUDE_LIST,
+    IMAGE_URL_TEMP,
     MKT_FACTOR_DESCRIPTION_MAPPING,
     PROCESSED_DATA_PATH,
 )
@@ -134,18 +135,54 @@ class DataLoader:
             )
 
             market_data[year_week_key] = {
-                "trend": row["tercile"],
+                "trend": row["trend"],
                 "attn": None,
                 "net": None,
+                "news": None,
             }
 
-            for strategy in ["attn", "net"]:
+            for strategy in ["attn", "net", "news"]:
                 strategy_list = self._strategy_list(strategy, market_factors)
                 market_data[year_week_key][strategy] = self._strategy_descriptions(
                     strategy_list, market_factor_yw, MKT_FACTOR_DESCRIPTION_MAPPING
                 )
 
         return market_data
+
+    def get_vision_data(
+        self, start_date: str = "2023-06-01", end_date: str = "2024-09-01"
+    ):
+        """
+        Get vision data
+        """
+
+        vision_data = {}
+
+        dff = pd.read_csv(f"{PROCESSED_DATA_PATH}/signal/gecko_signal.csv").sort_values(
+            ["id", "time"], ascending=True
+        )
+        dff = dff.loc[dff["time"].between(start_date, end_date)]
+
+        for (year, week), weekly_data in dff.groupby(["year", "week"]):
+            year_week_key = f"{year}{week}"
+            vision_data[year_week_key] = {
+                strategy: {} for strategy in ["image_url", "trend"]
+            }
+
+            # Add trend
+            vision_data[year_week_key]["trend"] = weekly_data.set_index("name")[
+                "ret_signal"
+            ].to_dict()
+
+            # Process image_url
+            for _, row in weekly_data.iterrows():
+                vision_data[year_week_key]["image_url"][row["name"]] = (
+                    IMAGE_URL_TEMP.format(
+                        id=row["id"], year=row["year"], week=row["week"]
+                    )
+                )
+
+        return vision_data
 
     def get_cs_prompt(
         self, path: str = f"{PROCESSED_DATA_PATH}/train/cs.jsonl"
@@ -188,10 +225,16 @@ class DataLoader:
 
 if __name__ == "__main__":
     dl = DataLoader()
-    # d = dl.get_mkt_data()
-    d = dl.get_cs_data(
-        start_date="2023-06-01",
-        end_date="2024-01-01",
-    )
+    d = dl.get_mkt_data()
+    # d = dl.get_cs_data(
+    #     start_date="2023-06-01",
+    #     end_date="2024-01-01",
+    # )
     # for i in dl.get_cs_prompt():
     #     print(i)
+
+    # # Vision data
+    # d = dl.get_vision_data(
+    #     start_date="2023-06-01",
+    #     end_date="2024-01-01",
+    # )

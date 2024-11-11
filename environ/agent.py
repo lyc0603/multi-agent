@@ -27,7 +27,7 @@ class OpenAIAgent:
     def __init__(self, model: str = "gpt-4o-2024-08-06") -> None:
         self.model = model
 
-    # @retry(stop=stop_after_attempt(3), wait=wait_random_exponential(min=1, max=60))
+    @retry(stop=stop_after_attempt(3), wait=wait_random_exponential(min=1, max=60))
     def __call__(
         self,
         prompt: str,
@@ -35,11 +35,27 @@ class OpenAIAgent:
         temperature: float = 0,
         log_probs: bool = False,
         top_logprobs: int | None = None,
+        vision_url: str | None = None,
     ) -> Any:
         """
         Send a message to the agent
         """
-        messages = [{"role": "user", "content": prompt}]
+
+        if vision_url:
+            messages = [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt},
+                        {
+                            "type": "image_url",
+                            "image_url": {"url": vision_url, "detail": "high"},
+                        },
+                    ],
+                },
+            ]
+        else:
+            messages = [{"role": "user", "content": prompt}]
 
         if instruction:
             messages = [
@@ -111,6 +127,7 @@ class FTAgent(OpenAIAgent):
         instruction: str | None = None,
         log_probs: bool = False,
         top_logprobs: int | None = None,
+        vision_url: str | None = None,
     ) -> Any:
         """
         Predict the response
@@ -121,6 +138,7 @@ class FTAgent(OpenAIAgent):
             temperature=0,
             log_probs=log_probs,
             top_logprobs=top_logprobs,
+            vision_url=vision_url,
         )
 
     def predict_from_prompt(
@@ -140,6 +158,26 @@ class FTAgent(OpenAIAgent):
             instruction=msg[0]["content"],
             log_probs=log_probs,
             top_logprobs=top_logprobs,
+        )
+
+    def predict_from_image(
+        self,
+        prompt: dict,
+        log_probs: bool = False,
+        top_logprobs: int | None = None,
+    ) -> Any:
+        """
+        Predict the response from the image
+        """
+
+        msg = prompt["messages"]
+
+        return self.predict(
+            assistant_msg=msg[1]["content"][0]["text"],
+            instruction=msg[0]["content"],
+            log_probs=log_probs,
+            top_logprobs=top_logprobs,
+            vision_url=msg[1]["content"][1]["image_url"]["url"],
         )
 
     def fine_tuning(self, dataset_path: str) -> None:
@@ -164,7 +202,7 @@ class FTAgent(OpenAIAgent):
 
 
 if __name__ == "__main__":
-    # agent = OpenAIAgent(model="gpt-4o-2024-08-06")
+    agent = OpenAIAgent(model="gpt-4o-2024-08-06")
     # print(agent("What is Bitcoin?"))
     # agent = FTAgent(model="gpt-4o-2024-08-06")
     # agent.fine_tuning(f"{PROCESSED_DATA_PATH}/train/cs.jsonl")
@@ -177,16 +215,24 @@ if __name__ == "__main__":
     # with open(f"{PROCESSED_DATA_PATH}/checkpoints/cs.pkl", "wb") as f:
     #     pickle.dump(agent, f)
 
-    with open(f"{PROCESSED_DATA_PATH}/checkpoints/cs_1106_b.pkl", "rb") as file:
-        agent = pickle.load(file)
+    # with open(f"{PROCESSED_DATA_PATH}/checkpoints/cs_1106_b.pkl", "rb") as file:
+    #     agent = pickle.load(file)
 
-    from environ.prompt_generator import PromptGenerator
+    # from environ.prompt_generator import PromptGenerator
 
-    pg = PromptGenerator()
-    for yw, crypto, line in pg.get_cs_prompt(
-        start_date="2024-01-01",
-        end_date="2025-01-01",
-        train_test="test",
-    ):
-        res = agent.predict_from_prompt(prompt=line, log_probs=True, top_logprobs=2)
-        break
+    # pg = PromptGenerator()
+    # for yw, crypto, line in pg.get_cs_prompt(
+    #     start_date="2024-01-01",
+    #     end_date="2025-01-01",
+    #     train_test="test",
+    # ):
+    #     res = agent.predict_from_prompt(prompt=line, log_probs=True, top_logprobs=2)
+    #     break
+
+    # vision test
+    print(
+        agent(
+            prompt="Please describe the trend of this candlestick graph?",
+            vision_url="https://raw.githubusercontent.com/lyc0603/multi-agent/refs/heads/main/figures/ohlc/tron_2023_31.png",
+        )
+    )

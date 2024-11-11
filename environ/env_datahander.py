@@ -19,10 +19,11 @@ class DataHandler:
         self.env_data = self.dl.get_env_data()
         self.cs_test_data = self.load_cs_test_data()
         self.mkt_test_data = self.load_mkt_test_data()
+        self.vision_test_data = self.load_vision_test_data()
 
     def load_cs_test_data(self) -> Dict[Any, Any]:
         """
-        Load the test set
+        Load the cross-sectional test set
         """
         cs_test = {}
         for yw, crypto, line in self.pg.get_cs_prompt(
@@ -33,6 +34,22 @@ class DataHandler:
             cs_test.setdefault(yw, {})[crypto] = line
 
         return cs_test
+
+    def load_vision_test_data(self) -> Dict:
+        """
+        Load the vision test set
+        """
+        vision_test = {}
+        for yw, crypto, line in self.pg.get_cs_prompt(
+            data_type="vision",
+            strategy="image_url",
+            start_date="2024-01-01",
+            end_date="2025-01-01",
+            train_test="test",
+        ):
+            vision_test.setdefault(yw, {})[crypto] = line
+
+        return vision_test
 
     def load_mkt_test_data(self) -> Dict:
         """

@@ -116,13 +116,24 @@ for idx, row in df_full.loc[df_full["year"] >= 2022].iterrows():
         # cut the cmkt into terciles
         df_sample[factor] = pd.qcut(
             df_sample[factor],
-            3,
-            labels=["Low", "Medium", "High"],
+            5,
+            labels=["Very Low", "Low", "Medium", "High", "Very High"],
         )
 
         market_factors.loc[
             (market_factors["year"] == year) & (market_factors["week"] == week),
             factor,
         ] = df_sample[df_sample["time"] == current_date][factor].values[0]
+
+# merge the cointelegraph data
+crypto_news = pd.read_csv(f"{DATA_PATH}/cointelegraph.csv")
+
+crypto_news["date"] = pd.to_datetime(crypto_news["date"])
+crypto_news[["year", "week", "day"]] = crypto_news["date"].dt.isocalendar()
+crypto_news = (
+    crypto_news.groupby(["year", "week"])["title"].apply("\n".join).reset_index()
+)
+crypto_news.rename(columns={"title": "news_"}, inplace=True)
+market_factors = pd.merge(market_factors, crypto_news, on=["year", "week"], how="left")
 
 market_factors = market_factors.loc[market_factors["year"] >= 2022]

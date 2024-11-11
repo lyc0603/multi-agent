@@ -67,7 +67,7 @@ class Portfolio:
         ).sort_values(["time", "name"], ascending=True)
 
     def update_mkt(
-        self, year: str, week: str, mkt_strength: str, mkt_true: str
+        self, year: str, week: str, mkt_strength: str, mkt_true: str, mkt_prob: float
     ) -> None:
         """
         Method to update the portfolio
@@ -82,6 +82,7 @@ class Portfolio:
                         "week": week,
                         "strength": mkt_strength,
                         "true": mkt_true,
+                        "lin_prob": np.exp(mkt_prob),
                     },
                     index=[0],
                 ),

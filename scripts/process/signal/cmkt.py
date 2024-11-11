@@ -33,23 +33,23 @@ dfm["cmkt"] = dfm["cmkt"].pct_change()
 dfm["cmkt"] = dfm["cmkt"].shift(-1)
 dfm.dropna(subset=["cmkt"], how="any", inplace=True)
 
-for idx, row in dfm.loc[dfm["year"] >= 2022].iterrows():
-    year = row["year"]
-    week = row["week"]
-    current_date = dfm[(dfm["year"] == year) & (dfm["week"] == week)]["time"].values[0]
-    df_sample = dfm[
-        (dfm["time"] <= current_date)
-        & (dfm["time"] >= current_date - pd.DateOffset(years=2))
-    ].copy()
+# for idx, row in dfm.loc[dfm["year"] >= 2022].iterrows():
+#     year = row["year"]
+#     week = row["week"]
+#     current_date = dfm[(dfm["year"] == year) & (dfm["week"] == week)]["time"].values[0]
+#     df_sample = dfm[
+#         (dfm["time"] <= current_date)
+#         & (dfm["time"] >= current_date - pd.DateOffset(years=2))
+#     ].copy()
 
-    # cut the cmkt into terciles
-    df_sample["tercile"] = pd.qcut(
-        df_sample["cmkt"], 3, labels=["Low", "Medium", "High"]
-    )
+#     # cut the cmkt into terciles
+#     df_sample["tercile"] = pd.qcut(
+#         df_sample["cmkt"], 3, labels=["Low", "Medium", "High"]
+#     )
 
-    dfm.loc[(dfm["year"] == year) & (dfm["week"] == week), "tercile"] = df_sample[
-        df_sample["time"] == current_date
-    ]["tercile"].values[0]
-
+#     dfm.loc[(dfm["year"] == year) & (dfm["week"] == week), "tercile"] = df_sample[
+#         df_sample["time"] == current_date
+#     ]["tercile"].values[0]
+dfm["trend"] = dfm["cmkt"].apply(lambda x: "Rise" if x > 0 else "Fall")
 
 dfm.to_csv(f"{PROCESSED_DATA_PATH}/market/cmkt.csv", index=False)
