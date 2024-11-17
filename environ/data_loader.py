@@ -48,6 +48,18 @@ class DataLoader:
             [f"{factor_mapping[factor]}: {data[factor]}\n" for factor in strategy_list]
         )
 
+    def get_literature_data(self, name: str) -> str:
+        """
+        Get literature data
+        """
+
+        with open(
+            f"{PROCESSED_DATA_PATH}/literature/{name}.txt", "r", encoding="utf-8"
+        ) as f:
+            literature = f.read()
+
+        return literature
+
     def get_env_data(self) -> pd.DataFrame:
         """
         Method to get environment data

@@ -8,15 +8,18 @@ from typing import Any, Generator, Literal
 import pandas as pd
 
 from environ.agent import OpenAIAgent
+from environ.constants import CROSS_SECTIONAL_CRYPTO_NUMBER
 from environ.data_loader import DataLoader
 from environ.instructions import (AGENT_ANNOTATION_INSTRUCTION,
                                   CROSS_SECTIONAL_INSTRUCTION,
-                                  MARKET_INSTRUCTION, VISION_INSTRUCTION)
+                                  MARKET_INSTRUCTION, NEWS_INSTRUCTION,
+                                  VISION_INSTRUCTION)
 from environ.prompts import (ANSWER, CROSS_SECTIONAL_ANNOTATION_PROMPT,
                              CROSS_SECTIONAL_PROMPT, MARKET_ANNOTATION_PROMPT,
-                             MARKET_PROMPT, VISION_PROMPT, VISION_ANNOTATION_PROMPT)
+                             MARKET_PROMPT, NEWS_ANNOTATION_PROMPT,
+                             NEWS_PROMPT, VISION_ANNOTATION_PROMPT,
+                             VISION_PROMPT)
 from environ.utils import predict_explain_split
-from environ.constants import CROSS_SECTIONAL_CRYPTO_NUMBER
 
 logging.basicConfig(
     level=logging.INFO,
@@ -147,10 +150,11 @@ class PromptGenerator:
             case "factor":
                 cs_data = self.data_loader.get_cs_data(start_date=start_date, end_date=end_date)
                 pmt_instruc_map = {
-                    "annot_instruc": CROSS_SECTIONAL_INSTRUCTION,
+                    "annot_instruc": AGENT_ANNOTATION_INSTRUCTION,
                     "annot_pmt": CROSS_SECTIONAL_ANNOTATION_PROMPT,
                     "cs_instruc": CROSS_SECTIONAL_INSTRUCTION,
-                    "cs_pmt": CROSS_SECTIONAL_PROMPT
+                    "cs_pmt": CROSS_SECTIONAL_PROMPT,
+                    "paper": self.data_loader.get_literature_data("crypto_factors")
                 }
             case "vision":
                 cs_data = self.data_loader.get_vision_data(start_date=start_date, end_date=end_date)
@@ -158,7 +162,8 @@ class PromptGenerator:
                     "annot_instruc": AGENT_ANNOTATION_INSTRUCTION,
                     "annot_pmt": VISION_ANNOTATION_PROMPT,
                     "cs_instruc": VISION_INSTRUCTION,
-                    "cs_pmt": VISION_PROMPT
+                    "cs_pmt": VISION_PROMPT,
+                    "paper": self.data_loader.get_literature_data("candlestick")
                 }
 
         for yw_counter, (yw, data) in enumerate(cs_data.items(), 1):
@@ -187,7 +192,8 @@ class PromptGenerator:
                         num=CROSS_SECTIONAL_CRYPTO_NUMBER,
                         target=target,
                         Target=target.capitalize(),
-                        categories=categories
+                        categories=categories,
+                        knowledge=pmt_instruc_map["paper"]
                     )
 
                     if data_type == "vision":
@@ -274,6 +280,7 @@ class PromptGenerator:
 
     def get_mkt_prompt(
         self,
+        data_type: Literal["factor", "text"] = "factor",
         start_date: str = "2023-06-01",
         end_date: str = "2024-01-01",
         strategy: list[str] | str = ["attn", "net"],
@@ -284,6 +291,24 @@ class PromptGenerator:
         """
         Generate cross-sectional prompt
         """
+
+        match data_type:
+            case "factor":
+                pmt_instruc_map = {
+                    "annot_instruc": AGENT_ANNOTATION_INSTRUCTION,
+                    "annot_pmt": MARKET_ANNOTATION_PROMPT,
+                    "mkt_instruc": MARKET_INSTRUCTION,
+                    "mkt_pmt": MARKET_PROMPT,
+                    "paper": self.data_loader.get_literature_data("market_factors")
+                }
+            case "text":
+                pmt_instruc_map = {
+                    "annot_instruc": AGENT_ANNOTATION_INSTRUCTION,
+                    "annot_pmt": NEWS_ANNOTATION_PROMPT,
+                    "mkt_instruc": NEWS_INSTRUCTION,
+                    "mkt_pmt": NEWS_PROMPT,
+                    "paper": self.data_loader.get_literature_data("news")
+                }
 
         mkt_data = self.data_loader.get_mkt_data(
             start_date=start_date, end_date=end_date
@@ -303,26 +328,26 @@ class PromptGenerator:
                     yw_counter,
                     len(mkt_data),
                 )
-                anno_prompt = MARKET_ANNOTATION_PROMPT.format(
+                anno_prompt = pmt_instruc_map["annot_pmt"].format(
                     info=info,
                     trend=data["trend"],
                     target=target,
                     Target=target.capitalize(),
-                    categories=categories
+                    categories=categories,
+                    knowledge=pmt_instruc_map["paper"]
                 )
-                print(anno_prompt)
                 explanation = self.agent(
-                    prompt=anno_prompt, instruction=AGENT_ANNOTATION_INSTRUCTION.format(
+                    prompt=anno_prompt, instruction=pmt_instruc_map["annot_instruc"].format(
                         target=target
                     )
                 )
 
                 ft_prompt = self._generate_ft_prompt(
-                    system_instruction=MARKET_INSTRUCTION.format(
+                    system_instruction=pmt_instruc_map["mkt_instruc"].format(
                         target = target,
                         Target = target.capitalize()
                     ),
-                    user_prompt=MARKET_PROMPT.format(
+                    user_prompt=pmt_instruc_map["mkt_pmt"].format(
                         info=info,
                         target=target,
                         categories=categories
@@ -333,11 +358,11 @@ class PromptGenerator:
                 )
             else:
                 ft_prompt = self._generate_ft_prompt(
-                    system_instruction=MARKET_INSTRUCTION.format(
+                    system_instruction=pmt_instruc_map["mkt_instruc"].format(
                         target=target,
                         Target=target.capitalize()
                     ),
-                    user_prompt=MARKET_PROMPT.format(
+                    user_prompt=pmt_instruc_map["mkt_pmt"].format(
                         info=info,
                         target=target,
                         categories=categories
@@ -353,18 +378,18 @@ if __name__ == "__main__":
     pg = PromptGenerator()
 
     # print(pg._get_train_yw())
-
-    # for pmt in pg.get_cs_prompt(train_test="train"):
-    #     print(pmt)
-    #     break
-
-    for pmt in pg.get_mkt_prompt(strategy="news"):
+    for pmt in pg.get_cs_prompt(train_test="train"):
         print(pmt)
         break
 
-    # for pmt in pg.get_opt_prompt():
-    #     print(pmt)
-
     # for pmt in pg.get_cs_prompt(data_type="vision", train_test="train", strategy="image_url"):
+    #     print(pmt)
+    #     break
+
+    # for pmt in pg.get_mkt_prompt(data_type="factor"):
+    #     print(pmt)
+    #     break
+
+    # for pmt in pg.get_mkt_prompt(data_type="text", strategy="news"):
     #     print(pmt)
     #     break

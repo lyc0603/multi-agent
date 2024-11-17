@@ -12,7 +12,7 @@ from environ.env import Environment
 from environ.prompt_generator import PromptGenerator
 
 pg = PromptGenerator()
-agent_name = "news_1110"
+agent_name = "news_1116"
 
 # # Generate the prompts for cross-sectional agent
 # with open(
@@ -61,21 +61,21 @@ agent_name = "news_1110"
 #         json_line = json.dumps(prompt)
 #         f.write(json_line + "\n")
 
-# # Generate the prompts for news agent
-# with open(
-#     f"{PROCESSED_DATA_PATH}/train/{agent_name}.jsonl", "w", encoding="utf-8"
-# ) as f:
+# Generate the prompts for news agent
+with open(
+    f"{PROCESSED_DATA_PATH}/train/{agent_name}.jsonl", "w", encoding="utf-8"
+) as f:
 
-#     logging.info("Generating market prompts for training")
+    logging.info("Generating market prompts for training")
 
-#     for _, prompt in pg.get_mkt_prompt(
-#         strategy="news",
-#         start_date="2023-06-01",
-#         end_date="2024-01-01",
-#         train_test="train",
-#     ):
-#         json_line = json.dumps(prompt)
-#         f.write(json_line + "\n")
+    for _, prompt in pg.get_mkt_prompt(
+        strategy="news",
+        start_date="2023-06-01",
+        end_date="2024-01-01",
+        train_test="train",
+    ):
+        json_line = json.dumps(prompt)
+        f.write(json_line + "\n")
 
 # Fine-tune the agent
 agent = FTAgent(model="gpt-4o-2024-08-06")

@@ -247,6 +247,38 @@ class Environment:
 
         self._save_record(self.mkt_records, mkt_record_path)
 
+    def run_cs(self, cs_record_path: str) -> None:
+        """
+        Run the environment
+        """
+        self.portfolio.reset()
+
+        for year, week in tqdm(self.data_handler.get_yw_list()):
+            for crypto in tqdm(self.data_handler.get_crypto_list(year, week)):
+                self._step_cs(year, week, crypto)
+            self.portfolio.asset_pricing(prob=True)
+            self.portfolio.plot()
+            print("CS ACC:", self.portfolio.score(self.portfolio.port)["ACC"])
+            print("CS MCC:", self.portfolio.score(self.portfolio.port)["MCC"])
+
+        self._save_record(self.cs_records, cs_record_path)
+
+    def run_vision(self, vision_record_path: str) -> None:
+        """
+        Run the environment
+        """
+        self.portfolio.reset()
+
+        for year, week in tqdm(self.data_handler.get_yw_list()):
+            for crypto in tqdm(self.data_handler.get_crypto_list(year, week)):
+                self._step_vision(year, week, crypto)
+            self.portfolio.asset_pricing(prob=True)
+            self.portfolio.plot()
+            print("CS ACC:", self.portfolio.score(self.portfolio.port)["ACC"])
+            print("CS MCC:", self.portfolio.score(self.portfolio.port)["MCC"])
+
+        self._save_record(self.vision_records, vision_record_path)
+
     def run(self, cs_record_path: str, mkt_record_path: str, vision_record_path: str) -> None:
         """
         Run the environment
@@ -300,9 +332,9 @@ class Environment:
 
 if __name__ == "__main__":
 
-    cs_agent_name = "cs_1106_b"
-    mkt_agent_name = "mkt_1110"
-    vision_agent_name = "vs_1110"
+    cs_agent_name = "cs_1116"
+    mkt_agent_name = "mkt_1116"
+    vision_agent_name = "vs_1116"
 
     env = Environment(
         cs_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/{cs_agent_name}.pkl",
@@ -314,7 +346,7 @@ if __name__ == "__main__":
     #     mkt_record_path=f"{PROCESSED_DATA_PATH}/record/record_{mkt_agent_name}.json",
     #     vision_record_path=f"{PROCESSED_DATA_PATH}/record/record_{vision_agent_name}.json",
     # )
-    env.run_mkt(mkt_record_path=f"{PROCESSED_DATA_PATH}/record/record_{mkt_agent_name}.json")
-
-
+    # env.run_cs(cs_record_path=f"{PROCESSED_DATA_PATH}/record/record_{cs_agent_name}.json")
+    # env.run_mkt(mkt_record_path=f"{PROCESSED_DATA_PATH}/record/record_{mkt_agent_name}.json")
+    env.run_vision(vision_record_path=f"{PROCESSED_DATA_PATH}/record/record_{vision_agent_name}.json")
     # env.replay(cs_record_name="record_no_learn.json", mkt_record_name="record_mkt_1106.json")
