@@ -20,6 +20,7 @@ class DataHandler:
         self.cs_test_data = self.load_cs_test_data()
         self.mkt_test_data = self.load_mkt_test_data()
         self.vision_test_data = self.load_vision_test_data()
+        self.news_test_data = self.load_news_test_data()
 
     def load_cs_test_data(self) -> Dict[Any, Any]:
         """
@@ -53,7 +54,7 @@ class DataHandler:
 
     def load_mkt_test_data(self) -> Dict:
         """
-        Load the test set
+        Load the market test set
         """
         mkt_test = {}
         for yw, line in self.pg.get_mkt_prompt(
@@ -64,6 +65,22 @@ class DataHandler:
             mkt_test[yw] = line
 
         return mkt_test
+
+    def load_news_test_data(self) -> Dict:
+        """
+        Load the news test set
+        """
+        news_test = {}
+        for yw, line in self.pg.get_mkt_prompt(
+            data_type="text",
+            strategy="news",
+            start_date="2024-01-01",
+            end_date="2025-01-01",
+            train_test="test",
+        ):
+            news_test[yw] = line
+
+        return news_test
 
     def get_yw_list(self) -> List[Tuple[str, str]]:
         """
@@ -81,3 +98,8 @@ class DataHandler:
         """
 
         return self.cs_test_data[f"{year}{week}"].keys()
+
+
+if __name__ == "__main__":
+    dh = DataHandler()
+    print(dh.news_test_data)

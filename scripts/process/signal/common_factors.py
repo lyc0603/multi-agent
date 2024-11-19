@@ -14,7 +14,7 @@ from environ.constants import (
     DATA_PATH,
     PROCESSED_DATA_PATH,
 )
-from environ.process.common_factors import cal_vol
+from environ.utils import cal_vol
 
 pandarallel.initialize(progress_bar=True, nb_workers=30)
 

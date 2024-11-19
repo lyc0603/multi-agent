@@ -2,15 +2,15 @@
 Portfolio class to keep track of the portfolio
 """
 
-from typing import Dict
-import numpy as np
+from typing import Dict, Literal
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 from IPython.display import clear_output
 from sklearn.metrics import accuracy_score, matthews_corrcoef
 
-from environ.constants import LABEL, TABLE_PATH, AP_LABEL
+from environ.constants import AP_LABEL, LABEL, TABLE_PATH
 from environ.data_loader import DataLoader
 
 
@@ -20,96 +20,86 @@ class Portfolio:
     """
 
     def __init__(self):
-        self.port = pd.DataFrame()
-        self.mkt = pd.DataFrame()
-        self.port_ret = pd.DataFrame()
-        self.btc = DataLoader().get_btc_data()
-        self.cmkt = DataLoader().get_cmkt_data()
+        self.reset()
+        data_loader = DataLoader()
+        self.btc = data_loader.get_btc_data()
+        self.cmkt = data_loader.get_cmkt_data()
 
     def reset(self) -> None:
         """
         Method to reset the portfolio
         """
-        self.port = pd.DataFrame()
-        self.mkt = pd.DataFrame()
-        self.port_ret = pd.DataFrame()
 
-    def update_cs(
+        components = ["port", "cs", "vision", "mkt", "news", "cs_agg", "mkt_agg"]
+        for attr in components + [f"{x}_ret" for x in components]:
+            setattr(self, attr, pd.DataFrame())
+
+    def _update(
         self,
+        df: pd.DataFrame,
         year: str,
         week: str,
-        crypto: str,
-        cs_strength: str,
-        cs_true: str,
-        state_ret: pd.DataFrame,
-        cs_prob: float,
-    ) -> None:
+        strength: str,
+        true_label: str,
+        prob: float,
+        name: str | None = None,
+        state_ret: pd.DataFrame | None = None,
+    ) -> pd.DataFrame:
         """
-        Method to update the portfolio
-        """
-
-        # update the portfolio
-        self.port = pd.concat(
-            [
-                self.port,
-                pd.DataFrame(
-                    {
-                        "year": year,
-                        "week": week,
-                        "name": crypto,
-                        "strength": cs_strength,
-                        "true": cs_true,
-                        "lin_prob": np.exp(cs_prob),
-                    },
-                    index=[0],
-                ).merge(state_ret, on=["year", "week", "name"], how="right"),
-            ]
-        ).sort_values(["time", "name"], ascending=True)
-
-    def update_mkt(
-        self, year: str, week: str, mkt_strength: str, mkt_true: str, mkt_prob: float
-    ) -> None:
-        """
-        Method to update the portfolio
+        Utility to update and sort portfolio components
         """
 
-        self.mkt = pd.concat(
-            [
-                self.mkt,
-                pd.DataFrame(
-                    {
-                        "year": year,
-                        "week": week,
-                        "strength": mkt_strength,
-                        "true": mkt_true,
-                        "lin_prob": np.exp(mkt_prob),
-                    },
-                    index=[0],
-                ),
-            ]
-        ).sort_values(["year", "week"], ascending=True)
+        new_data = pd.DataFrame(
+            {
+                "year": year,
+                "week": week,
+                "name": name,
+                "strength": strength,
+                "true": true_label,
+                "lin_prob": np.exp(prob),
+            },
+            index=[0],
+        )
 
-    def asset_pricing(self, prob: bool = False) -> None:
-        """
-        Method to implement the asset pricing
-        """
-
-        if prob:
-            self.port["quitiles"] = self.port.groupby(["year", "week"])[
-                "lin_prob"
-            ].transform(
-                lambda x: pd.qcut(
-                    x,
-                    5,
-                    labels=(AP_LABEL),
-                )
+        if state_ret is not None:
+            new_data = new_data.merge(
+                state_ret, on=["year", "week", "name"], how="right"
             )
-        else:
-            self.port["quitiles"] = self.port["strength"]
 
-        self.port_ret = (
+        return pd.concat([df, new_data]).sort_values(
+            ["year", "week", "name"], ascending=True
+        )
+
+    def update(
+        self, component: Literal["cs", "vision", "mkt", "news"], **kwargs
+    ) -> None:
+        """
+        Generic method to update the portfolio
+        """
+
+        setattr(self, component, self._update(getattr(self, component), **kwargs))
+
+    def _asset_pricing(self, df: pd.DataFrame, df_port: pd.DataFrame) -> pd.DataFrame:
+        """
+        Utility to implement the asset pricing
+        """
+
+        dfq = pd.DataFrame()
+        df.sort_values(["year", "week"], ascending=True, inplace=True)
+        for _, dfyw in df.groupby(["year", "week"]):
+            dfyw.sort_values("lin_prob", ascending=True, inplace=True)
+            dfyw.reset_index(drop=True, inplace=True)
+            n = dfyw.shape[0] // len(AP_LABEL)
+            for i, q in enumerate(AP_LABEL):
+                df_label = dfyw.iloc[i * n : (i + 1) * n]
+                df_label["quitiles"] = q
+                dfq = pd.concat([dfq, df_label])
+
+        df = dfq.copy()
+
+        df_port = (
             (
-                self.port.copy()
+                df.copy()
                 .groupby(["time", "quitiles"])["daily_ret"]
                 .mean()
                 .reset_index()
@@ -119,14 +109,57 @@ class Portfolio:
             .reset_index()
         )
 
-        for key in LABEL:
-            if key not in self.port_ret.columns:
-                self.port_ret[key] = 0
+        for key in AP_LABEL:
+            if key not in df_port.columns:
+                df_port[key] = 0
 
-        self.port_ret["Long"] = self.port_ret["Very High"]
-        self.port_ret["HML"] = self.port_ret["Very High"] - self.port_ret["Very Low"]
+        df_port["Long"] = df_port["Very High"]
+        df_port["HML"] = df_port["Very High"] - df_port["Very Low"]
         for _ in [self.cmkt, self.btc]:
-            self.port_ret = self.port_ret.merge(_, on="time", how="left")
+            df_port = df_port.merge(_, on="time", how="left")
+
+        return df_port
+
+    def merge_cs(self) -> None:
+        """
+        Method to merge the cross-sectional data
+        """
+
+        keys = [_ for _ in self.cs.columns if _ not in ["lin_prob", "strength"]]
+        df_merge = self.cs.merge(self.vision, on=keys, how="inner")
+        df_merge["lin_prob"] = (df_merge["lin_prob_x"] + df_merge["lin_prob_y"]) / 2
+        df_merge["strength"] = df_merge["lin_prob"].apply(
+            lambda x: "Rise" if x >= 0.5 else "Fall"
+        )
+        self.cs_agg = df_merge.copy()
+
+    def merge_mkt(self) -> None:
+        """
+        Method to merge the market data
+        """
+
+        keys = [_ for _ in self.mkt.columns if _ not in ["lin_prob", "strength"]]
+        df_merge = self.mkt.merge(self.news, on=keys, how="inner")
+        df_merge["lin_prob"] = (df_merge["lin_prob_x"] + df_merge["lin_prob_y"]) / 2
+        df_merge["strength"] = df_merge["lin_prob"].apply(
+            lambda x: "Rise" if x >= 0.5 else "Fall"
+        )
+
+        self.mkt_agg = df_merge.copy()
+
+    def asset_pricing(self, component: str) -> None:
+        """
+        Method to implement the asset pricing
+        """
+
+        setattr(
+            self,
+            f"{component}_ret",
+            self._asset_pricing(
+                getattr(self, component),
+                getattr(self, f"{component}_ret"),
+            ),
+        )
 
     def score(
         self, df: pd.DataFrame, pred_col: str = "strength", truth_col: str = "true"
@@ -140,20 +173,19 @@ class Portfolio:
             "MCC": matthews_corrcoef(df[truth_col], df[pred_col]),
         }
 
-    def plot(self) -> None:
+    def plot(self, data_type: Literal["cs", "vision", "mkt", "news"]) -> None:
         """
         Method to plot the portfolio
         """
 
-        clear_output(wait=True)
-        plt.clf()
-
         # plot the cumulative returns
         plt.figure()
 
+        df = getattr(self, f"{data_type}_ret")
+
         for q in AP_LABEL:
             plt.plot(
-                (self.port_ret.set_index("time")[q] + 1).cumprod(),
+                (df.set_index("time")[q] + 1).cumprod(),
                 label=q,
             )
 
@@ -166,7 +198,7 @@ class Portfolio:
 
         for q in ["HML", "Long", "BTC", "CMKT"]:
             plt.plot(
-                (self.port_ret.set_index("time")[q] + 1).cumprod(),
+                (df.set_index("time")[q] + 1).cumprod(),
                 label=q,
             )
 
@@ -213,30 +245,31 @@ class Portfolio:
         # plt.xticks(rotation=45)
         # plt.show()
 
-    def asset_pricing_table(self) -> None:
+    def asset_pricing_table(self, data_type: str) -> dict:
         """
         Method to get the asset pricing table
         """
 
-        ap_tab = self.port_ret.copy().sort_values("time", ascending=True)
+        ap_tab = (
+            getattr(self, f"{data_type}_ret").copy().sort_values("time", ascending=True)
+        )
         ap_tab["year"] = ap_tab["time"].dt.year
         ap_tab["week"] = ap_tab["time"].dt.isocalendar().week
         ap_tab = ap_tab.drop(columns=["time"])
-        for strength in LABEL + ["HML"]:
+        for strength in AP_LABEL + ["HML"]:
             ap_tab[strength] = ap_tab[strength] + 1
         ap_tab = (ap_tab.groupby(["year", "week"])).prod().reset_index()
 
-        for strength in LABEL + ["HML"]:
+        for strength in AP_LABEL + ["HML"]:
             ap_tab[strength] = ap_tab[strength] - 1
 
         res_dict = {}
 
-        for strength in LABEL + ["HML"]:
+        for strength in AP_LABEL + ["HML"]:
             avg = ap_tab[strength].mean()
             std = ap_tab[strength].std()
             sharpe = avg / std
             t = avg / std * (ap_tab[strength].shape[0]) ** 0.5
-            res_dict["Cross-sectional"] = {}
 
             if t > 2.58:
                 asterisk = "***"
@@ -247,61 +280,24 @@ class Portfolio:
             else:
                 asterisk = ""
 
-            res_dict["Cross-sectional"][strength] = {
+            res_dict[strength] = {
                 f"{strength}_avg": avg,
                 f"{strength}_std": std,
                 f"{strength}_t": t,
                 f"{strength}_sr": sharpe,
                 f"{strength}_a": asterisk,
             }
-            print(f"{strength} avg: {avg}, std: {std}, t: {t}, sharpe: {sharpe}")
-        ap_table(res_dict)
+
+        return res_dict
 
 
-def ap_table(res_dict: Dict) -> None:
-    """
-    Method to get the asset pricing table
-    """
+if __name__ == "__main__":
 
-    max_value = max(
-        [v_v for _, v in res_dict.items() for v_k, v_v in v.items() if "avg" in v_k]
-    )
-    max_value = round(max_value, 4)
+    portfolio = Portfolio()
+    portfolio.reset()
 
-    with open(f"{TABLE_PATH}/asset_pricing.tex", "w", encoding="utf-8") as f:
-        f.write(r"\renewcommand{\maxnum}{" + str(max_value) + r"}" + "\n")
-        f.write(r"\begin{tabularx}{\linewidth}{*{5}{X}}" + "\n")
-        f.write(r"\toprule" + "\n")
-        for model in ["Cross-sectional"]:
-            f.write(r"\multicolumn{5}{c}{" + model + r"}\\" + "\n")
-            f.write(r"\midrule" + "\n")
-            f.write(r" & Mean & Std & t(Mean) & Sharpe \\" + "\n")
-            f.write(r"\midrule" + "\n")
-            for _ in LABEL + ["HML"]:
+    portfolio.port["A"] = [1]  # Modify self.port
+    print(portfolio.cs)  # self.cs also contains column 'A'
 
-                f.write(f"{_}")
-                f.write(
-                    r" & "
-                    + " & ".join(
-                        [
-                            (
-                                "${:.4f}$".format(
-                                    round(res_dict[model][f"{_}_{col}"], 4)
-                                )
-                                if col != "avg"
-                                else "\databar{{{:.4f}}}".format(
-                                    round(res_dict[model][f"{_}_{col}"], 4)
-                                )
-                                + "$^{"
-                                + res_dict[model][f"{_}_a"]
-                                + "}$"
-                            )
-                            for col in ["avg", "std", "t", "sr"]
-                        ]
-                    )
-                    + r"\\"
-                    + "\n"
-                )
-            f.write(r"\bottomrule" + "\n")
-
-        f.write(r"\end{tabularx}" + "\n")
+    portfolio.port_ret["B"] = [2]  # Modify self.port_ret
+    print(portfolio.cs_ret)  # self.cs_ret also contains column 'B'

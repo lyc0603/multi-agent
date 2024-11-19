@@ -4,8 +4,10 @@ Class for the crypto market environment
 
 import json
 import pickle
-from typing import Any, Dict, Literal
-import numpy as np
+import time
+from typing import Any, Literal
+import matplotlib.pyplot as plt
+from IPython.display import clear_output
 
 from tqdm import tqdm
 
@@ -14,339 +16,331 @@ from environ.constants import LABEL, PROCESSED_DATA_PATH
 from environ.env_datahander import DataHandler
 from environ.env_portfolio import Portfolio
 from environ.utils import predict_explain_split
+from environ.tabulate import ap_table
 
 
 class Environment:
     """
-    Class for the crypto market environment
+    Class for the crypto market environment.
+    Manages data handling, agents, and portfolio operations.
     """
 
-    def __init__(
-        self,
-        cs_agent_path: str,
-        mkt_agent_path: str,
-        vision_agent_path: str,
-    ) -> None:
+    def __init__(self, **agent_paths: str) -> None:
+        """
+        Initialize the environment with agent paths.
 
+        Args:
+            **agent_paths (str): Paths to agent pickle files, e.g., cs_agent_path, mkt_agent_path.
+        """
         self.data_handler = DataHandler()
-        self.cs_agent = self._load_agent(cs_agent_path)
-        self.mkt_agent = self._load_agent(mkt_agent_path)
-        self.vision_agent = self._load_agent(vision_agent_path)
-        self.cs_records: Dict[str, Any] = {}
-        self.mkt_records: Dict[str, Any] = {}
-        self.vision_records: Dict[str, Any] = {}
         self.portfolio = Portfolio()
+        self.agents_path = agent_paths
+        self.agents = {
+            name.split("_")[0]: self._load_agent(path)
+            for name, path in agent_paths.items()
+        }
+        self.records = {name.split("_")[0]: {} for name, _ in agent_paths.items()}
 
     def _load_agent(self, path: str) -> Any:
         """
-        Load the agent
+        Load an agent from a pickle file.
+
+        Args:
+            path (str): Path to the agent pickle file.
+
+        Returns:
+            Any: Loaded agent object.
         """
         with open(path, "rb") as file:
             return pickle.load(file)
 
+    def load_record(self, record_type: str, path: str) -> None:
+        """
+        Load a record from a JSON file.
+
+        Args:
+            record_type (str): Type of record (cs, mkt, vision, news).
+            path (str): Path to the record file.
+        """
+        with open(path, "r", encoding="utf-8") as f:
+            self.records[record_type] = json.load(f)
+
     def _get_state(
         self,
-        data_type: Literal["ret", "cs", "mkt", "vision"],
+        data_type: Literal["ret", "cs", "mkt", "vision", "news"],
         year: str,
         week: str,
-        crypto: str|None
+        crypto: str | None = None,
     ) -> Any:
         """
-        Get the state
-        """
-        match data_type:
-            case "ret":
-                return self.data_handler.env_data.query(
-                    "year == @year & week == @week & name == @crypto"
-                ).copy()
-            case "cs":
-                return self.data_handler.cs_test_data.get(f"{year}{week}", {}).get(crypto)
-            case "mkt":
-                return self.data_handler.mkt_test_data.get(f"{year}{week}")
-            case "vision":
-                return self.data_handler.vision_test_data.get(f"{year}{week}", {}).get(crypto)
-            case _:
-                raise ValueError(f"Invalid data_type: {data_type}")
+        Retrieve the state data based on data type.
 
-    def _get_cs_action(self, state: dict) -> str:
-        """
-        Get the action to take
-        """
-        return self.cs_agent.predict_from_prompt(state, log_probs=True, top_logprobs=10)
+        Args:
+            data_type (str): Type of data (ret, cs, mkt, vision, news).
+            year (str): Year of the data.
+            week (str): Week of the data.
+            crypto (str | None): Cryptocurrency name (optional for non-crypto data).
 
-    def _get_mkt_action(self, state: dict) -> str:
+        Returns:
+            Any: Corresponding state data.
         """
-        Get the action to take
-        """
-        return self.mkt_agent.predict_from_prompt(state, log_probs=True, top_logprobs=10)
+        data_sources = {
+            "ret": lambda: self.data_handler.env_data.loc[
+                (self.data_handler.env_data["year"] == year)
+                & (self.data_handler.env_data["week"] == week)
+                & (self.data_handler.env_data["name"] == crypto)
+            ],
+            "cs": lambda: self.data_handler.cs_test_data.get(f"{year}{week}", {}).get(
+                crypto
+            ),
+            "mkt": lambda: self.data_handler.mkt_test_data.get(f"{year}{week}"),
+            "vision": lambda: self.data_handler.vision_test_data.get(
+                f"{year}{week}", {}
+            ).get(crypto),
+            "news": lambda: self.data_handler.news_test_data.get(f"{year}{week}"),
+        }
+        return data_sources[data_type]()
 
-    def _get_vision_action(self, state: dict) -> str:
+    def _get_action(self, state: Any, data_type: str) -> tuple:
         """
-        Get the action to take
-        """
-        return self.vision_agent.predict_from_image(state, log_probs=True, top_logprobs=10)
+        Get the action from the corresponding agent.
 
-    def _record_cs(
+        Args:
+            agent_name (str): The agent's name (cs, mkt, vision, news).
+            state (Any): Current state data.
+            data_type (str): Type of data to process.
+
+        Returns:
+            tuple: Action and log probabilities.
+        """
+        action_method = {
+            "cs": self.agents["cs"].predict_from_prompt,
+            "mkt": self.agents["mkt"].predict_from_prompt,
+            "vision": self.agents["vision"].predict_from_image,
+            "news": self.agents["news"].predict_from_prompt,
+        }
+        return action_method[data_type](state, log_probs=True, top_logprobs=10)
+
+    def _record_action(
         self,
+        record_type: str,
         year: str,
         week: str,
-        crypto: str,
-        cs_action: str,
+        crypto: str | None,
+        action: str,
         log_prob: Any,
-        cs_state: dict,
-    ) -> None:
+        state: dict,
+    ):
         """
-        Record the cross-sectional state and action
-        """
+        Record the action and associated log probabilities.
 
-        # record the cross-sectional action
-        self.cs_records.setdefault(f"{year}{week}", {}).setdefault(
-            crypto, {"messages": cs_state["messages"].copy()}
+        Args:
+            record_type (str): Type of record (cs, mkt, vision, news).
+            year (str): Year of the data.
+            week (str): Week of the data.
+            crypto (str | None): Cryptocurrency name (if applicable).
+            action (str): Action taken.
+            log_prob (Any): Log probability of the action.
+            state (dict): Current state data.
+        """
+        record = self.records[record_type]
+        record.setdefault(f"{year}{week}", {}).setdefault(
+            crypto, {"messages": state["messages"].copy()}
         )
-
-        self.cs_records[f"{year}{week}"][crypto]["messages"] += [
-            {
-                "role": "assistant",
-                "content": cs_action,
-            },
-            {
-                "role": "assistant",
-                "content": log_prob,
-            },
+        record[f"{year}{week}"][crypto]["messages"] += [
+            {"role": "assistant", "content": action},
+            {"role": "assistant", "content": log_prob},
         ]
 
-    def _record_vision(
+    def _step(
         self,
         year: str,
         week: str,
-        crypto: str,
-        vision_action: str,
-        log_prob: Any,
-        vision_state: dict,
+        data_type: Literal["cs", "mkt", "vision", "news"],
+        crypto: str | None = None,
     ) -> None:
         """
-        Record the vision state and action
-        """
-        # record the vision action
-        self.vision_records.setdefault(f"{year}{week}", {}).setdefault(
-            crypto, {"messages": vision_state["messages"].copy()}
-        )
+        Perform a single step in the environment for a specific data type.
 
-        self.vision_records[f"{year}{week}"][crypto]["messages"] += [
-            {
-                "role": "assistant",
-                "content": vision_action,
-            },
-            {
-                "role": "assistant",
-                "content": log_prob,
-            },
-        ]
-
-    def _record_mkt(
-        self,
-        year: str,
-        week: str,
-        mkt_action: str,
-        log_prob: Any,
-        mkt_state: dict,
-    ) -> None:
-        """
-        Record the market state and action
-        """
-
-        # record the market action
-        self.mkt_records[f"{year}{week}"] = mkt_state["messages"].copy()
-        self.mkt_records[f"{year}{week}"] += [
-            {
-                "role": "assistant",
-                "content": mkt_action,
-            },
-            {
-                "role": "assistant",
-                "content": log_prob,
-            },
-        ]
-
-    def _step_cs(self, year: str, week: str, crypto: str) -> None:
-        """
-        Step the cross-sectional environment
+        Args:
+            year (str): Year of the data.
+            week (str): Week of the data.
+            data_type (str): Type of data to process (cs, mkt, vision, news).
+            crypto (str | None): Cryptocurrency name (if applicable).
         """
         ret_state = self._get_state("ret", year, week, crypto)
-        cs_state = self._get_state("cs", year, week, crypto)
-        cs_action, prob = self._get_cs_action(cs_state)
-        # parse the log probability for the forth token
-        log_prob = [_.logprob for _ in prob[3].top_logprobs if _.token == " " + LABEL[0]][0]
-        cs_strength = predict_explain_split(cs_action)
-        cs_true = cs_state["messages"][-1]["content"]
-        print(f"Year: {year}, Week: {week}, Crypto: {crypto}, CS Strength: {cs_strength}, CS True {cs_true}, Lin Prob: {prob[3].top_logprobs}")
-        self._record_cs(year, week, crypto, cs_action, log_prob, cs_state)
-        self.portfolio.update_cs(year, week, crypto, cs_strength, cs_true, ret_state, log_prob)
+        state = self._get_state(data_type, year, week, crypto)
+        action, prob = self._get_action(state, data_type)
+        log_prob = [
+            p.logprob for p in prob[3].top_logprobs if p.token == " " + LABEL[0]
+        ][0]
+        self._record_action(data_type, year, week, crypto, action, log_prob, state)
 
-    def _step_vision(self, year: str, week: str, crypto: str) -> None:
-        """
-        Step the vision environment
-        """
-        ret_state = self._get_state("ret", year, week, crypto)
-        vision_state = self._get_state("vision", year, week, crypto)
-        vision_action, prob = self._get_vision_action(vision_state)
-        # parse the log probability for the forth token
-        log_prob = [_.logprob for _ in prob[3].top_logprobs if _.token == " " + LABEL[0]][0]
-        vision_strength = predict_explain_split(vision_action)
-        vision_true = vision_state["messages"][-1]["content"]
-        print(f"Year: {year}, Week: {week}, Crypto: {crypto}, Vision Strength: {vision_strength}, Vision True {vision_true}, Lin Prob: {prob[3].top_logprobs}")
-        self._record_vision(year, week, crypto, vision_action, log_prob, vision_state)
-        self.portfolio.update_cs(year, week, crypto, vision_strength, vision_true, ret_state, log_prob)
+        # Update portfolio
+        strength = predict_explain_split(action)
+        true_value = state["messages"][-1]["content"]
 
-    def _step_mkt(self, year: str, week: str) -> None:
-        """
-        Step the market environment
-        """
-        mkt_state = self._get_state("mkt", year, week, None)
-        mkt_action, prob = self._get_mkt_action(mkt_state)
-        # parse the log probability for the forth token
-        log_prob = [_.logprob for _ in prob[3].top_logprobs if _.token == " " + LABEL[0]][0]
-        mkt_strength = predict_explain_split(mkt_action)
-        mkt_true = mkt_state["messages"][-1]["content"]
-        self._record_mkt(year, week, mkt_action, log_prob, mkt_state)
-        self.portfolio.update_mkt(year, week, mkt_strength, mkt_true, log_prob)
+        if data_type in ["cs", "vision"]:
+            self.portfolio.update(
+                component=data_type,
+                year=year,
+                week=week,
+                name=crypto,
+                strength=strength,
+                true_label=true_value,
+                prob=log_prob,
+                state_ret=ret_state,
+            )
+        else:
+            self.portfolio.update(
+                component=data_type,
+                year=year,
+                week=week,
+                strength=strength,
+                true_label=true_value,
+                prob=log_prob,
+                state_ret=ret_state,
+            )
 
-    def _save_record(self, record: Dict, path: str) -> None:
+    def _save_record(self, record_type: str, path: str) -> None:
         """
-        Save the record
-        """
+        Save records to a JSON file.
 
+        Args:
+            record_type (str): Type of record (cs, mkt, vision, news).
+            path (str): Path to save the record file.
+        """
         with open(path, "w", encoding="utf-8") as f:
-            json.dump(record, f, indent=4)
+            json.dump(self.records[record_type], f, indent=4)
 
-    def _load_record(self, record_type:str, name:str) -> None:
+    def run(
+        self, data_type: Literal["cs", "mkt", "vision", "news"], record_path: str
+    ) -> None:
         """
-        Load the record
-        """
-        with open(f"{PROCESSED_DATA_PATH}/record/{name}", "r", encoding="utf-8") as f:
-            match record_type:
-                case "cs":
-                    self.cs_records = json.load(f)
-                case "mkt":
-                    self.mkt_records = json.load(f)
-                case "vision":
-                    self.vision_records = json.load(f)
-                case _:
-                    raise ValueError(f"Invalid record type: {record_type}")
+        Run the environment for a specific data type.
 
-    def run_mkt(self, mkt_record_path: str) -> None:
+        Args:
+            data_type (str): Type of data to process (cs, mkt, vision, news).
+            record_path (str): Path to save the record.
         """
-        Run the environment
+        self.portfolio.reset()
+        for year, week in tqdm(self.data_handler.get_yw_list()):
+            cryptos = (
+                self.data_handler.get_crypto_list(year, week)
+                if data_type in ["cs", "vision"]
+                else [None]
+            )
+            for crypto in cryptos:
+                self._step(year, week, data_type, crypto)
+
+            if data_type in ["cs", "vision"]:
+                self.portfolio.asset_pricing(data_type)
+                clear_output(wait=True)
+                plt.clf()
+                self.portfolio.plot(data_type)
+
+        self._save_record(data_type, record_path)
+
+    def _process_replay(
+        self,
+        agent_type: Literal["cs", "mkt", "vision", "news"],
+        yw: str,
+        crypto: str | None,
+        ret_state: Any = None,
+    ) -> None:
+        """
+        Replay actions for a agent
+        """
+
+        if crypto:
+            record = self.records[agent_type][yw][crypto]["messages"]
+        else:
+            record = self.records[agent_type][yw]
+
+        strength = predict_explain_split(record[-2]["content"])
+        true = record[-3]["content"]
+        prob = record[-1]["content"]
+        self.portfolio.update(
+            component=agent_type,
+            year=yw[:4],
+            week=yw[4:],
+            name=crypto,
+            strength=strength,
+            true_label=true,
+            prob=prob,
+            state_ret=ret_state,
+        )
+
+    def replay(self) -> None:
+        """
+        Replay the record
         """
         self.portfolio.reset()
 
-        for year, week in tqdm(self.data_handler.get_yw_list()):
-            self._step_mkt(year, week)
+        # load the records
+        for record_type, agent_dir in self.agents_path.items():
+            record_path = f"{PROCESSED_DATA_PATH}/record/record_{agent_dir.split('/')[-1].split('.')[0]}.json"
+            self.load_record(
+                record_type.split("_")[0],
+                record_path,
+            )
+
+        for yw, cryptos in self.records["vision"].items():
+            year, week = yw[:4], yw[4:]
+
+            for mkt_agent in ["mkt", "news"]:
+                self._process_replay(mkt_agent, yw, None)
+
+            for crypto, _ in cryptos.items():
+                ret_state = self._get_state("ret", year, week, crypto)
+
+                for crypto_agent in ["cs", "vision"]:
+                    self._process_replay(crypto_agent, yw, crypto, ret_state)
+
+            self.portfolio.merge_cs()
+            self.portfolio.merge_mkt()
+
+            clear_output(wait=True)
+            plt.clf()
+
+            for data_type in ["cs", "vision", "cs_agg"]:
+                print(data_type)
+                self.portfolio.asset_pricing(data_type)
+                self.portfolio.plot(data_type)
+
+            # time.sleep(10)
+
+            # self.portfolio.asset_pricing_table()
+            print("CS ACC:", self.portfolio.score(self.portfolio.cs)["ACC"])
+            print("CS MCC:", self.portfolio.score(self.portfolio.cs)["MCC"])
+            print("VS ACC:", self.portfolio.score(self.portfolio.vision)["ACC"])
+            print("VS MCC:", self.portfolio.score(self.portfolio.vision)["MCC"])
+            print("CS AGG ACC:", self.portfolio.score(self.portfolio.cs_agg)["ACC"])
+            print("CS AGG MCC:", self.portfolio.score(self.portfolio.cs_agg)["MCC"])
             print("MKT ACC:", self.portfolio.score(self.portfolio.mkt)["ACC"])
             print("MKT MCC:", self.portfolio.score(self.portfolio.mkt)["MCC"])
+            print("NEWS ACC:", self.portfolio.score(self.portfolio.news)["ACC"])
+            print("NEWS MCC:", self.portfolio.score(self.portfolio.news)["MCC"])
 
-        self._save_record(self.mkt_records, mkt_record_path)
+        ap_table_data = {}
+        for data_type, data_name in zip(
+            ["cs", "vision", "cs_agg"],
+            ["Crypto Factor", "Vision", "Crypto Emsemble"],
+        ):
+            ap_table_data[data_name] = self.portfolio.asset_pricing_table(data_type)
 
-    def run_cs(self, cs_record_path: str) -> None:
-        """
-        Run the environment
-        """
-        self.portfolio.reset()
-
-        for year, week in tqdm(self.data_handler.get_yw_list()):
-            for crypto in tqdm(self.data_handler.get_crypto_list(year, week)):
-                self._step_cs(year, week, crypto)
-            self.portfolio.asset_pricing(prob=True)
-            self.portfolio.plot()
-            print("CS ACC:", self.portfolio.score(self.portfolio.port)["ACC"])
-            print("CS MCC:", self.portfolio.score(self.portfolio.port)["MCC"])
-
-        self._save_record(self.cs_records, cs_record_path)
-
-    def run_vision(self, vision_record_path: str) -> None:
-        """
-        Run the environment
-        """
-        self.portfolio.reset()
-
-        for year, week in tqdm(self.data_handler.get_yw_list()):
-            for crypto in tqdm(self.data_handler.get_crypto_list(year, week)):
-                self._step_vision(year, week, crypto)
-            self.portfolio.asset_pricing(prob=True)
-            self.portfolio.plot()
-            print("CS ACC:", self.portfolio.score(self.portfolio.port)["ACC"])
-            print("CS MCC:", self.portfolio.score(self.portfolio.port)["MCC"])
-
-        self._save_record(self.vision_records, vision_record_path)
-
-    def run(self, cs_record_path: str, mkt_record_path: str, vision_record_path: str) -> None:
-        """
-        Run the environment
-        """
-        self.portfolio.reset()
-
-        for year, week in tqdm(self.data_handler.get_yw_list()):
-            # self._step_mkt(year, week)
-            for crypto in tqdm(self.data_handler.get_crypto_list(year, week)):
-                # self._step_cs(year, week, crypto)
-                self._step_vision(year, week, crypto)
-            self.portfolio.asset_pricing(prob=True)
-            self.portfolio.plot()
-            print("CS ACC:", self.portfolio.score(self.portfolio.port)["ACC"])
-            print("CS MCC:", self.portfolio.score(self.portfolio.port)["MCC"])
-            # print("MKT ACC:", self.portfolio.score(self.portfolio.mkt)["ACC"])
-            # print("MKT MCC:", self.portfolio.score(self.portfolio.mkt)["MCC"])
-
-        # self._save_record(self.cs_records, cs_record_path)
-        self._save_record(self.vision_records, vision_record_path)
-        # self._save_record(self.mkt_records, mkt_record_path)
-
-    # def replay(self, cs_record_name: str, mkt_record_name: str) -> None:
-    #     """
-    #     Replay the record
-    #     """
-    #     self.portfolio.reset()
-
-    #     for record_type, record_name in [("cs", cs_record_name), ("mkt", mkt_record_name)]:
-    #         self._load_record(record_type, record_name)
-
-    #     for yw, cryptos in self.cs_records.items():
-    #         year, week = yw[:4], yw[4:]
-    #         mkt_strength = predict_explain_split(self.mkt_records[yw][-1]["content"])
-    #         mkt_true = self.mkt_records[yw][-2]["content"]
-    #         print(f"Year: {year}, Week: {week}, MKT Strength: {mkt_strength}, MKT True {mkt_true}")
-    #         self.portfolio.update_mkt(year, week, mkt_strength, mkt_true)
-    #         for crypto, messages in cryptos.items():
-    #             ret_state = self._get_state("ret", year, week, crypto)
-    #             strength = predict_explain_split(messages["messages"][-1]["content"])
-    #             true = messages["messages"][-2]["content"]
-    #             self.portfolio.update_cs(year, week, crypto, strength, true, ret_state)
-    #         self.portfolio.asset_pricing()
-    #         self.portfolio.plot()
-    #         # self.portfolio.asset_pricing_table()
-    #         print("CS ACC:", self.portfolio.score(self.portfolio.port)["ACC"])
-    #         print("CS MCC:", self.portfolio.score(self.portfolio.port)["MCC"])
-    #         print("MKT ACC:", self.portfolio.score(self.portfolio.mkt)["ACC"])
-    #         print("MKT MCC:", self.portfolio.score(self.portfolio.mkt)["MCC"])
+        print(ap_table_data)
+        ap_table(ap_table_data)
 
 
 if __name__ == "__main__":
-
-    cs_agent_name = "cs_1116"
-    mkt_agent_name = "mkt_1116"
-    vision_agent_name = "vs_1116"
-
     env = Environment(
-        cs_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/{cs_agent_name}.pkl",
-        mkt_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/{mkt_agent_name}.pkl",
-        vision_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/{cs_agent_name}.pkl",
+        cs_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/cs_1116.pkl",
+        mkt_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/mkt_1116.pkl",
+        vision_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/vs_1116.pkl",
+        news_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/news_1116.pkl",
     )
-    # env.run(
-    #     cs_record_path=f"{PROCESSED_DATA_PATH}/record/record_{cs_agent_name}.json",
-    #     mkt_record_path=f"{PROCESSED_DATA_PATH}/record/record_{mkt_agent_name}.json",
-    #     vision_record_path=f"{PROCESSED_DATA_PATH}/record/record_{vision_agent_name}.json",
-    # )
-    # env.run_cs(cs_record_path=f"{PROCESSED_DATA_PATH}/record/record_{cs_agent_name}.json")
-    # env.run_mkt(mkt_record_path=f"{PROCESSED_DATA_PATH}/record/record_{mkt_agent_name}.json")
-    env.run_vision(vision_record_path=f"{PROCESSED_DATA_PATH}/record/record_{vision_agent_name}.json")
-    # env.replay(cs_record_name="record_no_learn.json", mkt_record_name="record_mkt_1106.json")
+
+    # env.run("cs", f"{PROCESSED_DATA_PATH}/record/record_cs.json")
+    # env.run("vision", f"{PROCESSED_DATA_PATH}/record/record_vision.json")
+    env.replay()

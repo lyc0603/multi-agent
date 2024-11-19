@@ -9,7 +9,7 @@ from pathlib import Path
 import pandas as pd
 
 from environ.constants import DATA_PATH, PROCESSED_DATA_PATH
-from environ.process.market_factors import load_attn
+from environ.utils import load_attn
 
 warnings.filterwarnings("ignore")
 
