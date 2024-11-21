@@ -4,5 +4,8 @@
     "[python]": {
         "editor.defaultFormatter": "ms-python.black-formatter"
     },
-    "git.terminalAuthentication": false
+    "git.terminalAuthentication": false,
+    "files.readonlyInclude": {
+        "**/.daml/unpacked-dars/**": true
+    }
 }
