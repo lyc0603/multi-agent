@@ -329,7 +329,6 @@ class Environment:
         ):
             ap_table_data[data_name] = self.portfolio.asset_pricing_table(data_type)
 
-        print(ap_table_data)
         ap_table(ap_table_data)
 
 

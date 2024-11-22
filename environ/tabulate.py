@@ -46,7 +46,7 @@ def ap_table(res_dict: dict) -> None:
                                     round(res_dict[model][_][f"{_}_{col}"], 4)
                                 )
                                 + "$^{"
-                                + res_dict[model][f"{_}_a"]
+                                + res_dict[model][_][f"{_}_a"]
                                 + "}$"
                             )
                             for col in ["avg", "std", "t", "sr"]

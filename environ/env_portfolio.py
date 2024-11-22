@@ -256,12 +256,12 @@ class Portfolio:
         ap_tab["year"] = ap_tab["time"].dt.year
         ap_tab["week"] = ap_tab["time"].dt.isocalendar().week
         ap_tab = ap_tab.drop(columns=["time"])
-        for strength in AP_LABEL + ["HML"]:
-            ap_tab[strength] = ap_tab[strength] + 1
-        ap_tab = (ap_tab.groupby(["year", "week"])).prod().reset_index()
+        # for strength in AP_LABEL + ["HML"]:
+        #     ap_tab[strength] = ap_tab[strength] + 1
+        # ap_tab = (ap_tab.groupby(["year", "week"])).prod().reset_index()
 
-        for strength in AP_LABEL + ["HML"]:
-            ap_tab[strength] = ap_tab[strength] - 1
+        # for strength in AP_LABEL + ["HML"]:
+        #     ap_tab[strength] = ap_tab[strength] - 1
 
         res_dict = {}
 

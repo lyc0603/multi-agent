@@ -60,6 +60,20 @@ class DataLoader:
 
         return literature
 
+    def get_factor_data(self) -> pd.DataFrame:
+        """
+        Get factor data
+        """
+
+        df = pd.read_csv(f"{PROCESSED_DATA_PATH}/signal/gecko_signal.csv").sort_values(
+            ["id", "time"], ascending=True
+        )
+
+        for var in ["year", "week"]:
+            df[var] = df[var].apply(str)
+
+        return df
+
     def get_env_data(self) -> pd.DataFrame:
         """
         Method to get environment data
