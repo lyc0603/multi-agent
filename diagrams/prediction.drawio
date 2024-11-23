@@ -1,4 +1,4 @@
-<mxfile host="Electron" modified="2024-11-21T13:43:57.541Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/23.0.2 Chrome/120.0.6099.109 Electron/28.1.0 Safari/537.36" etag="sQlEdJAFTacbUT3BwtdQ" version="23.0.2" type="device">
+<mxfile host="Electron" modified="2024-11-23T21:43:02.355Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/23.0.2 Chrome/120.0.6099.109 Electron/28.1.0 Safari/537.36" etag="fYSwWcS6cEHH321pMpvG" version="23.0.2" type="device">
   <diagram name="Page-1" id="ofzxBS9mfT8VJ1EvsjLv">
     <mxGraphModel dx="954" dy="633" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3000" pageHeight="3000" math="0" shadow="0">
       <root>
@@ -238,6 +238,9 @@
         </mxCell>
         <mxCell id="TS_MdYHWejrZGjp8PLQd-99" value="Prompt" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=none;" parent="1" vertex="1">
           <mxGeometry x="996" y="288" width="52" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="Ndva9f5kz68G1TzCS-5H-4" value="Prompt" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="1060" y="350" width="40" height="20" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
