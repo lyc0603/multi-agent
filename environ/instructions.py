@@ -4,7 +4,7 @@ System Instructions
 
 AGENT_ANNOTATION_INSTRUCTION = """You are a professional cryptocurrency analyst, \
 specializing in explaining the predicted {target} based on the provided knowledge \
-and information. You should internalize the provided knoledge to generate a \
+and information. You should internalize the provided knowledge to generate a \
 comprehensive explanation without explicitly referring to the literature. Your \
 output should be in a single paragraph."""
 

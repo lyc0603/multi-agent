@@ -3,31 +3,48 @@ Script to fetch data from cryptocompare API
 """
 
 import json
+import time
 
 import requests
-import time
 from tqdm import tqdm
 
 from environ.constants import CC_API_KEY, DATA_PATH
 
 cg_cc_mapping = {
-    "bitcoin": "BTC",
-    "ethereum": "ETH",
-    "binancecoin": "BNB",
-    "solana": "SOL",
-    "ripple": "XRP",
-    "staked-ether": "STETH",
-    "dogecoin": "DOGE",
-    "the-open-network": "TON",
-    "tron": "TRX",
-    "cardano": "ADA",
-    "avalanche-2": "AVAX",
-    "shiba-inu": "SHIB",
-    "chainlink": "LINK",
-    "polkadot": "DOT",
-    "matic-network": "MATIC",
-    "litecoin": "LTC",
-    "okb": "OKB",
+    # "bitcoin": "BTC",
+    # "ethereum": "ETH",
+    # "binancecoin": "BNB",
+    # "solana": "SOL",
+    # "ripple": "XRP",
+    # "staked-ether": "STETH",
+    # "dogecoin": "DOGE",
+    # "the-open-network": "TON",
+    # "tron": "TRX",
+    # "cardano": "ADA",
+    # "avalanche-2": "AVAX",
+    # "shiba-inu": "SHIB",
+    # "chainlink": "LINK",
+    # "polkadot": "DOT",
+    # "matic-network": "MATIC",
+    # "litecoin": "LTC",
+    # "okb": "OKB",
+    "bitcoin-cash": "BCH",
+    "bitcoin-cash-sv": "BSV",
+    "crypto-com-chain": "CRO",
+    "dash": "DASH",
+    "eos": "EOS",
+    "ethereum-classic": "ETC",
+    "filecoin": "FIL",
+    "internet-computer": "ICP",
+    "iota": "MIOTA",
+    "monero": "XMR",
+    "neo": "NEO",
+    "stellar": "XLM",
+    "terra-luna": "LUNA",
+    "tezos": "XTZ",
+    "theta-token": "THETA",
+    "uniswap": "UNI",
+    "wrapped-bitcoin": "WBTC",
 }
 
 

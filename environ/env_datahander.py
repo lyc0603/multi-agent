@@ -28,7 +28,7 @@ class DataHandler:
         """
         cs_test = {}
         for yw, crypto, line in self.pg.get_cs_prompt(
-            start_date="2024-01-01",
+            start_date="2023-11-01",
             end_date="2025-01-01",
             train_test="test",
         ):
@@ -44,7 +44,7 @@ class DataHandler:
         for yw, crypto, line in self.pg.get_cs_prompt(
             data_type="vision",
             strategy="image_url",
-            start_date="2024-01-01",
+            start_date="2023-11-01",
             end_date="2025-01-01",
             train_test="test",
         ):
@@ -58,7 +58,7 @@ class DataHandler:
         """
         mkt_test = {}
         for yw, line in self.pg.get_mkt_prompt(
-            start_date="2024-01-01",
+            start_date="2023-11-01",
             end_date="2025-01-01",
             train_test="test",
         ):
@@ -74,7 +74,7 @@ class DataHandler:
         for yw, line in self.pg.get_mkt_prompt(
             data_type="text",
             strategy="news",
-            start_date="2024-01-01",
+            start_date="2023-11-01",
             end_date="2025-01-01",
             train_test="test",
         ):

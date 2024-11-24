@@ -85,7 +85,7 @@ class DataLoader:
         # The test data is the next week data
         env_data["time"] = env_data["time"] - pd.Timedelta(days=7)
         env_data["year"], env_data["week"] = (
-            env_data["time"].dt.year,
+            env_data["time"].dt.isocalendar().year,
             env_data["time"].dt.isocalendar().week,
         )
 

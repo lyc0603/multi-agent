@@ -9,7 +9,7 @@ import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-from environ.constants import DATA_PATH, PROCESSED_DATA_PATH
+from environ.constants import DATA_PATH, FIGURE_PATH, PROCESSED_DATA_PATH
 
 CANDLESTICKS_DAYS = 30
 
@@ -124,6 +124,4 @@ for year, week in yw_list:
         )
 
         # Save the figure
-        fig.write_image(
-            PROCESSED_DATA_PATH / "ohlc" / f"{id}_{year}_{week}.png", scale=2
-        )
+        fig.write_image(f"{FIGURE_PATH}/ohlc/{id}_{year}_{week}.png", scale=2)

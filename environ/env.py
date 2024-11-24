@@ -285,13 +285,14 @@ class Environment:
                 record_path,
             )
 
-        for yw, cryptos in self.records["vision"].items():
-            year, week = yw[:4], yw[4:]
+        for year, week in tqdm(self.data_handler.get_yw_list()):
+            yw = f"{year}{week}"
+            crypto_info = self.data_handler.cs_test_data.get(yw, {})
 
             for mkt_agent in ["mkt", "news"]:
                 self._process_replay(mkt_agent, yw, None)
 
-            for crypto, _ in cryptos.items():
+            for crypto, _ in crypto_info.items():
                 ret_state = self._get_state("ret", year, week, crypto)
 
                 for crypto_agent in ["cs", "vision"]:
@@ -334,12 +335,12 @@ class Environment:
 
 if __name__ == "__main__":
     env = Environment(
-        cs_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/cs_1116.pkl",
+        cs_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/cs_1124.pkl",
         mkt_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/mkt_1116.pkl",
         vision_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/vs_1116.pkl",
         news_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/news_1116.pkl",
     )
 
-    # env.run("cs", f"{PROCESSED_DATA_PATH}/record/record_cs.json")
+    env.run("cs", f"{PROCESSED_DATA_PATH}/record/record_cs_1124.json")
     # env.run("vision", f"{PROCESSED_DATA_PATH}/record/record_vision.json")
-    env.replay()
+    # env.replay()

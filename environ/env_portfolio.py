@@ -79,7 +79,12 @@ class Portfolio:
 
         setattr(self, component, self._update(getattr(self, component), **kwargs))
 
-    def _asset_pricing(self, df: pd.DataFrame, df_port: pd.DataFrame) -> pd.DataFrame:
+    def _asset_pricing(
+        self,
+        df: pd.DataFrame,
+        df_port: pd.DataFrame,
+        port_method: Literal["equal", "mcap"] = "equal",
+    ) -> pd.DataFrame:
         """
         Utility to implement the asset pricing
         """
@@ -97,17 +102,33 @@ class Portfolio:
 
         df = dfq.copy()
 
-        df_port = (
-            (
-                df.copy()
-                .groupby(["time", "quitiles"])["daily_ret"]
-                .mean()
-                .reset_index()
-                .pivot(index="time", columns="quitiles", values="daily_ret")
-            )
-            .fillna(0)
-            .reset_index()
-        )
+        match port_method:
+            case "equal": 
+                df_port = (
+                    (
+                        df.copy()
+                        .groupby(["time", "quitiles"])["daily_ret"]
+                        .mean()
+                        .reset_index()
+                        .pivot(index="time", columns="quitiles", values="daily_ret")
+                    )
+                    .reset_index()
+                )
+            case "mcap":
+                df["mcap_ret"] = df["daily_ret"] * df["market_caps"]
+                df_port = (
+                    (
+                        df.copy()
+                        .groupby(["time", "quitiles"])
+                        .agg({"market_caps": "sum", "mcap_ret": "sum"})
+                        .reset_index()
+                    )
+                )
+                df_port["daily_ret"] = df_port["mcap_ret"] / df_port["market_caps"]
+                df_port = (
+                    df_port.pivot(index="time", columns="quitiles", values="daily_ret")
+                    .reset_index()
+                )
 
         for key in AP_LABEL:
             if key not in df_port.columns:

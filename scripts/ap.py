@@ -6,6 +6,8 @@ import pandas as pd
 from environ.constants import AP_LABEL, DATA_PATH
 from environ.data_loader import DataLoader
 
+port_method = "equal-weight"
+
 dl = DataLoader()
 
 df_factor = dl.get_factor_data()
@@ -25,7 +27,7 @@ df = env[["id", "time", "year", "week", "daily_ret"]].merge(
 
 df.sort_values(["id", "time"], ascending=True, inplace=True)
 df.dropna(inplace=True)
-df = df.loc[df["time"] >= "2023-10-01"]
+df = df.loc[df["time"] >= "2023-11-01"]
 
 mom_factor = [_ for _ in df.columns if "mom_" in _]
 size_factor = [_ for _ in df.columns if "size_" in _]
@@ -44,35 +46,37 @@ for factor, factor_cols in factors.items():
     for f in factor_cols:
         dff = df.copy()
 
-        # ap_tab = (
-        #     df.groupby(["year", "week", "time", f])["daily_ret"]
-        #     .mean()
-        #     .reset_index()
-        #     .groupby([f])["daily_ret"]
-        #     .mean()
-        #     .reset_index()
-        #     .set_index(f)
-        #     .T[AP_LABEL]
-        # )
-        # ap_tab["HML"] = ap_tab["Very High"] - ap_tab["Very Low"]
+        dff["mcap_ret"] = dff["daily_ret"] * dff["market_caps"]
 
-        # print(ap_tab)
+        if port_method == "equal_weight":
+            ret_tab = (
+                df.groupby(["year", "week", "time", f])["daily_ret"]
+                .mean()
+                .reset_index()
+            )
+        else:
+            dff["mcap_ret"] = dff["daily_ret"] * dff["market_caps"]
+            ret_tab = (
+                dff.groupby(["year", "week", "time", f])
+                .agg({"market_caps": "sum", "mcap_ret": "sum"})
+                .reset_index()
+            )
+            ret_tab["daily_ret"] = ret_tab["mcap_ret"] / ret_tab["market_caps"]
 
         ap_tab = (
-            df.groupby(["year", "week", "time", f])["daily_ret"]
-            .mean()
+            ret_tab.copy()
+            .pivot(index="time", columns=f, values="daily_ret")
             .reset_index()
-            .groupby([f])
-            .agg({"daily_ret": ["mean", "std", "count"]})
-            .reset_index()
-            .set_index(f)
         )
 
-        ap_tab["t"] = ap_tab["daily_ret"]["mean"] / (
-            ap_tab["daily_ret"]["std"] / ap_tab["daily_ret"]["count"] ** 0.5
-        )
+        ap_tab["HML"] = ap_tab["Very High"] - ap_tab["Very Low"]
 
-        def asterisk(t):
+        df_res = pd.DataFrame()
+
+        def asterisk(t: float) -> str:
+            """
+            Function to get the asterisk
+            """
             if t > 2.58:
                 return "***"
             elif t > 1.96:
@@ -82,9 +86,16 @@ for factor, factor_cols in factors.items():
             else:
                 return ""
 
-        ap_tab["asterisk"] = ap_tab["t"].apply(asterisk)
+        for label in AP_LABEL + ["HML"]:
+            res_dict = {}
+            res_dict["label"] = label
+            res_dict["mean"] = ap_tab[label].mean()
+            res_dict["std"] = ap_tab[label].std()
+            res_dict["t"] = res_dict["mean"] / (res_dict["std"] / len(ap_tab) ** 0.5)
+            res_dict["asterisk"] = asterisk(res_dict["t"])
 
-        # calculate the t-statistic
-        ap_tab
+            df_res = pd.concat([df_res, pd.DataFrame([res_dict])])
 
-        print(ap_tab)
+        df_res
+        print(f"Factor: {factor} - {f}")
+        print(df_res)
