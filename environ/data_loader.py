@@ -225,6 +225,29 @@ class DataLoader:
                     yield prompt_list
                     prompt_list = []
 
+    def get_n_data(self) -> pd.DataFrame:
+        """
+        Get 1/N data
+        """
+
+        signal = pd.read_csv(
+            f"{PROCESSED_DATA_PATH}/signal/gecko_signal.csv"
+        ).sort_values(["id", "time"], ascending=True)
+        for var in ["year", "week"]:
+            signal[var] = signal[var].apply(str)
+        signal["uid"] = signal["year"] + signal["week"] + signal["id"]
+
+        ret = self.get_env_data()
+
+        n = ret.loc[
+            (ret["year"] + ret["week"] + ret["id"]).isin(signal["uid"].unique())
+        ]
+
+        n = n.groupby(["time"])["daily_ret"].mean().reset_index()
+        n.rename(columns={"daily_ret": "1/N"}, inplace=True)
+
+        return n
+
     def get_cmkt_data(self) -> pd.DataFrame:
         """
         Get the market data
@@ -232,6 +255,7 @@ class DataLoader:
 
         cmkt = pd.read_csv(PROCESSED_DATA_PATH / "market" / "cmkt_daily_ret.csv")
         cmkt["time"] = pd.to_datetime(cmkt["time"])
+        cmkt["time"] = cmkt["time"] - pd.Timedelta(days=7)
         cmkt.rename(columns={"cmkt": "CMKT"}, inplace=True)
 
         return cmkt
@@ -244,6 +268,7 @@ class DataLoader:
         btc = pd.read_csv(f"{PROCESSED_DATA_PATH}/env/gecko_daily_env.csv")
         btc = btc.loc[btc["id"] == "bitcoin", ["time", "daily_ret"]]
         btc["time"] = pd.to_datetime(btc["time"])
+        btc["time"] = btc["time"] - pd.Timedelta(days=7)
         btc.rename(columns={"daily_ret": "BTC"}, inplace=True)
 
         return btc
@@ -251,7 +276,7 @@ class DataLoader:
 
 if __name__ == "__main__":
     dl = DataLoader()
-    d = dl.get_mkt_data()
+    # d = dl.get_mkt_data()
     # d = dl.get_cs_data(
     #     start_date="2023-06-01",
     #     end_date="2024-01-01",
@@ -264,3 +289,5 @@ if __name__ == "__main__":
     #     start_date="2023-06-01",
     #     end_date="2024-01-01",
     # )
+
+    d = dl.get_n_data()

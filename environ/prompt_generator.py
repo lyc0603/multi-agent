@@ -135,7 +135,7 @@ class PromptGenerator:
     def get_cs_prompt(
         self,
         data_type: Literal["factor", "vision", "text"] = "factor",
-        strategy: list[str] | str = ["mom", "size", "vol", "volume"],
+        strategy: list[str] | str = ["size", "mom", "vol", "volume"],
         start_date: str = "2023-06-01",
         end_date: str = "2024-01-01",
         train_test: Literal["train", "test"] = "train",

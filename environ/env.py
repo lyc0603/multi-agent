@@ -5,6 +5,7 @@ Class for the crypto market environment
 import json
 import pickle
 import time
+import numpy as np
 from typing import Any, Literal
 import matplotlib.pyplot as plt
 from IPython.display import clear_output
@@ -171,13 +172,18 @@ class Environment:
         ret_state = self._get_state("ret", year, week, crypto)
         state = self._get_state(data_type, year, week, crypto)
         action, prob = self._get_action(state, data_type)
-        log_prob = [
-            p.logprob for p in prob[3].top_logprobs if p.token == " " + LABEL[0]
-        ][0]
-        self._record_action(data_type, year, week, crypto, action, log_prob, state)
 
-        # Update portfolio
-        strength = predict_explain_split(action)
+        if " " + LABEL[0] in [_.token for _ in prob[3].top_logprobs]:
+            log_prob = [
+                p.logprob for p in prob[3].top_logprobs if p.token == " " + LABEL[0]
+            ][0]
+            strength = predict_explain_split(action)
+        else:
+            print("No token found")
+            log_prob = np.log(1 / len(LABEL))
+            strength = LABEL[1]
+
+        self._record_action(data_type, year, week, crypto, action, log_prob, state)
         true_value = state["messages"][-1]["content"]
 
         if data_type in ["cs", "vision"]:
@@ -224,6 +230,14 @@ class Environment:
             record_path (str): Path to save the record.
         """
         self.portfolio.reset()
+        PLOT = True
+
+        yw_crypto_done_list = [
+            yw + crypto
+            for yw, info in self.records[data_type].items()
+            for crypto, _ in info.items()
+        ]
+
         for year, week in tqdm(self.data_handler.get_yw_list()):
             cryptos = (
                 self.data_handler.get_crypto_list(year, week)
@@ -231,9 +245,15 @@ class Environment:
                 else [None]
             )
             for crypto in cryptos:
+                if data_type in ["cs", "vision"]:
+                    if year + week + str(crypto) in yw_crypto_done_list:
+                        print(f"Skipping {year}{week}{crypto}")
+                        PLOT = False
+                        continue
+
                 self._step(year, week, data_type, crypto)
 
-            if data_type in ["cs", "vision"]:
+            if (data_type in ["cs", "vision"]) & PLOT:
                 self.portfolio.asset_pricing(data_type)
                 clear_output(wait=True)
                 plt.clf()
@@ -255,9 +275,14 @@ class Environment:
         if crypto:
             record = self.records[agent_type][yw][crypto]["messages"]
         else:
-            record = self.records[agent_type][yw]
+            record = self.records[agent_type][yw]["null"]["messages"]
 
-        strength = predict_explain_split(record[-2]["content"])
+        try:
+            strength = predict_explain_split(record[-2]["content"])
+        except:
+            strength = LABEL[1]
+
+        print(record)
         true = record[-3]["content"]
         prob = record[-1]["content"]
         self.portfolio.update(
@@ -334,13 +359,29 @@ class Environment:
 
 
 if __name__ == "__main__":
+
+    # Treatment group
     env = Environment(
-        cs_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/cs_1124.pkl",
-        mkt_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/mkt_1116.pkl",
-        vision_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/vs_1116.pkl",
-        news_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/news_1116.pkl",
+        cs_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/cs_1125.pkl",
+        mkt_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/mkt_1124.pkl",
+        vision_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/vs_1124.pkl",
+        news_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/news_1124.pkl",
     )
 
-    env.run("cs", f"{PROCESSED_DATA_PATH}/record/record_cs_1124.json")
-    # env.run("vision", f"{PROCESSED_DATA_PATH}/record/record_vision.json")
-    # env.replay()
+    # env.run("cs", f"{PROCESSED_DATA_PATH}/record/record_cs_1124.json")
+    # env.run("vision", f"{PROCESSED_DATA_PATH}/record/record_vs_1124_new.json")
+    # env.run("mkt", f"{PROCESSED_DATA_PATH}/record/record_mkt_1124.json")
+    # env.run("news", f"{PROCESSED_DATA_PATH}/record/record_news_1124.json")
+    env.replay()
+
+    # # Control group
+    # env = Environment(
+    #     cs_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/gpt_4o.pkl",
+    #     mkt_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/gpt_4o.pkl",
+    #     vision_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/gpt_4o.pkl",
+    #     news_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/gpt_4o.pkl",
+    # )
+    # # env.run("cs", f"{PROCESSED_DATA_PATH}/record/record_cs_gpt_4o_1125.json")
+    # env.run("vision", f"{PROCESSED_DATA_PATH}/record/record_vs_gpt_4o_1125.json")
+    # env.run("mkt", f"{PROCESSED_DATA_PATH}/record/record_mkt_gpt_4o_1125.json")
+    # env.run("news", f"{PROCESSED_DATA_PATH}/record/record_news_gpt_4o_1125.json")

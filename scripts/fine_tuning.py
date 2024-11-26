@@ -12,7 +12,7 @@ from environ.env import Environment
 from environ.prompt_generator import PromptGenerator
 
 pg = PromptGenerator()
-agent_name = "cs_1124"
+agent_name = "cs_1125"
 
 # Generate the prompts for cross-sectional agent
 with open(
@@ -40,7 +40,7 @@ with open(
 #         data_type="vision",
 #         strategy="image_url",
 #         start_date="2023-06-01",
-#         end_date="2024-01-01",
+#         end_date="2023-11-01",
 #         train_test="train",
 #     ):
 #         json_line = json.dumps(prompt)
@@ -55,7 +55,7 @@ with open(
 
 #     for _, prompt in pg.get_mkt_prompt(
 #         start_date="2023-06-01",
-#         end_date="2024-01-01",
+#         end_date="2023-11-01",
 #         train_test="train",
 #     ):
 #         json_line = json.dumps(prompt)
@@ -71,7 +71,7 @@ with open(
 #     for _, prompt in pg.get_mkt_prompt(
 #         strategy="news",
 #         start_date="2023-06-01",
-#         end_date="2024-01-01",
+#         end_date="2023-11-01",
 #         train_test="train",
 #     ):
 #         json_line = json.dumps(prompt)
@@ -83,15 +83,12 @@ agent.fine_tuning(f"{PROCESSED_DATA_PATH}/train/{agent_name}.jsonl")
 with open(f"{PROCESSED_DATA_PATH}/checkpoints/{agent_name}.pkl", "wb") as f:
     pickle.dump(agent, f)
 
-# # Run the env
-# cs_agent_name = agent_name
-# mkt_agent_name = "mkt_1101"
+# Run the env
+env = Environment(
+    cs_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/cs_1125.pkl",
+    mkt_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/mkt_1124.pkl",
+    vision_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/vs_1124.pkl",
+    news_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/news_1124.pkl",
+)
 
-# env = Environment(
-#     cs_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/{cs_agent_name}.pkl",
-#     mkt_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/{mkt_agent_name}.pkl",
-# )
-# env.run(
-#     cs_record_path=f"{PROCESSED_DATA_PATH}/record/record_{cs_agent_name}.json",
-#     mkt_record_path=f"{PROCESSED_DATA_PATH}/record/record_{mkt_agent_name}.json",
-# )
+env.run("cs", f"{PROCESSED_DATA_PATH}/record/record_cs_1125.json")

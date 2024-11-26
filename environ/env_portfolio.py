@@ -24,6 +24,7 @@ class Portfolio:
         data_loader = DataLoader()
         self.btc = data_loader.get_btc_data()
         self.cmkt = data_loader.get_cmkt_data()
+        self.n = data_loader.get_n_data()
 
     def reset(self) -> None:
         """
@@ -130,13 +131,9 @@ class Portfolio:
                     .reset_index()
                 )
 
-        for key in AP_LABEL:
-            if key not in df_port.columns:
-                df_port[key] = 0
-
         df_port["Long"] = df_port["Very High"]
         df_port["HML"] = df_port["Very High"] - df_port["Very Low"]
-        for _ in [self.cmkt, self.btc]:
+        for _ in [self.cmkt, self.btc, self.n]:
             df_port = df_port.merge(_, on="time", how="left")
 
         return df_port
@@ -217,7 +214,7 @@ class Portfolio:
         # also plot the Very High minus Very Low
         plt.figure()
 
-        for q in ["HML", "Long", "BTC", "CMKT"]:
+        for q in ["HML", "Long", "BTC", "CMKT", "1/N"]:
             plt.plot(
                 (df.set_index("time")[q] + 1).cumprod(),
                 label=q,
@@ -290,7 +287,7 @@ class Portfolio:
             avg = ap_tab[strength].mean()
             std = ap_tab[strength].std()
             sharpe = avg / std
-            t = avg / std * (ap_tab[strength].shape[0]) ** 0.5
+            t = avg / (std / ap_tab[strength].shape[0] ** 0.5)
 
             if t > 2.58:
                 asterisk = "***"
