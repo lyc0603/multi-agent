@@ -7,17 +7,23 @@ from matplotlib import pyplot as plt
 
 from environ.constants import AP_LABEL, TABLE_PATH
 
+FONT_SIZE = 13
+
 FIGURE_NAME_MAPPING = {
-    "Long": {"name": "Multi-Agent Model", "color": "blue", "linestyle": "-"},
-    "BTC": {"name": "Bitcoin", "color": "orange", "linestyle": "--"},
-    "CMKT": {"name": "Market", "color": "green", "linestyle": "--"},
-    "1/N": {"name": "1/N", "color": "red", "linestyle": "--"},
+    "Long": {"name": "Multi-Agent Model", "color": "blue", "linestyle": "solid"},
+    "BTC": {"name": "Bitcoin", "color": "orange", "linestyle": "dashdot"},
+    "mcap_ret": {
+        "name": "Market",
+        "color": "green",
+        "linestyle": "dashdot",
+    },
+    "1/N": {"name": "1/N", "color": "red", "linestyle": "dashdot"},
 }
 
 
 def port_fig(
     df: pd.DataFrame,
-    lines: list[str] = ["Long", "BTC", "CMKT", "1/N"],
+    lines: list[str] = ["Long", "BTC", "mcap_ret", "1/N"],
     path: str | None = None,
 ) -> None:
     """
@@ -33,10 +39,12 @@ def port_fig(
             linestyle=FIGURE_NAME_MAPPING[q]["linestyle"],
         )
 
-    plt.legend()
-    plt.xticks(rotation=45)
-    plt.ylabel("Cumulative Return")
+    plt.legend(frameon=False, fontsize=FONT_SIZE)
+    plt.xticks(rotation=45, fontsize=FONT_SIZE)
+    plt.yticks(fontsize=FONT_SIZE)
+    plt.ylabel("Cumulative Return", fontsize=FONT_SIZE)
     plt.grid(alpha=0.5)
+    plt.tight_layout()
     if path:
         plt.savefig(path)
     else:

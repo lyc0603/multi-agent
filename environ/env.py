@@ -16,48 +16,8 @@ from environ.agent import FTAgent
 from environ.constants import LABEL, PROCESSED_DATA_PATH, FIGURE_PATH
 from environ.env_datahander import DataHandler
 from environ.env_portfolio import Portfolio
-from environ.visualization import ap_table
+from environ.visualization import ap_table, port_fig
 from environ.utils import predict_explain_split
-
-FIGURE_NAME_MAPPING = {
-    "Long": {"name": "Multi-Agent Model", "color": "blue", "linestyle": "solid"},
-    "BTC": {"name": "Bitcoin", "color": "orange", "linestyle": "dashdot"},
-    "mcap_ret": {
-        "name": "Market, 30",
-        "color": "green",
-        "linestyle": "dashdot",
-    },
-    "1/N": {"name": "1/N, 30", "color": "red", "linestyle": "dashdot"},
-}
-
-
-def port_fig(
-    df: pd.DataFrame,
-    lines: list[str] = ["Long", "BTC", "mcap_ret", "1/N"],
-    path: str | None = None,
-) -> None:
-    """
-    Function to plot the portfolio figure
-    """
-    plt.figure()
-
-    for q in lines:
-        plt.plot(
-            (df.set_index("time")[q] + 1).cumprod(),
-            label=FIGURE_NAME_MAPPING[q]["name"],
-            color=FIGURE_NAME_MAPPING[q]["color"],
-            linestyle=FIGURE_NAME_MAPPING[q]["linestyle"],
-        )
-
-    plt.legend(frameon=False)
-    plt.xticks(rotation=45)
-    plt.ylabel("Cumulative Return")
-    plt.grid(alpha=0.5)
-    plt.tight_layout()
-    if path:
-        plt.savefig(path)
-    else:
-        plt.show()
 
 
 class Environment:
