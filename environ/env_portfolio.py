@@ -4,13 +4,11 @@ Portfolio class to keep track of the portfolio
 
 from typing import Dict, Literal
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from IPython.display import clear_output
 from sklearn.metrics import accuracy_score, matthews_corrcoef
 
-from environ.constants import AP_LABEL, LABEL, TABLE_PATH
+from environ.constants import AP_LABEL
 from environ.data_loader import DataLoader
 
 
@@ -92,13 +90,15 @@ class Portfolio:
 
         dfq = pd.DataFrame()
         df.sort_values(["year", "week"], ascending=True, inplace=True)
-        for _, dfyw in df.groupby(["year", "week"]):
+        for idx, dfyw in df.groupby(["year", "week"]):
             dfyw.sort_values("lin_prob", ascending=True, inplace=True)
             dfyw.reset_index(drop=True, inplace=True)
             n = dfyw.shape[0] // len(AP_LABEL)
             for i, q in enumerate(AP_LABEL):
                 df_label = dfyw.iloc[i * n : (i + 1) * n]
                 df_label["quitiles"] = q
+                df_label["year"] = idx[0]
+                df_label["week"] = idx[1]
                 dfq = pd.concat([dfq, df_label])
 
         df = dfq.copy()
@@ -115,6 +115,26 @@ class Portfolio:
                     )
                     .reset_index()
                 )
+                # df_port = (
+                #     (
+                #         df.copy()
+                #         .groupby(["year", "week", "time", "quitiles"])["daily_ret"]
+                #         .mean()
+                #         .reset_index()
+                #     )
+                # )
+
+                # # calculate the weekly return for the portfolio
+                # df_port.sort_values(["time", "quitiles"], ascending=True, inplace=True)
+                # df_port["daily_ret"] = df_port["daily_ret"] + 1
+                # df_port["weekly_ret"] = df_port.groupby(["year", "week", "quitiles"])["daily_ret"].transform(
+                #     "prod"
+                # )
+                # df_port = df_port.drop_duplicates(subset=["year", "week", "quitiles"])[
+                #     ["year", "week", "time", "quitiles", "weekly_ret"]
+                # ]
+                # df_port["weekly_ret"] = df_port["weekly_ret"] - 1
+                # df_port = df_port.pivot(index="time", columns="quitiles", values="weekly_ret").reset_index()
             case "mcap":
                 df["mcap_ret"] = df["daily_ret"] * df["market_caps"]
                 df_port = (
@@ -191,77 +211,31 @@ class Portfolio:
             "MCC": matthews_corrcoef(df[truth_col], df[pred_col]),
         }
 
-    def plot(self, data_type: Literal["cs", "vision", "mkt", "news"]) -> None:
+    def mkt_cs_comb(self) -> None:
         """
-        Method to plot the portfolio
+        Method to combine the market and cross-sectional data
         """
 
-        # plot the cumulative returns
-        plt.figure()
+        self.cs_agg_ret["time"] = pd.to_datetime(self.cs_agg_ret["time"])
+        self.cs_agg_ret["year"] = self.cs_agg_ret["time"].dt.year.astype(int)
+        self.cs_agg_ret["week"] = self.cs_agg_ret["time"].dt.isocalendar().week.astype(int)
+        df_mkt = (
+            self.mkt_agg[["year", "week", "strength"]]
+            .rename(columns={"strength": "mkt"})
+            .copy()
+        )
 
-        df = getattr(self, f"{data_type}_ret")
+        for col in ["year", "week"]:
+            df_mkt[col] = df_mkt[col].astype(int)
 
-        for q in AP_LABEL:
-            plt.plot(
-                (df.set_index("time")[q] + 1).cumprod(),
-                label=q,
-            )
-
-        plt.legend()
-        plt.xticks(rotation=45)
-        plt.show()
-
-        # also plot the Very High minus Very Low
-        plt.figure()
-
-        for q in ["HML", "Long", "BTC", "CMKT", "1/N"]:
-            plt.plot(
-                (df.set_index("time")[q] + 1).cumprod(),
-                label=q,
-            )
-
-        plt.legend()
-        plt.xticks(rotation=45)
-        plt.show()
-
-        # # adjust the portfolio
-        # df_cs = self.port_ret.copy()
-        # df_cs["time"] = pd.to_datetime(df_cs["time"])
-        # df_cs["year"] = df_cs["time"].dt.year.astype(int)
-        # df_cs["week"] = df_cs["time"].dt.isocalendar().week.astype(int)
-        # df_mkt = (
-        #     self.mkt[["year", "week", "strength"]]
-        #     .rename(columns={"strength": "mkt"})
-        #     .copy()
-        # )
-        # df_mkt["year"] = df_mkt["year"].astype(int)
-        # df_mkt["week"] = df_mkt["week"].astype(int)
-        # df_mkt = df_mkt.replace(
-        #     {
-        #         "High": 2,
-        #         "Medium": 1,
-        #         "Low": 0.5,
-        #     },
-        # )
-        # df = df_cs.merge(df_mkt, on=["year", "week"], how="left")
-        # # also plot the Very High minus Very Low
-        # plt.figure()
-        # for strength in ["HML", "Long", "BTC", "CMKT"]:
-
-        #     df[strength] = (
-        #         df[strength] * df["mkt"]
-        #         if strength in ["HML", "Long"]
-        #         else df[strength]
-        #     )
-
-        #     plt.plot(
-        #         (df.set_index("time")[strength] + 1).cumprod(),
-        #         label=strength,
-        #     )
-
-        # plt.legend()
-        # plt.xticks(rotation=45)
-        # plt.show()
+        df_mkt = df_mkt.replace(
+            {
+                "Rise": 1,
+                "Fall": 0.5,
+            },
+        )
+        self.cs_agg_ret = self.cs_agg_ret.merge(df_mkt, on=["year", "week"], how="left")
+        self.cs_agg_ret["Long"] = self.cs_agg_ret["Long"] * self.cs_agg_ret["mkt"]  
 
     def asset_pricing_table(self, data_type: str) -> dict:
         """
@@ -274,12 +248,6 @@ class Portfolio:
         ap_tab["year"] = ap_tab["time"].dt.year
         ap_tab["week"] = ap_tab["time"].dt.isocalendar().week
         ap_tab = ap_tab.drop(columns=["time"])
-        # for strength in AP_LABEL + ["HML"]:
-        #     ap_tab[strength] = ap_tab[strength] + 1
-        # ap_tab = (ap_tab.groupby(["year", "week"])).prod().reset_index()
-
-        # for strength in AP_LABEL + ["HML"]:
-        #     ap_tab[strength] = ap_tab[strength] - 1
 
         res_dict = {}
 
@@ -313,9 +281,3 @@ if __name__ == "__main__":
 
     portfolio = Portfolio()
     portfolio.reset()
-
-    portfolio.port["A"] = [1]  # Modify self.port
-    print(portfolio.cs)  # self.cs also contains column 'A'
-
-    portfolio.port_ret["B"] = [2]  # Modify self.port_ret
-    print(portfolio.cs_ret)  # self.cs_ret also contains column 'B'

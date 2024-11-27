@@ -31,6 +31,7 @@ class OpenAIAgent:
     def __call__(
         self,
         prompt: str,
+        context: list[dict[str, str]] | None = None,
         instruction: str | None = None,
         temperature: float = 0,
         log_probs: bool = False,
@@ -41,6 +42,7 @@ class OpenAIAgent:
         Send a message to the agent
         """
 
+        # Add vision
         if vision_url:
             messages = [
                 {
@@ -57,6 +59,11 @@ class OpenAIAgent:
         else:
             messages = [{"role": "user", "content": prompt}]
 
+        # Add context
+        if context:
+            messages = context + messages
+
+        # Add system instruction
         if instruction:
             messages = [
                 {
@@ -124,6 +131,7 @@ class FTAgent(OpenAIAgent):
     def predict(
         self,
         assistant_msg: str,
+        context: list[dict[str, str]] | None = None,
         instruction: str | None = None,
         log_probs: bool = False,
         top_logprobs: int | None = None,
@@ -134,6 +142,7 @@ class FTAgent(OpenAIAgent):
         """
         return self(
             assistant_msg,
+            context=context,
             instruction=instruction,
             temperature=0,
             log_probs=log_probs,
@@ -153,8 +162,19 @@ class FTAgent(OpenAIAgent):
 
         msg = prompt["messages"]
 
+        # If the message has more than 2 parts
+        # Then the parts before the last two are the context
+        if len(msg) > 2:
+            context = msg[:2]
+            msg = msg[2:]
+            print(context)
+            print(msg)
+        else:
+            context = None
+
         return self.predict(
             assistant_msg=msg[1]["content"],
+            context=context,
             instruction=msg[0]["content"],
             log_probs=log_probs,
             top_logprobs=top_logprobs,
@@ -172,8 +192,17 @@ class FTAgent(OpenAIAgent):
 
         msg = prompt["messages"]
 
+        # If the message has more than 2 parts
+        # Then the parts before the last two are the context
+        if len(msg) > 2:
+            context = msg[:2]
+            msg = msg[2:]
+        else:
+            context = None
+
         return self.predict(
             assistant_msg=msg[1]["content"][0]["text"],
+            context=context,
             instruction=msg[0]["content"],
             log_probs=log_probs,
             top_logprobs=top_logprobs,

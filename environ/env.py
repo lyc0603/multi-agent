@@ -2,22 +2,61 @@
 Class for the crypto market environment
 """
 
+import pandas as pd
 import json
 import pickle
-import time
-import numpy as np
 from typing import Any, Literal
-import matplotlib.pyplot as plt
-from IPython.display import clear_output
 
+import matplotlib.pyplot as plt
+import numpy as np
+from IPython.display import clear_output
 from tqdm import tqdm
 
 from environ.agent import FTAgent
-from environ.constants import LABEL, PROCESSED_DATA_PATH
+from environ.constants import LABEL, PROCESSED_DATA_PATH, FIGURE_PATH
 from environ.env_datahander import DataHandler
 from environ.env_portfolio import Portfolio
+from environ.visualization import ap_table
 from environ.utils import predict_explain_split
-from environ.tabulate import ap_table
+
+FIGURE_NAME_MAPPING = {
+    "Long": {"name": "Multi-Agent Model", "color": "blue", "linestyle": "solid"},
+    "BTC": {"name": "Bitcoin", "color": "orange", "linestyle": "dashdot"},
+    "mcap_ret": {
+        "name": "Market, 30",
+        "color": "green",
+        "linestyle": "dashdot",
+    },
+    "1/N": {"name": "1/N, 30", "color": "red", "linestyle": "dashdot"},
+}
+
+
+def port_fig(
+    df: pd.DataFrame,
+    lines: list[str] = ["Long", "BTC", "mcap_ret", "1/N"],
+    path: str | None = None,
+) -> None:
+    """
+    Function to plot the portfolio figure
+    """
+    plt.figure()
+
+    for q in lines:
+        plt.plot(
+            (df.set_index("time")[q] + 1).cumprod(),
+            label=FIGURE_NAME_MAPPING[q]["name"],
+            color=FIGURE_NAME_MAPPING[q]["color"],
+            linestyle=FIGURE_NAME_MAPPING[q]["linestyle"],
+        )
+
+    plt.legend(frameon=False)
+    plt.xticks(rotation=45)
+    plt.ylabel("Cumulative Return")
+    plt.grid(alpha=0.5)
+    if path:
+        plt.savefig(path)
+    else:
+        plt.show()
 
 
 class Environment:
@@ -29,9 +68,6 @@ class Environment:
     def __init__(self, **agent_paths: str) -> None:
         """
         Initialize the environment with agent paths.
-
-        Args:
-            **agent_paths (str): Paths to agent pickle files, e.g., cs_agent_path, mkt_agent_path.
         """
         self.data_handler = DataHandler()
         self.portfolio = Portfolio()
@@ -45,12 +81,6 @@ class Environment:
     def _load_agent(self, path: str) -> Any:
         """
         Load an agent from a pickle file.
-
-        Args:
-            path (str): Path to the agent pickle file.
-
-        Returns:
-            Any: Loaded agent object.
         """
         with open(path, "rb") as file:
             return pickle.load(file)
@@ -58,13 +88,21 @@ class Environment:
     def load_record(self, record_type: str, path: str) -> None:
         """
         Load a record from a JSON file.
-
-        Args:
-            record_type (str): Type of record (cs, mkt, vision, news).
-            path (str): Path to the record file.
         """
         with open(path, "r", encoding="utf-8") as f:
             self.records[record_type] = json.load(f)
+
+    def _load_record_yw_crypto(
+        self, record_type: str, year: str, week: str, crypto: str | None = None
+    ) -> dict:
+        """
+        Load the record in a specific year and week
+        """
+
+        if crypto:
+            return self.records[record_type][f"{year}{week}"][crypto]
+        else:
+            return self.records[record_type][f"{year}{week}"]["null"]
 
     def _get_state(
         self,
@@ -75,15 +113,6 @@ class Environment:
     ) -> Any:
         """
         Retrieve the state data based on data type.
-
-        Args:
-            data_type (str): Type of data (ret, cs, mkt, vision, news).
-            year (str): Year of the data.
-            week (str): Week of the data.
-            crypto (str | None): Cryptocurrency name (optional for non-crypto data).
-
-        Returns:
-            Any: Corresponding state data.
         """
         data_sources = {
             "ret": lambda: self.data_handler.env_data.loc[
@@ -105,14 +134,6 @@ class Environment:
     def _get_action(self, state: Any, data_type: str) -> tuple:
         """
         Get the action from the corresponding agent.
-
-        Args:
-            agent_name (str): The agent's name (cs, mkt, vision, news).
-            state (Any): Current state data.
-            data_type (str): Type of data to process.
-
-        Returns:
-            tuple: Action and log probabilities.
         """
         action_method = {
             "cs": self.agents["cs"].predict_from_prompt,
@@ -131,18 +152,9 @@ class Environment:
         action: str,
         log_prob: Any,
         state: dict,
-    ):
+    ) -> None:
         """
         Record the action and associated log probabilities.
-
-        Args:
-            record_type (str): Type of record (cs, mkt, vision, news).
-            year (str): Year of the data.
-            week (str): Week of the data.
-            crypto (str | None): Cryptocurrency name (if applicable).
-            action (str): Action taken.
-            log_prob (Any): Log probability of the action.
-            state (dict): Current state data.
         """
         record = self.records[record_type]
         record.setdefault(f"{year}{week}", {}).setdefault(
@@ -153,31 +165,65 @@ class Environment:
             {"role": "assistant", "content": log_prob},
         ]
 
+    def _collab(self, state: dict, year: str, week: str) -> dict:
+        """
+        Method to collaborate between market team and crypto team
+        """
+
+        # Get the market team's prediction
+        market_records = []
+        for record_type in ["mkt", "news"]:
+            market_record = self._load_record_yw_crypto(record_type, year, week)[
+                "messages"
+            ]
+
+            system_instruc = market_record[0]
+            message = market_record[1]
+            assistant_msg = market_record[3]
+            log_prob = market_record[4]["content"]
+
+            lin_prob = np.exp(log_prob)
+            strength, explain = predict_explain_split(assistant_msg["content"])
+            explain_with_prob = f"I am {lin_prob} confident that the market \
+trend for the upcoming week is {strength}. {explain}"
+
+            assistant_msg_with_prob = {
+                "role": "assistant",
+                "content": f"Market trend: {strength}\nExplanation: {explain_with_prob}",
+            }
+
+            market_records.append(message)
+            market_records.append(assistant_msg_with_prob)
+
+        state["messages"] = market_records + state["messages"]
+
+        return state
+
     def _step(
         self,
         year: str,
         week: str,
         data_type: Literal["cs", "mkt", "vision", "news"],
         crypto: str | None = None,
+        collab: bool = False,
     ) -> None:
         """
         Perform a single step in the environment for a specific data type.
-
-        Args:
-            year (str): Year of the data.
-            week (str): Week of the data.
-            data_type (str): Type of data to process (cs, mkt, vision, news).
-            crypto (str | None): Cryptocurrency name (if applicable).
         """
         ret_state = self._get_state("ret", year, week, crypto)
         state = self._get_state(data_type, year, week, crypto)
+
+        if collab:
+            state = self._collab(state, year, week)
+            print(state)
+
         action, prob = self._get_action(state, data_type)
 
         if " " + LABEL[0] in [_.token for _ in prob[3].top_logprobs]:
             log_prob = [
                 p.logprob for p in prob[3].top_logprobs if p.token == " " + LABEL[0]
             ][0]
-            strength = predict_explain_split(action)
+            strength, _ = predict_explain_split(action)
         else:
             print("No token found")
             log_prob = np.log(1 / len(LABEL))
@@ -211,25 +257,29 @@ class Environment:
     def _save_record(self, record_type: str, path: str) -> None:
         """
         Save records to a JSON file.
-
-        Args:
-            record_type (str): Type of record (cs, mkt, vision, news).
-            path (str): Path to save the record file.
         """
         with open(path, "w", encoding="utf-8") as f:
             json.dump(self.records[record_type], f, indent=4)
 
     def run(
-        self, data_type: Literal["cs", "mkt", "vision", "news"], record_path: str
+        self,
+        data_type: Literal["cs", "mkt", "vision", "news"],
+        record_path: str,
+        collab: bool = False,
+        # For collaboration replay
+        mkt_record_path: str | None = None,
+        news_record_path: str | None = None,
     ) -> None:
         """
         Run the environment for a specific data type.
-
-        Args:
-            data_type (str): Type of data to process (cs, mkt, vision, news).
-            record_path (str): Path to save the record.
         """
-        self.portfolio.reset()
+
+        if (mkt_record_path is not None) & (news_record_path is not None):
+            self.load_record("mkt", str(mkt_record_path))
+            self.load_record("news", str(news_record_path))
+        else:
+            self.portfolio.reset()
+
         PLOT = True
 
         yw_crypto_done_list = [
@@ -250,8 +300,11 @@ class Environment:
                         print(f"Skipping {year}{week}{crypto}")
                         PLOT = False
                         continue
+                else:
+                    # market team does not receive collaboration
+                    collab = False
 
-                self._step(year, week, data_type, crypto)
+                self._step(year, week, data_type, crypto, collab)
 
             if (data_type in ["cs", "vision"]) & PLOT:
                 self.portfolio.asset_pricing(data_type)
@@ -276,13 +329,11 @@ class Environment:
             record = self.records[agent_type][yw][crypto]["messages"]
         else:
             record = self.records[agent_type][yw]["null"]["messages"]
-
         try:
-            strength = predict_explain_split(record[-2]["content"])
-        except:
+            strength, _ = predict_explain_split(record[-2]["content"])
+        except:  # pylint: disable=bare-except
             strength = LABEL[1]
 
-        print(record)
         true = record[-3]["content"]
         prob = record[-1]["content"]
         self.portfolio.update(
@@ -296,18 +347,17 @@ class Environment:
             state_ret=ret_state,
         )
 
-    def replay(self) -> None:
+    def replay(self, **record_paths: str) -> None:
         """
         Replay the record
         """
         self.portfolio.reset()
 
         # load the records
-        for record_type, agent_dir in self.agents_path.items():
-            record_path = f"{PROCESSED_DATA_PATH}/record/record_{agent_dir.split('/')[-1].split('.')[0]}.json"
+        for record_type, _ in self.agents_path.items():
             self.load_record(
                 record_type.split("_")[0],
-                record_path,
+                record_paths[record_type.split("_")[0] + "_record_path"],
             )
 
         for year, week in tqdm(self.data_handler.get_yw_list()):
@@ -326,28 +376,35 @@ class Environment:
             self.portfolio.merge_cs()
             self.portfolio.merge_mkt()
 
-            clear_output(wait=True)
-            plt.clf()
-
             for data_type in ["cs", "vision", "cs_agg"]:
-                print(data_type)
+                # print(data_type)
                 self.portfolio.asset_pricing(data_type)
-                self.portfolio.plot(data_type)
+                # self.portfolio.plot(data_type)
 
-            # time.sleep(10)
+        # Display the metrics
+        metrics = [
+            ("CS", self.portfolio.cs),
+            ("VS", self.portfolio.vision),
+            ("CS AGG", self.portfolio.cs_agg),
+            ("MKT", self.portfolio.mkt),
+            ("NEWS", self.portfolio.news),
+            ("NEWS AGG", self.portfolio.mkt_agg),
+        ]
 
-            # self.portfolio.asset_pricing_table()
-            print("CS ACC:", self.portfolio.score(self.portfolio.cs)["ACC"])
-            print("CS MCC:", self.portfolio.score(self.portfolio.cs)["MCC"])
-            print("VS ACC:", self.portfolio.score(self.portfolio.vision)["ACC"])
-            print("VS MCC:", self.portfolio.score(self.portfolio.vision)["MCC"])
-            print("CS AGG ACC:", self.portfolio.score(self.portfolio.cs_agg)["ACC"])
-            print("CS AGG MCC:", self.portfolio.score(self.portfolio.cs_agg)["MCC"])
-            print("MKT ACC:", self.portfolio.score(self.portfolio.mkt)["ACC"])
-            print("MKT MCC:", self.portfolio.score(self.portfolio.mkt)["MCC"])
-            print("NEWS ACC:", self.portfolio.score(self.portfolio.news)["ACC"])
-            print("NEWS MCC:", self.portfolio.score(self.portfolio.news)["MCC"])
+        for name, component in metrics:
+            scores = self.portfolio.score(component)
+            print(f"{name} ACC: {scores['ACC']:.6f} | {name} MCC: {scores['MCC']:.6f}")
 
+        # Integrate the cash-crypto allocation
+        self.portfolio.mkt_cs_comb()
+
+        # Display the portfolio figure
+        port_fig(
+            self.portfolio.cs_agg_ret,
+            path=f"{FIGURE_PATH}/port.pdf",
+        )
+
+        # Display the asset pricing table
         ap_table_data = {}
         for data_type, data_name in zip(
             ["cs", "vision", "cs_agg"],
@@ -359,6 +416,22 @@ class Environment:
 
 
 if __name__ == "__main__":
+
+    # # Treatment group: Collaboration
+    # env = Environment(
+    #     cs_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/cs_1125.pkl",
+    #     mkt_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/mkt_1124.pkl",
+    #     vision_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/vs_1124.pkl",
+    #     news_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/news_1124.pkl",
+    # )
+
+    # env.run(
+    #     "cs",
+    #     f"{PROCESSED_DATA_PATH}/record/record_cs_collab_1127.json",
+    #     collab=True,
+    #     mkt_record_path=f"{PROCESSED_DATA_PATH}/record/record_mkt_1124.json",
+    #     news_record_path=f"{PROCESSED_DATA_PATH}/record/record_news_1124.json",
+    # )
 
     # Treatment group
     env = Environment(
@@ -372,7 +445,12 @@ if __name__ == "__main__":
     # env.run("vision", f"{PROCESSED_DATA_PATH}/record/record_vs_1124_new.json")
     # env.run("mkt", f"{PROCESSED_DATA_PATH}/record/record_mkt_1124.json")
     # env.run("news", f"{PROCESSED_DATA_PATH}/record/record_news_1124.json")
-    env.replay()
+    env.replay(
+        cs_record_path=f"{PROCESSED_DATA_PATH}/record/record_cs_1125.json",
+        vision_record_path=f"{PROCESSED_DATA_PATH}/record/record_vs_1124.json",
+        mkt_record_path=f"{PROCESSED_DATA_PATH}/record/record_mkt_1124.json",
+        news_record_path=f"{PROCESSED_DATA_PATH}/record/record_news_1124.json",
+    )
 
     # # Control group
     # env = Environment(
@@ -382,6 +460,30 @@ if __name__ == "__main__":
     #     news_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/gpt_4o.pkl",
     # )
     # # env.run("cs", f"{PROCESSED_DATA_PATH}/record/record_cs_gpt_4o_1125.json")
-    # env.run("vision", f"{PROCESSED_DATA_PATH}/record/record_vs_gpt_4o_1125.json")
-    # env.run("mkt", f"{PROCESSED_DATA_PATH}/record/record_mkt_gpt_4o_1125.json")
-    # env.run("news", f"{PROCESSED_DATA_PATH}/record/record_news_gpt_4o_1125.json")
+    # # env.run("vision", f"{PROCESSED_DATA_PATH}/record/record_vs_gpt_4o_1125.json")
+    # # env.run("mkt", f"{PROCESSED_DATA_PATH}/record/record_mkt_gpt_4o_1125.json")
+    # # env.run("news", f"{PROCESSED_DATA_PATH}/record/record_news_gpt_4o_1125.json")
+    # env.replay(
+    #     cs_record_path=f"{PROCESSED_DATA_PATH}/record/record_cs_gpt_4o_1125.json",
+    #     vision_record_path=f"{PROCESSED_DATA_PATH}/record/record_vs_gpt_4o_1125.json",
+    #     mkt_record_path=f"{PROCESSED_DATA_PATH}/record/record_mkt_gpt_4o_1125.json",
+    #     news_record_path=f"{PROCESSED_DATA_PATH}/record/record_news_gpt_4o_1125.json",
+    # )
+
+    # # Single GPT-4o with fine-tuning
+    # env = Environment(
+    #     cs_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/comb_1126.pkl",
+    #     mkt_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/comb_1126.pkl",
+    #     vision_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/comb_1126.pkl",
+    #     news_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/comb_1126.pkl",
+    # )
+    # # env.run("cs", f"{PROCESSED_DATA_PATH}/record/record_cs_comb_1126.json")
+    # # env.run("vision", f"{PROCESSED_DATA_PATH}/record/record_vs_comb_1126.json")
+    # # env.run("mkt", f"{PROCESSED_DATA_PATH}/record/record_mkt_comb_1126.json")
+    # # env.run("news", f"{PROCESSED_DATA_PATH}/record/record_news_comb_1126.json")
+    # env.replay(
+    #     cs_record_path=f"{PROCESSED_DATA_PATH}/record/record_cs_comb_1126.json",
+    #     vision_record_path=f"{PROCESSED_DATA_PATH}/record/record_vs_comb_1126.json",
+    #     mkt_record_path=f"{PROCESSED_DATA_PATH}/record/record_mkt_comb_1126.json",
+    #     news_record_path=f"{PROCESSED_DATA_PATH}/record/record_news_comb_1126.json",
+    # )

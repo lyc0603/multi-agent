@@ -243,7 +243,15 @@ class DataLoader:
             (ret["year"] + ret["week"] + ret["id"]).isin(signal["uid"].unique())
         ]
 
-        n = n.groupby(["time"])["daily_ret"].mean().reset_index()
+        n["mcap_ret"] = n["daily_ret"] * n["market_caps"]
+        n = (
+            n.groupby(["time"])
+            .agg({"daily_ret": "mean", "mcap_ret": "sum", "market_caps": "sum"})
+            .reset_index()
+        )
+        n["mcap_ret"] = n["mcap_ret"] / n["market_caps"]
+        n.drop(columns=["market_caps"], inplace=True)
+        # n = n.groupby(["time"])["daily_ret"].mean().reset_index()
         n.rename(columns={"daily_ret": "1/N"}, inplace=True)
 
         return n

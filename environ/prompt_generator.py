@@ -111,7 +111,7 @@ class PromptGenerator:
             for cs_prompt in cs_prompt_yw:
                 crypto_name = cs_prompt["messages"][1]["content"].split("of ")[1].split(" to")[0]
                 strength_explanation = cs_prompt["messages"][2]["content"]
-                strength = predict_explain_split(strength_explanation)
+                strength, _ = predict_explain_split(strength_explanation)
                 match strength:
                     case "Very High":
                         long.append(crypto_name)

@@ -18,13 +18,15 @@ er = pd.read_csv(f"{PROCESSED_DATA_PATH}/signal/gecko_mkt.csv")
 er["time"] = pd.to_datetime(er["time"])
 
 
-def predict_explain_split(output: str) -> str:
+def predict_explain_split(output: str) -> tuple[str, str]:
     """
     Predict the response from the prompt
     """
 
     strength = output.split("\n")[0].split(": ")[1]
-    return strength
+    explain = output.split("\n")[1].split(": ")[1]
+
+    return strength, explain
 
 
 def get_pdf_text(pdf_path: str) -> str:
