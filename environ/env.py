@@ -53,6 +53,7 @@ def port_fig(
     plt.xticks(rotation=45)
     plt.ylabel("Cumulative Return")
     plt.grid(alpha=0.5)
+    plt.tight_layout()
     if path:
         plt.savefig(path)
     else:
