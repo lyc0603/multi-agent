@@ -16,7 +16,7 @@ from environ.agent import FTAgent
 from environ.constants import LABEL, PROCESSED_DATA_PATH, FIGURE_PATH
 from environ.env_datahander import DataHandler
 from environ.env_portfolio import Portfolio
-from environ.visualization import ap_table, port_fig
+from environ.visualization import ap_table, port_fig, port_fig_btc_base
 from environ.utils import predict_explain_split
 
 
@@ -363,6 +363,12 @@ trend for the upcoming week is {strength}. {explain}"
         port_fig(
             self.portfolio.cs_agg_ret,
             path=f"{FIGURE_PATH}/port.pdf",
+        )
+
+        # Display the portfolio figure with BTC as base
+        port_fig_btc_base(
+            self.portfolio.cs_agg_ret,
+            path=f"{FIGURE_PATH}/port_btc.pdf",
         )
 
         # Display the asset pricing table

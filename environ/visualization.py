@@ -21,9 +21,42 @@ FIGURE_NAME_MAPPING = {
 }
 
 
+def port_fig_btc_base(
+    df: pd.DataFrame,
+    lines: list[str] = ["Long"],
+    path: str | None = None,
+) -> None:
+    """
+    Function to plot the portfolio figure
+    """
+    plt.figure()
+    df = df.copy()
+
+    for q in lines:
+        plt.plot(
+            (df.set_index("time")[q] + 1).cumprod()
+            / (df.set_index("time")["BTC"] + 1).cumprod(),
+            label=FIGURE_NAME_MAPPING[q]["name"] + " vs. Bitcoin",
+            color=FIGURE_NAME_MAPPING[q]["color"],
+            linestyle=FIGURE_NAME_MAPPING[q]["linestyle"],
+        )
+
+    plt.legend(frameon=False, fontsize=FONT_SIZE)
+    plt.xticks(rotation=45, fontsize=FONT_SIZE)
+    plt.yticks(fontsize=FONT_SIZE)
+    plt.ylabel("Cumulative Return Denominated in Bitcoin", fontsize=FONT_SIZE)
+    plt.grid(alpha=0.5)
+    plt.tight_layout()
+    plt.axhline(y=1, color="black", linestyle="--")
+    if path:
+        plt.savefig(path)
+    else:
+        plt.show()
+
+
 def port_fig(
     df: pd.DataFrame,
-    lines: list[str] = ["Long", "BTC", "mcap_ret", "1/N"],
+    lines: list[str] = ["Long", "mcap_ret", "1/N"],
     path: str | None = None,
 ) -> None:
     """
