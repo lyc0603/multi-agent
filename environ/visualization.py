@@ -23,7 +23,7 @@ FIGURE_NAME_MAPPING = {
 
 def port_fig_btc_base(
     df: pd.DataFrame,
-    lines: list[str] = ["Long"],
+    lines: list[str] = ["Long", "mcap_ret", "1/N"],
     path: str | None = None,
 ) -> None:
     """
@@ -36,7 +36,7 @@ def port_fig_btc_base(
         plt.plot(
             (df.set_index("time")[q] + 1).cumprod()
             / (df.set_index("time")["BTC"] + 1).cumprod(),
-            label=FIGURE_NAME_MAPPING[q]["name"] + " vs. Bitcoin",
+            label=FIGURE_NAME_MAPPING[q]["name"],
             color=FIGURE_NAME_MAPPING[q]["color"],
             linestyle=FIGURE_NAME_MAPPING[q]["linestyle"],
         )

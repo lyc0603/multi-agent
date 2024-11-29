@@ -1,30 +1,37 @@
-\renewcommand{\maxnum}{0.0172}
-\begin{tabularx}{\linewidth}{*{10}{X}}
+\renewcommand{\maxnum}{0.0022}
+\begin{tabularx}{\linewidth}{*{4}{X}}
 \toprule
-&\multicolumn{3}{c}{\makecell{Single GPT-4o\\without fine-tuning}} &\multicolumn{3}{c}{\makecell{Single GPT-4o\\with fine-tuning}} & \multicolumn{3}{c}{\makecell{Multi-agent framework\\(Ours)}}\\
+\multicolumn{4}{c}{Crypto Factor}\\
 \midrule
-\textbf{Factor} & Mean & Std & Sharpe & Mean & Std & Sharpe & Mean & Std & Sharpe \\
+ & Mean & Std & t(Mean) & Sharpe \\
 \midrule
-Very Low & \databar{0.0066}$^{}$ & $0.0919$ & $0.0713$ & \databar{0.0086}$^{}$ & $0.0772$ & $0.1112$ & \databar{0.0096}$^{}$ & $0.0776$ & $0.1235$ \\
-Low & \databar{0.0066}$^{}$ & $0.1038$ & $0.0633$& \databar{0.0115}$^{}$ & $0.0925$ & $0.1239$ & \databar{0.0086}$^{}$ & $0.1046$ & $0.0827$\\
-Medium & \databar{0.0019}$^{}$ & $0.0898$ & $0.0210$& \databar{0.0090}$^{}$ & $0.0963$ & $0.0933$ & \databar{0.0089}$^{}$ & $0.0915$ & $0.0971$\\
-High & \databar{0.0110}$^{}$ & $0.0807$ & $0.1360$&\databar{-0.0001}$^{}$ & $0.0865$ & $-0.0012$ & \databar{0.0046}$^{}$ & $0.0972$ & $0.0472$\\
-Very High & \databar{0.0153}$^{}$ & $0.0843$ & $0.1810$& \databar{0.0122}$^{}$ & $0.0947$ & $0.1283$ & \databar{0.0100}$^{}$ & $0.0813$ & $0.1230$\\
+Very Low & \databar{0.0014}$^{}$ & $0.0296$ & $0.0469$\\
+Low & \databar{0.0011}$^{}$ & $0.0337$ & $0.0327$\\
+Medium & \databar{0.0013}$^{}$ & $0.0350$ & $0.0370$\\
+High & \databar{0.0006}$^{}$ & $0.0348$ & $0.0179$\\
+Very High & \databar{0.0015}$^{}$ & $0.0321$ & $0.0465$\\
+HML & \databar{0.0001}$^{}$ & $0.0171$ & $0.0061$\\
+\bottomrule
+\multicolumn{4}{c}{Vision}\\
 \midrule
-\textbf{Chart} & Mean & Std & Sharpe & Mean & Std & Sharpe & Mean & Std & Sharpe \\
+ & Mean & Std & t(Mean) & Sharpe \\
 \midrule
-Very Low & \databar{0.0057}$^{}$ & $0.0774$ & $0.0740$& \databar{-0.0009}$^{}$ & $0.0792$ & $-0.0116$ & \databar{0.0038}$^{}$ & $0.0791$ & $0.0475$\\
-Low & \databar{0.0048}$^{}$ & $0.0939$ & $0.0507$& \databar{0.0140}$^{}$ & $0.0958$ & $0.1462$ & \databar{0.0055}$^{}$ & $0.0995$ & $0.0553$\\
-Medium & \databar{0.0015}$^{}$ & $0.0975$ & $0.0157$& \databar{0.0041}$^{}$ & $0.0838$ & $0.0492$ & \databar{0.0082}$^{}$ & $0.0850$ & $0.0960$\\
-High & \databar{0.0172}$^{}$ & $0.0925$ & $0.1860$& \databar{0.0079}$^{}$ & $0.0951$ & $0.0832$ & \databar{0.0132}$^{}$ & $0.0903$ & $0.1461$\\
-Very High & \databar{0.0119}$^{}$ & $0.0847$ & $0.1407$& \databar{0.0152}$^{}$ & $0.0870$ & $0.1749$ & \databar{0.0103}$^{}$ & $0.0869$ & $0.1187$\\
+Very Low & \databar{0.0006}$^{}$ & $0.0324$ & $0.0191$\\
+Low & \databar{0.0007}$^{}$ & $0.0342$ & $0.0207$\\
+Medium & \databar{0.0012}$^{}$ & $0.0323$ & $0.0367$\\
+High & \databar{0.0019}$^{}$ & $0.0330$ & $0.0570$\\
+Very High & \databar{0.0015}$^{}$ & $0.0323$ & $0.0461$\\
+HML & \databar{0.0009}$^{}$ & $0.0192$ & $0.0456$\\
+\bottomrule
+\multicolumn{4}{c}{Crypto Emsemble}\\
 \midrule
-\textbf{Emsemble} & Mean & Std & Sharpe & Mean & Std & Sharpe & Mean & Std & Sharpe \\
+ & Mean & Std & t(Mean) & Sharpe \\
 \midrule
-Very Low & \databar{0.0058}$^{}$ & $0.0900$ & $0.0640$& \databar{0.0036}$^{}$ & $0.0785$ & $0.0464$ & \databar{0.0108}$^{}$ & $0.0787$ & $0.1369$\\
-Low & \databar{0.0070}$^{}$ & $0.1016$ & $0.0688$& \databar{0.0093}$^{}$ & $0.0944$ & $0.0983$ & \databar{0.0069}$^{}$ & $0.1026$ & $0.0674$\\
-Medium & \databar{0.0101}$^{}$ & $0.0974$ & $0.1039$& \databar{0.0072}$^{}$ & $0.0850$ & $0.0851$ & \databar{0.0049}$^{}$ & $0.0913$ & $0.0535$\\
-High & \databar{0.0091}$^{}$ & $0.0801$ & $0.1131$& \databar{0.0067}$^{}$ & $0.0934$ & $0.0719$ & \databar{0.0032}$^{}$ & $0.0829$ & $0.0384$\\
-Very High & \databar{0.0094}$^{}$ & $0.0849$ & $0.1107$& \databar{0.0144}$^{}$ & $0.0956$ & $0.1510$ & \databar{0.0160}$^{}$ & $0.0899$ & $0.1779$\\
+Very Low & \databar{0.0016}$^{}$ & $0.0312$ & $0.0511$\\
+Low & \databar{0.0009}$^{}$ & $0.0350$ & $0.0256$\\
+Medium & \databar{0.0007}$^{}$ & $0.0332$ & $0.0204$\\
+High & \databar{0.0005}$^{}$ & $0.0336$ & $0.0159$\\
+Very High & \databar{0.0022}$^{}$ & $0.0320$ & $0.0681$\\
+HML & \databar{0.0006}$^{}$ & $0.0204$ & $0.0284$\\
 \bottomrule
 \end{tabularx}
