@@ -9,13 +9,63 @@ import pandas as pd
 from langchain_community.document_loaders.pdf import PyPDFLoader
 from sklearn.linear_model import LinearRegression
 
-from environ.constants import PROCESSED_DATA_PATH
+from environ.constants import PROCESSED_DATA_PATH, AP_LABEL
 
 warnings.filterwarnings("ignore")
 
 # excess market return
 er = pd.read_csv(f"{PROCESSED_DATA_PATH}/signal/gecko_mkt.csv")
 er["time"] = pd.to_datetime(er["time"])
+
+
+def port_eval(
+    ap_tab: pd.DataFrame,
+    col: list = AP_LABEL + ["HML"],
+    sharpe_annul: bool = False,
+    weekly: bool = False,
+) -> dict:
+    """
+    Function to evaluate the portfolio
+    """
+
+    res_dict = {}
+
+    if weekly:
+        ap_tab = ap_tab.copy()
+        for df_col in col:
+            ap_tab[df_col] = ap_tab[df_col] + 1
+
+        ap_tab = ap_tab.groupby(["year", "week"])[col].prod()
+
+        for df_col in col:
+            ap_tab[df_col] = ap_tab[df_col] - 1
+
+    for strength in col:
+        avg = ap_tab[strength].mean()
+        std = ap_tab[strength].std()
+        sharpe = avg / std if not sharpe_annul else (avg / std) * np.sqrt(52)
+        t = avg / (std / ap_tab[strength].shape[0] ** 0.5)
+        cum_ret = (ap_tab[strength] + 1).cumprod().iloc[-1] - 1
+
+        if t > 2.58:
+            asterisk = "***"
+        elif t > 1.96:
+            asterisk = "**"
+        elif t > 1.64:
+            asterisk = "*"
+        else:
+            asterisk = ""
+
+        res_dict[strength] = {
+            f"{strength}_avg": avg,
+            f"{strength}_std": std,
+            f"{strength}_t": t,
+            f"{strength}_sr": sharpe,
+            f"{strength}_a": asterisk,
+            f"{strength}_cum": cum_ret,
+        }
+
+    return res_dict
 
 
 def predict_explain_split(output: str) -> tuple[str, str]:

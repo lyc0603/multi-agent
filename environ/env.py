@@ -2,22 +2,22 @@
 Class for the crypto market environment
 """
 
-import pandas as pd
 import json
 import pickle
 from typing import Any, Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 from IPython.display import clear_output
 from tqdm import tqdm
 
 from environ.agent import FTAgent
-from environ.constants import LABEL, PROCESSED_DATA_PATH, FIGURE_PATH
+from environ.constants import FIGURE_PATH, LABEL, PROCESSED_DATA_PATH
 from environ.env_datahander import DataHandler
 from environ.env_portfolio import Portfolio
-from environ.visualization import ap_table, port_fig, port_fig_btc_base
-from environ.utils import predict_explain_split
+from environ.utils import predict_explain_split, port_eval
+from environ.exhibits import ap_table, port_fig, port_fig_btc_base, port_table
 
 
 class Environment:
@@ -358,6 +358,16 @@ trend for the upcoming week is {strength}. {explain}"
 
         # Integrate the cash-crypto allocation
         self.portfolio.mkt_cs_comb()
+
+        # Display the portfolio table
+        port_table(
+            port_eval(
+                self.portfolio.cs_agg_ret,
+                col=["Long", "mcap_ret", "1/N", "BTC"],
+                sharpe_annul=True,
+                weekly=True,
+            )
+        )
 
         # Display the portfolio figure
         port_fig(

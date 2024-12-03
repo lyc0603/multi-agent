@@ -10,6 +10,7 @@ from sklearn.metrics import accuracy_score, matthews_corrcoef
 
 from environ.constants import AP_LABEL
 from environ.data_loader import DataLoader
+from environ.utils import port_eval
 
 
 class Portfolio:
@@ -249,32 +250,7 @@ class Portfolio:
         ap_tab["week"] = ap_tab["time"].dt.isocalendar().week
         ap_tab = ap_tab.drop(columns=["time"])
 
-        res_dict = {}
-
-        for strength in AP_LABEL + ["HML"]:
-            avg = ap_tab[strength].mean()
-            std = ap_tab[strength].std()
-            sharpe = avg / std
-            t = avg / (std / ap_tab[strength].shape[0] ** 0.5)
-
-            if t > 2.58:
-                asterisk = "***"
-            elif t > 1.96:
-                asterisk = "**"
-            elif t > 1.64:
-                asterisk = "*"
-            else:
-                asterisk = ""
-
-            res_dict[strength] = {
-                f"{strength}_avg": avg,
-                f"{strength}_std": std,
-                f"{strength}_t": t,
-                f"{strength}_sr": sharpe,
-                f"{strength}_a": asterisk,
-            }
-
-        return res_dict
+        return port_eval(ap_tab)
 
 
 if __name__ == "__main__":

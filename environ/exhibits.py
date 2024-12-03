@@ -84,6 +84,40 @@ def port_fig(
         plt.show()
 
 
+def port_table(res_dict: dict, col: list = ["mcap_ret", "1/N", "BTC", "Long"]) -> None:
+    """
+    Function to get the portfolio table
+    """
+
+    with open(f"{TABLE_PATH}/portfolio.tex", "w", encoding="utf-8") as f:
+        f.write(r"\begin{tabularx}{\linewidth}{*{5}{X}}" + "\n")
+        f.write(r"\toprule" + "\n")
+        f.write(r"Portfolio & Cumulative & Mean & Std & Annualized Sharpe \\" + "\n")
+        f.write(r"\midrule" + "\n")
+        for port_name in col:
+            port_dict = res_dict[port_name]
+            f.write(f"{FIGURE_NAME_MAPPING[port_name]['name']}")
+            f.write(
+                r" & "
+                + " & ".join(
+                    [
+                        (
+                            "${:.4f}$".format(round(port_dict[f"{port_name}_{col}"], 4))
+                            if col != "cum"
+                            else "${:.4f}$".format(
+                                round(port_dict[f"{port_name}_{col}"], 4)
+                            )
+                        )
+                        for col in ["cum", "avg", "std", "sr"]
+                    ]
+                )
+                + r"\\"
+                + "\n"
+            )
+        f.write(r"\bottomrule" + "\n")
+        f.write(r"\end{tabularx}" + "\n")
+
+
 def ap_table(res_dict: dict) -> None:
     """
     Function to get the asset pricing table
