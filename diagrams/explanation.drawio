@@ -1,0 +1,34 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.7.17 Chrome/128.0.6613.36 Electron/32.0.1 Safari/537.36" version="24.7.17">
+  <diagram name="Page-1" id="-c1_lCrLUVeaLovK_KLw">
+    <mxGraphModel dx="954" dy="633" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3000" pageHeight="3000" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="EgnboBhH1mPVYbVk5sjr-14" value="" style="group;whiteSpace=wrap;html=1;" vertex="1" connectable="0" parent="1">
+          <mxGeometry x="260" y="200" width="490" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="EgnboBhH1mPVYbVk5sjr-12" value="&lt;p style=&quot;line-height: 150%; margin-right: 5px; margin-left: 5px;&quot;&gt;&lt;b&gt;Price trend:&lt;/b&gt; Rise&lt;br&gt;&lt;b&gt;Explanation:&lt;/b&gt; The analysis of the provided information suggests a positive price trend for Avalanche in the upcoming week. The key factors influencing this prediction include the high past one-week return and high past one-to-four-week return, indicating a strong recent uptrend. Although the past 16-week return is very low, the more recent performance metrics (one-week and one-to-four-week returns) are more indicative of short-term trends and suggest a continuation of upward growth. Additionally, the medium levels of market capitalization, price, and volume metrics suggest a stable environment without extreme volatility, which supports the likelihood of a continued rise in price.&lt;/p&gt;" style="rounded=1;arcSize=8;whiteSpace=wrap;align=left;html=1;" vertex="1" parent="EgnboBhH1mPVYbVk5sjr-14">
+          <mxGeometry y="11.176470588235293" width="489.99999999999994" height="178.8235294117647" as="geometry" />
+        </mxCell>
+        <mxCell id="EgnboBhH1mPVYbVk5sjr-13" value="Without Fine-Tuning" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1;fillColor=default;" vertex="1" parent="EgnboBhH1mPVYbVk5sjr-14">
+          <mxGeometry x="182.44680851063828" width="125.10638297872339" height="22.352941176470587" as="geometry" />
+        </mxCell>
+        <mxCell id="EgnboBhH1mPVYbVk5sjr-15" value="" style="group;whiteSpace=wrap;html=1;flipH=1;" vertex="1" connectable="0" parent="1">
+          <mxGeometry x="260" y="410" width="490" height="280" as="geometry" />
+        </mxCell>
+        <mxCell id="EgnboBhH1mPVYbVk5sjr-16" value="&lt;p style=&quot;margin: 0cm 5px; font-family: Calibri, sans-serif; line-height: 150%;&quot; class=&quot;MsoNormal&quot;&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;&lt;b style=&quot;&quot;&gt;Price trend:&lt;/b&gt; Rise&lt;/font&gt;&lt;/p&gt;&lt;p style=&quot;margin: 0px 5px 0cm; font-family: Calibri, sans-serif; line-height: 150%;&quot; class=&quot;MsoNormal&quot;&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;&lt;b style=&quot;&quot;&gt;Explanation:&lt;/b&gt; The predicted price trend for Avalanche in the upcoming week is expected to rise, driven by several key factors. The past one-week and one-to-four-week returns are categorized as high, indicating strong recent &lt;span style=&quot;background-color: rgb(204, 204, 255);&quot;&gt;momentum, which is a significant predictor of future price increases in the cryptocurrency market.&lt;/span&gt; This &lt;span style=&quot;background-color: rgb(204, 204, 255);&quot;&gt;momentum effect&lt;/span&gt; suggests that investors are likely reacting positively to recent price movements, potentially due to favorable news or market sentiment, which can lead to continued upward pressure on prices. Additionally, the medium categorization for market capitalization, last-day price, maximum price, and standard deviation of price volume suggests a balanced market environment without extreme &lt;span style=&quot;background-color: rgb(204, 204, 255);&quot;&gt;volatility or liquidity issues&lt;/span&gt;, supporting a stable upward trend. The medium level of average daily volume times price further indicates a healthy trading activity, providing sufficient &lt;span style=&quot;background-color: rgb(204, 204, 255);&quot;&gt;liquidity&lt;/span&gt; to sustain price increases. Overall, these factors align with the &lt;span style=&quot;background-color: rgb(204, 204, 255);&quot;&gt;momentum and size effects&lt;/span&gt; observed in cryptocurrency markets, supporting the forecasted rise in Avalanche&#39;s price.&lt;/font&gt;&lt;/p&gt;" style="rounded=1;arcSize=8;whiteSpace=wrap;align=left;html=1;" vertex="1" parent="EgnboBhH1mPVYbVk5sjr-15">
+          <mxGeometry y="15.651999999999997" width="490" height="264.348" as="geometry" />
+        </mxCell>
+        <mxCell id="EgnboBhH1mPVYbVk5sjr-17" value="With Fine-Tuning" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1;fillColor=default;" vertex="1" parent="EgnboBhH1mPVYbVk5sjr-15">
+          <mxGeometry x="191.23000000000002" width="107.55" height="31.290000000000003" as="geometry" />
+        </mxCell>
+        <mxCell id="EgnboBhH1mPVYbVk5sjr-19" value="" style="shape=flexArrow;endArrow=classic;html=1;rounded=0;endWidth=6;endSize=4;width=4;fillColor=#000000;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="504.5" y="390" as="sourcePoint" />
+            <mxPoint x="504.5" y="420" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
