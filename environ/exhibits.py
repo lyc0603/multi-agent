@@ -2,10 +2,17 @@
 Function to tabulate data
 """
 
+import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
+from matplotlib.patches import Circle, RegularPolygon
+from matplotlib.path import Path
+from matplotlib.projections import register_projection
+from matplotlib.projections.polar import PolarAxes
+from matplotlib.spines import Spine
+from matplotlib.transforms import Affine2D
 
-from environ.constants import AP_LABEL, TABLE_PATH
+from environ.constants import AP_LABEL, FIGURE_PATH, TABLE_PATH
 
 FONT_SIZE = 13
 
@@ -171,3 +178,113 @@ def ap_table(res_dict: dict) -> None:
             f.write(r"\bottomrule" + "\n")
 
         f.write(r"\end{tabularx}" + "\n")
+
+
+def radar_factory(num_vars, frame="circle"):
+    """
+    Create a radar chart with `num_vars` Axes.
+    """
+    theta = np.linspace(0, 2 * np.pi, num_vars, endpoint=False)
+
+    class RadarTransform(PolarAxes.PolarTransform):
+        def transform_path_non_affine(self, path):
+            if path._interpolation_steps > 1:
+                path = path.interpolated(num_vars)
+            return Path(self.transform(path.vertices), path.codes)
+
+    class RadarAxes(PolarAxes):
+        name = "radar"
+
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.set_theta_zero_location("N")
+
+        def fill(self, *args, closed=True, **kwargs):
+            return super().fill(closed=closed, *args, **kwargs)
+
+        def plot(self, *args, **kwargs):
+            lines = super().plot(*args, **kwargs)
+            for line in lines:
+                self._close_line(line)
+
+        def _close_line(self, line):
+            x, y = line.get_data()
+            if x[0] != x[-1]:
+                x = np.append(x, x[0])
+                y = np.append(y, y[0])
+                line.set_data(x, y)
+
+        def set_varlabels(self, labels):
+            self.set_thetagrids(np.degrees(theta), labels)
+
+        def _gen_axes_patch(self):
+            if frame == "circle":
+                return Circle((0.5, 0.5), 0.5)
+            elif frame == "polygon":
+                return RegularPolygon((0.5, 0.5), num_vars, radius=0.5, edgecolor="k")
+            else:
+                raise ValueError("Unknown value for 'frame': %s" % frame)
+
+        def _gen_axes_spines(self):
+            if frame == "circle":
+                return super()._gen_axes_spines()
+            elif frame == "polygon":
+                spine = Spine(
+                    axes=self,
+                    spine_type="circle",
+                    path=Path.unit_regular_polygon(num_vars),
+                )
+                spine.set_transform(
+                    Affine2D().scale(0.5).translate(0.5, 0.5) + self.transAxes
+                )
+                return {"polar": spine}
+            else:
+                raise ValueError("Unknown value for 'frame': %s" % frame)
+
+    register_projection(RadarAxes)
+    return theta
+
+
+if __name__ == "__main__":
+
+    def example_data():
+        return [
+            [
+                "Professionalism",
+                "Objectiveness",
+                "Clarity & Coherence",
+                "Consistency",
+                "Rationale",
+            ],
+            [
+                [0.93, 0.91, 0.86, 0.85, 0.90],
+                [0.88, 0.86, 0.84, 0.81, 0.86],
+                [0.53, 0.56, 0.75, 0.78, 0.56],
+            ],
+        ]
+
+    N = 5
+    theta = radar_factory(N, frame="circle")
+
+    spoke_labels, data = example_data()
+
+    fig, ax = plt.subplots(subplot_kw=dict(projection="radar"))
+
+    colors = ["b", "g", "r"]
+    for d, color in zip(data, colors):
+        ax.plot(theta, d, color=color)
+        ax.fill(theta, d, facecolor=color, alpha=0.10, label="_nolegend_")
+
+    ax.set_varlabels(spoke_labels)
+
+    labels = [
+        "Multi-agent framework (Ours)",
+        "Single GPT-4o with fine-tuning",
+        "Single GPT-4o without fine-tuning",
+    ]
+    legend = plt.legend(
+        labels, loc="upper center", bbox_to_anchor=(0.5, -0.02), frameon=False
+    )
+
+    plt.tight_layout()
+    plt.savefig(f"{FIGURE_PATH}/radar.pdf")

@@ -394,23 +394,7 @@ trend for the upcoming week is {strength}. {explain}"
 
 if __name__ == "__main__":
 
-    # # Treatment group: Collaboration
-    # env = Environment(
-    #     cs_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/cs_1125.pkl",
-    #     mkt_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/mkt_1124.pkl",
-    #     vision_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/vs_1124.pkl",
-    #     news_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/news_1124.pkl",
-    # )
-
-    # env.run(
-    #     "cs",
-    #     f"{PROCESSED_DATA_PATH}/record/record_cs_collab_1127.json",
-    #     collab=True,
-    #     mkt_record_path=f"{PROCESSED_DATA_PATH}/record/record_mkt_1124.json",
-    #     news_record_path=f"{PROCESSED_DATA_PATH}/record/record_news_1124.json",
-    # )
-
-    # Treatment group
+    # Treatment group: Collaboration
     env = Environment(
         cs_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/cs_1125.pkl",
         mkt_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/mkt_1124.pkl",
@@ -418,16 +402,32 @@ if __name__ == "__main__":
         news_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/news_1124.pkl",
     )
 
-    # env.run("cs", f"{PROCESSED_DATA_PATH}/record/record_cs_1124.json")
-    # env.run("vision", f"{PROCESSED_DATA_PATH}/record/record_vs_1124_new.json")
-    # env.run("mkt", f"{PROCESSED_DATA_PATH}/record/record_mkt_1124.json")
-    # env.run("news", f"{PROCESSED_DATA_PATH}/record/record_news_1124.json")
-    env.replay(
-        cs_record_path=f"{PROCESSED_DATA_PATH}/record/record_cs_1125.json",
-        vision_record_path=f"{PROCESSED_DATA_PATH}/record/record_vs_1124.json",
+    env.run(
+        "cs",
+        f"{PROCESSED_DATA_PATH}/record/record_cs_collab_1127.json",
+        collab=True,
         mkt_record_path=f"{PROCESSED_DATA_PATH}/record/record_mkt_1124.json",
         news_record_path=f"{PROCESSED_DATA_PATH}/record/record_news_1124.json",
     )
+
+    # # Treatment group
+    # env = Environment(
+    #     cs_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/cs_1125.pkl",
+    #     mkt_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/mkt_1124.pkl",
+    #     vision_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/vs_1124.pkl",
+    #     news_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/news_1124.pkl",
+    # )
+
+    # # env.run("cs", f"{PROCESSED_DATA_PATH}/record/record_cs_1124.json")
+    # # env.run("vision", f"{PROCESSED_DATA_PATH}/record/record_vs_1124_new.json")
+    # # env.run("mkt", f"{PROCESSED_DATA_PATH}/record/record_mkt_1124.json")
+    # # env.run("news", f"{PROCESSED_DATA_PATH}/record/record_news_1124.json")
+    # env.replay(
+    #     cs_record_path=f"{PROCESSED_DATA_PATH}/record/record_cs_1125.json",
+    #     vision_record_path=f"{PROCESSED_DATA_PATH}/record/record_vs_1124.json",
+    #     mkt_record_path=f"{PROCESSED_DATA_PATH}/record/record_mkt_1124.json",
+    #     news_record_path=f"{PROCESSED_DATA_PATH}/record/record_news_1124.json",
+    # )
 
     # # Control group
     # env = Environment(

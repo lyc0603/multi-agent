@@ -18,6 +18,14 @@ er = pd.read_csv(f"{PROCESSED_DATA_PATH}/signal/gecko_mkt.csv")
 er["time"] = pd.to_datetime(er["time"])
 
 
+def mad(df: pd.DataFrame, col1: str, col2: str) -> float:
+    """
+    Function to calculate the mean absolute deviation
+    """
+
+    return np.abs(df[col1] - df[col2]).mean()
+
+
 def port_eval(
     ap_tab: pd.DataFrame,
     col: list = AP_LABEL + ["HML"],
