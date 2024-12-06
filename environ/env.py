@@ -308,7 +308,26 @@ trend for the upcoming week is {strength}. {explain}"
             state_ret=ret_state,
         )
 
-    def replay(self, **record_paths: str) -> None:
+    # def eval_explain(self, **record_paths: str) -> None:
+    #     """
+    #     Evaluate the explanation
+    #     """
+
+    #     # load the records
+    #     for record_type, _ in self.agents_path.items():
+    #         self.load_record(
+    #             record_type.split("_")[0],
+    #             record_paths[record_type.split("_")[0] + "_record_path"],
+    #         )
+
+    #     for year, week in tqdm(self.data_handler.get_yw_list()):
+    #         yw = f"{year}{week}"
+    #         crypto_info = self.data_handler.cs_test_data.get(yw, {})
+
+    #         for crypto, _ in crypto_info.items():
+    #             ret_state = self._get_state("ret", year, week, crypto)
+
+    def replay(self, ablation: str | None = None, **record_paths: str) -> None:
         """
         Replay the record
         """
@@ -334,8 +353,12 @@ trend for the upcoming week is {strength}. {explain}"
                 for crypto_agent in ["cs", "vision"]:
                     self._process_replay(crypto_agent, yw, crypto, ret_state)
 
-            self.portfolio.merge_cs()
-            self.portfolio.merge_mkt()
+            self.portfolio.merge_cs(
+                ablation=ablation if ablation in ["cs", "vision"] else None
+            )
+            self.portfolio.merge_mkt(
+                ablation=ablation if ablation in ["mkt", "news"] else None
+            )
 
             for data_type in ["cs", "vision", "cs_agg"]:
                 # print(data_type)
@@ -390,77 +413,3 @@ trend for the upcoming week is {strength}. {explain}"
             ap_table_data[data_name] = self.portfolio.asset_pricing_table(data_type)
 
         ap_table(ap_table_data)
-
-
-if __name__ == "__main__":
-
-    # Treatment group: Collaboration
-    env = Environment(
-        cs_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/cs_1125.pkl",
-        mkt_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/mkt_1124.pkl",
-        vision_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/vs_1124.pkl",
-        news_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/news_1124.pkl",
-    )
-
-    env.run(
-        "cs",
-        f"{PROCESSED_DATA_PATH}/record/record_cs_collab_1127.json",
-        collab=True,
-        mkt_record_path=f"{PROCESSED_DATA_PATH}/record/record_mkt_1124.json",
-        news_record_path=f"{PROCESSED_DATA_PATH}/record/record_news_1124.json",
-    )
-
-    # # Treatment group
-    # env = Environment(
-    #     cs_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/cs_1125.pkl",
-    #     mkt_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/mkt_1124.pkl",
-    #     vision_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/vs_1124.pkl",
-    #     news_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/news_1124.pkl",
-    # )
-
-    # # env.run("cs", f"{PROCESSED_DATA_PATH}/record/record_cs_1124.json")
-    # # env.run("vision", f"{PROCESSED_DATA_PATH}/record/record_vs_1124_new.json")
-    # # env.run("mkt", f"{PROCESSED_DATA_PATH}/record/record_mkt_1124.json")
-    # # env.run("news", f"{PROCESSED_DATA_PATH}/record/record_news_1124.json")
-    # env.replay(
-    #     cs_record_path=f"{PROCESSED_DATA_PATH}/record/record_cs_1125.json",
-    #     vision_record_path=f"{PROCESSED_DATA_PATH}/record/record_vs_1124.json",
-    #     mkt_record_path=f"{PROCESSED_DATA_PATH}/record/record_mkt_1124.json",
-    #     news_record_path=f"{PROCESSED_DATA_PATH}/record/record_news_1124.json",
-    # )
-
-    # # Control group
-    # env = Environment(
-    #     cs_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/gpt_4o.pkl",
-    #     mkt_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/gpt_4o.pkl",
-    #     vision_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/gpt_4o.pkl",
-    #     news_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/gpt_4o.pkl",
-    # )
-    # # env.run("cs", f"{PROCESSED_DATA_PATH}/record/record_cs_gpt_4o_1125.json")
-    # # env.run("vision", f"{PROCESSED_DATA_PATH}/record/record_vs_gpt_4o_1125.json")
-    # # env.run("mkt", f"{PROCESSED_DATA_PATH}/record/record_mkt_gpt_4o_1125.json")
-    # # env.run("news", f"{PROCESSED_DATA_PATH}/record/record_news_gpt_4o_1125.json")
-    # env.replay(
-    #     cs_record_path=f"{PROCESSED_DATA_PATH}/record/record_cs_gpt_4o_1125.json",
-    #     vision_record_path=f"{PROCESSED_DATA_PATH}/record/record_vs_gpt_4o_1125.json",
-    #     mkt_record_path=f"{PROCESSED_DATA_PATH}/record/record_mkt_gpt_4o_1125.json",
-    #     news_record_path=f"{PROCESSED_DATA_PATH}/record/record_news_gpt_4o_1125.json",
-    # )
-
-    # # Single GPT-4o with fine-tuning
-    # env = Environment(
-    #     cs_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/comb_1126.pkl",
-    #     mkt_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/comb_1126.pkl",
-    #     vision_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/comb_1126.pkl",
-    #     news_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/comb_1126.pkl",
-    # )
-    # # env.run("cs", f"{PROCESSED_DATA_PATH}/record/record_cs_comb_1126.json")
-    # # env.run("vision", f"{PROCESSED_DATA_PATH}/record/record_vs_comb_1126.json")
-    # # env.run("mkt", f"{PROCESSED_DATA_PATH}/record/record_mkt_comb_1126.json")
-    # # env.run("news", f"{PROCESSED_DATA_PATH}/record/record_news_comb_1126.json")
-    # env.replay(
-    #     cs_record_path=f"{PROCESSED_DATA_PATH}/record/record_cs_comb_1126.json",
-    #     vision_record_path=f"{PROCESSED_DATA_PATH}/record/record_vs_comb_1126.json",
-    #     mkt_record_path=f"{PROCESSED_DATA_PATH}/record/record_mkt_comb_1126.json",
-    #     news_record_path=f"{PROCESSED_DATA_PATH}/record/record_news_comb_1126.json",
-    # )

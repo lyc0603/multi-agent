@@ -89,3 +89,40 @@ Information: {info}
 
 ANSWER = """{Target}: {trend}
 Explanation: {explanation}"""
+
+# Evaluation prompts
+EVAL_PROMPT = """Given the following context, evaluate the \
+financial prediction and explanation based on the following \
+criteria with either "Yes" or "No".
+
+Criteria:
+1. Professionalism (Does the explanation demonstrate expertise and professionalism in the field of finance?)
+2. Objectiveness (Is the explanation presented objectively?)
+3. Clarity & Coherence (Is the explanation clear, and does it present a coherent narrative?)
+4. Consistency (Is the information presented consistent with the context?)
+5. Rationale (Does the explanation include a detailed rationale behind how these metrics influence the performance?)
+6. Contextual Understanding (Does the explanation demonstrate a deep understanding of the context provided?)
+7. Interconnectedness (Does the explanation acknowledge and interpret potential interaction effects between data?)
+8. Hetereogeneity (Does the explanation take into account the unique characteristics and dynamics specific to this cryptocurrency?)
+(End of Criteria)
+
+Context: 
+{context}
+(End of Context)
+
+Prediction and Explanation:
+{prediction}
+(End of Prediction and Explanation)
+"""
+
+EVAL_INSTRUCT = """You are a financial expert who is proficient in evaluating financial text. \
+Your output format should be as follows:
+Professionalism: {Yes/No}
+Objectiveness: {Yes/No}
+Clarity & Coherence: {Yes/No}
+Consistency: {Yes/No}
+Rationale: {Yes/No}
+Contextual Understanding: {Yes/No}
+Interconnectedness: {Yes/No}
+Hetereogeneity: {Yes/No}
+"""

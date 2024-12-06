@@ -159,32 +159,44 @@ class Portfolio:
 
         return df_port
 
-    def merge_cs(self) -> None:
+    def merge_cs(self, ablation: str| None = None) -> None:
         """
         Method to merge the cross-sectional data
         """
 
-        keys = [_ for _ in self.cs.columns if _ not in ["lin_prob", "strength"]]
-        df_merge = self.cs.merge(self.vision, on=keys, how="inner")
-        df_merge["lin_prob"] = (df_merge["lin_prob_x"] + df_merge["lin_prob_y"]) / 2
-        df_merge["strength"] = df_merge["lin_prob"].apply(
-            lambda x: "Rise" if x >= 0.5 else "Fall"
-        )
-        self.cs_agg = df_merge.copy()
+        match ablation:
+            case "cs":
+                self.cs_agg = self.cs.copy()
+            case "vision":
+                self.cs_agg = self.vision.copy()
+            case _:
+                keys = [_ for _ in self.cs.columns if _ not in ["lin_prob", "strength"]]
+                df_merge = self.cs.merge(self.vision, on=keys, how="inner")
+                df_merge["lin_prob"] = (df_merge["lin_prob_x"] + df_merge["lin_prob_y"]) / 2
+                df_merge["strength"] = df_merge["lin_prob"].apply(
+                    lambda x: "Rise" if x >= 0.5 else "Fall"
+                )
+                self.cs_agg = df_merge.copy()
 
-    def merge_mkt(self) -> None:
+    def merge_mkt(self, ablation: str|None = None) -> None:
         """
         Method to merge the market data
         """
 
-        keys = [_ for _ in self.mkt.columns if _ not in ["lin_prob", "strength"]]
-        df_merge = self.mkt.merge(self.news, on=keys, how="inner")
-        df_merge["lin_prob"] = (df_merge["lin_prob_x"] + df_merge["lin_prob_y"]) / 2
-        df_merge["strength"] = df_merge["lin_prob"].apply(
-            lambda x: "Rise" if x >= 0.5 else "Fall"
-        )
+        match ablation:
+            case "mkt":
+                self.mkt_agg = self.mkt.copy()
+            case "news":
+                self.mkt_agg = self.news.copy()
+            case _:
+                keys = [_ for _ in self.mkt.columns if _ not in ["lin_prob", "strength"]]
+                df_merge = self.mkt.merge(self.news, on=keys, how="inner")
+                df_merge["lin_prob"] = (df_merge["lin_prob_x"] + df_merge["lin_prob_y"]) / 2
+                df_merge["strength"] = df_merge["lin_prob"].apply(
+                    lambda x: "Rise" if x >= 0.5 else "Fall"
+                )
 
-        self.mkt_agg = df_merge.copy()
+                self.mkt_agg = df_merge.copy()
 
     def asset_pricing(self, component: str) -> None:
         """
