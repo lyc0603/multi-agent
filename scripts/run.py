@@ -34,6 +34,7 @@ env = Environment(
 # env.run("mkt", f"{PROCESSED_DATA_PATH}/record/record_mkt_1124.json")
 # env.run("news", f"{PROCESSED_DATA_PATH}/record/record_news_1124.json")
 env.replay(
+    ablation="news",
     cs_record_path=f"{PROCESSED_DATA_PATH}/record/record_cs_1125.json",
     vision_record_path=f"{PROCESSED_DATA_PATH}/record/record_vs_1124.json",
     mkt_record_path=f"{PROCESSED_DATA_PATH}/record/record_mkt_1124.json",

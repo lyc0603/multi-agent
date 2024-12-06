@@ -14,8 +14,9 @@ data = {
         "w/o Technical Expert",
         "w/o Market Factor Expert",
         "w/o News Expert",
+        "w/o collab",
     ],
-    "Cumulative": [1.5425, 1.1395, 1.1354, 1.4623, 1.3576],
+    "Cumulative": [1.5425, 1.1395, 1.1354, 1.3968, 1.3576, 1.4926],
 }
 
 # Creating a DataFrame
