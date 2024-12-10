@@ -23,7 +23,13 @@ def msd(df: pd.DataFrame, col1: str, col2: str) -> float:
     Function to calculate the mean squared deviation
     """
 
-    return (df[col1] - df[col2]).apply(lambda x: x**2).mean()
+    df = df.copy()
+
+    # calculate the std for data in co1 and col2 in the same row
+    df["std"] = df[[col1, col2]].std(axis=1)
+
+    # calculate the mean squared deviation
+    return df["std"].mean()
 
 
 def port_eval(

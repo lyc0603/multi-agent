@@ -76,8 +76,12 @@ def plot_msd(msd_list: list, path: str | None = None) -> None:
             alpha=0.5,
             edgecolor="black",
         )
-        ax.bar_label(rects, padding=3, fontsize=BAR_FONT_SIZE)
+        ax.bar_label(rects, padding=3, fontsize=BAR_FONT_SIZE - 2)
         multiplier += 1
+
+    divider_positions = [0.75, 1.75]
+    for pos in divider_positions:
+        ax.axvline(pos, color="black", linestyle="--", linewidth=2, alpha=0.7)
 
     ax.set_xticks(x + WIDTH, GROUP, fontsize=BAR_FONT_SIZE)
     ax.legend(
@@ -90,7 +94,7 @@ def plot_msd(msd_list: list, path: str | None = None) -> None:
     ax.set_ylim(0, 0.4)
     ax.yaxis.set_tick_params(labelsize=BAR_FONT_SIZE)
     plt.tight_layout()
-    plt.grid(alpha=0.5)
+    # plt.grid(alpha=0.5)
     if path:
         plt.savefig(path)
     else:
