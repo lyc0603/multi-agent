@@ -94,7 +94,7 @@ def plot_msd(msd_list: list, path: str | None = None) -> None:
     ax.set_ylim(0, 0.35)
     ax.yaxis.set_tick_params(labelsize=BAR_FONT_SIZE)
     plt.tight_layout()
-    # plt.grid(alpha=0.5)
+    plt.grid(alpha=0.5)
     if path:
         plt.savefig(path)
     else:
