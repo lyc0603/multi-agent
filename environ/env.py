@@ -20,6 +20,10 @@ from environ.utils import predict_explain_split, port_eval
 from environ.exhibits import ap_table, port_fig, port_fig_btc_base, port_table
 
 
+# Initialize the portfolio
+portfolio = Portfolio()
+
+
 class Environment:
     """
     Class for the crypto market environment.
@@ -31,7 +35,7 @@ class Environment:
         Initialize the environment with agent paths.
         """
         self.data_handler = DataHandler()
-        self.portfolio = Portfolio()
+        self.portfolio = portfolio
         self.agents_path = agent_paths
         self.agents = {
             name.split("_")[0]: self._load_agent(path)
@@ -413,3 +417,6 @@ trend for the upcoming week is {strength}. {explain}"
             ap_table_data[data_name] = self.portfolio.asset_pricing_table(data_type)
 
         ap_table(ap_table_data)
+
+        # Display the disagreement
+        self.portfolio.mad()

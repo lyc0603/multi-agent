@@ -8,10 +8,14 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import accuracy_score, matthews_corrcoef
 
+from environ.evaluator import evaluator
 from environ.constants import AP_LABEL
 from environ.data_loader import DataLoader
 from environ.utils import port_eval
 
+
+# initialize the evaluator
+eval = evaluator()
 
 class Portfolio:
     """
@@ -24,6 +28,7 @@ class Portfolio:
         self.btc = data_loader.get_btc_data()
         self.cmkt = data_loader.get_cmkt_data()
         self.n = data_loader.get_n_data()
+        self.eval = eval
 
     def reset(self) -> None:
         """
@@ -264,6 +269,18 @@ class Portfolio:
 
         return port_eval(ap_tab)
 
+    def mad(self) -> None:
+        """
+        Calculate the mean absolute deviation
+        """
+
+        cs_mkt_concat = pd.concat([
+            self.cs_agg[["lin_prob_x" , "lin_prob_y"]], 
+            self.mkt_agg[["lin_prob_x", "lin_prob_y"]]
+        ])
+
+        for df in [self.mkt_agg, self.cs_agg, cs_mkt_concat]:
+            self.eval.cal_msd(df, "lin_prob_x", "lin_prob_y")
 
 if __name__ == "__main__":
 

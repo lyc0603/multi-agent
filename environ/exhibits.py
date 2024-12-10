@@ -2,6 +2,7 @@
 Function to tabulate data
 """
 
+from matplotlib.patches import Rectangle
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
@@ -15,6 +16,27 @@ from matplotlib.transforms import Affine2D
 from environ.constants import AP_LABEL, FIGURE_PATH, TABLE_PATH
 
 FONT_SIZE = 13
+WIDTH = 0.25
+METHODS = {
+    "Single GPT-4o without fine-tuning": {
+        "color": "lightblue",
+        "newline": "Single GPT-4o\nwithout fine-tuning",
+    },
+    "Single GPT-4o with fine-tuning": {
+        "color": "cyan",
+        "newline": "Single GPT-4o\nwith fine-tuning",
+    },
+    "Multi-agent framework (Ours)": {
+        "color": "blue",
+        "newline": "Multi-agent\nframework (Ours)",
+    },
+}
+
+GROUP = [
+    "Market Team",
+    "Crypto Team",
+    "Overall",
+]
 
 FIGURE_NAME_MAPPING = {
     "Long": {"name": "Multi-Agent Model", "color": "blue", "linestyle": "solid"},
@@ -26,6 +48,50 @@ FIGURE_NAME_MAPPING = {
     },
     "1/N": {"name": "1/N", "color": "red", "linestyle": "dashdot"},
 }
+
+
+def plot_msd(msd_list: list, path: str | None = None) -> None:
+    """
+    Function to plot the mean square deviation
+    """
+
+    msd_list = [round(x, 4) for x in msd_list]
+
+    _, ax = plt.subplots(figsize=(9.6, 7.2))
+    x = np.arange(len(METHODS))
+    multiplier = 0
+
+    # Adjust the loop logic
+    for idx, (_, plot_info) in enumerate(METHODS.items()):
+        offset = WIDTH * multiplier
+
+        # Correct indexing logic
+        rects = ax.bar(
+            x + offset,
+            msd_list[3 * idx : 3 * (idx + 1)],
+            WIDTH,
+            label=plot_info["newline"],
+            color=plot_info["color"],
+            alpha=0.5,
+        )
+        ax.bar_label(rects, padding=3, fontsize=FONT_SIZE)
+        multiplier += 1
+
+    ax.set_xticks(x + WIDTH, GROUP, fontsize=FONT_SIZE)
+    ax.legend(
+        loc="upper center",
+        bbox_to_anchor=(0.5, -0.10),  # Below the chart
+        ncols=3,
+        frameon=False,
+        fontsize=FONT_SIZE,
+    )
+    ax.set_ylim(0, 0.4)
+    ax.yaxis.set_tick_params(labelsize=FONT_SIZE)
+    plt.tight_layout()
+    if path:
+        plt.savefig(path)
+    else:
+        plt.show()
 
 
 def port_fig_btc_base(
@@ -277,13 +343,8 @@ if __name__ == "__main__":
 
     ax.set_varlabels(spoke_labels)
 
-    labels = [
-        "Multi-agent framework (Ours)",
-        "Single GPT-4o with fine-tuning",
-        "Single GPT-4o without fine-tuning",
-    ]
     legend = plt.legend(
-        labels, loc="upper center", bbox_to_anchor=(0.5, -0.02), frameon=False
+        METHODS, loc="upper center", bbox_to_anchor=(0.5, -0.02), frameon=False
     )
 
     plt.tight_layout()
