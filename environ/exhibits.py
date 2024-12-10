@@ -56,7 +56,6 @@ def plot_msd(msd_list: list, path: str | None = None) -> None:
     """
 
     BAR_FONT_SIZE = 16
-    msd_list = [round(x, 4) for x in msd_list]
 
     _, ax = plt.subplots(figsize=(9.6, 7.2))
     x = np.arange(len(METHODS))
@@ -76,7 +75,7 @@ def plot_msd(msd_list: list, path: str | None = None) -> None:
             alpha=0.5,
             edgecolor="black",
         )
-        ax.bar_label(rects, padding=3, fontsize=BAR_FONT_SIZE - 2)
+        ax.bar_label(rects, padding=3, fmt="%.4f", fontsize=BAR_FONT_SIZE - 2)
         multiplier += 1
 
     divider_positions = [0.75, 1.75]
