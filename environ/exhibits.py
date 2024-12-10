@@ -55,6 +55,7 @@ def plot_msd(msd_list: list, path: str | None = None) -> None:
     Function to plot the mean square deviation
     """
 
+    BAR_FONT_SIZE = 16
     msd_list = [round(x, 4) for x in msd_list]
 
     _, ax = plt.subplots(figsize=(9.6, 7.2))
@@ -73,21 +74,23 @@ def plot_msd(msd_list: list, path: str | None = None) -> None:
             label=plot_info["newline"],
             color=plot_info["color"],
             alpha=0.5,
+            edgecolor="black",
         )
-        ax.bar_label(rects, padding=3, fontsize=FONT_SIZE)
+        ax.bar_label(rects, padding=3, fontsize=BAR_FONT_SIZE)
         multiplier += 1
 
-    ax.set_xticks(x + WIDTH, GROUP, fontsize=FONT_SIZE)
+    ax.set_xticks(x + WIDTH, GROUP, fontsize=BAR_FONT_SIZE)
     ax.legend(
         loc="upper center",
         bbox_to_anchor=(0.5, -0.10),  # Below the chart
         ncols=3,
         frameon=False,
-        fontsize=FONT_SIZE,
+        fontsize=BAR_FONT_SIZE,
     )
     ax.set_ylim(0, 0.4)
-    ax.yaxis.set_tick_params(labelsize=FONT_SIZE)
+    ax.yaxis.set_tick_params(labelsize=BAR_FONT_SIZE)
     plt.tight_layout()
+    plt.grid(alpha=0.5)
     if path:
         plt.savefig(path)
     else:
