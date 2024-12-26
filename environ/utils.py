@@ -18,6 +18,125 @@ er = pd.read_csv(f"{PROCESSED_DATA_PATH}/signal/gecko_mkt.csv")
 er["time"] = pd.to_datetime(er["time"])
 
 
+def boom_bust_one_period(
+    time_price: pd.DataFrame,
+    price_col: str = "price",
+    boom_change: float = 0.25,
+    bust_change: float = 0.25,
+) -> dict:
+    """
+    Return the boom and bust periods of the given price.
+
+    Args:
+        time_price (pd.DataFrame): A DataFrame containing price and time columns.
+        boom_change (float): The percentage change required for a price boom.
+        bust_change (float): The percentage change required for a price bust.
+
+    Returns:
+        dict: A dictionary containing the main trend, start time, and end time of the period.
+    """
+    if len(time_price) == 0:
+        raise ValueError("Input DataFrame is empty.")
+
+    if price_col not in time_price.columns or "time" not in time_price.columns:
+        raise ValueError("Input DataFrame missing required columns.")
+
+    boom_threshold = time_price[price_col][0] * (1 + boom_change)
+    bust_threshold = time_price[price_col][0] * (1 - bust_change)
+
+    boom = np.where(time_price[price_col] > boom_threshold)[0]
+    bust = np.where(time_price[price_col] < bust_threshold)[0]
+
+    cycle = {
+        "main_trend": "none",
+        "start": time_price["time"].iloc[0],
+        "end": time_price["time"].iloc[-1],
+    }
+
+    if len(boom) == len(bust) == 0:
+        return cycle
+
+    if len(boom) == 0 or (len(bust) > 0 and bust[0] < boom[0]):
+        cycle["main_trend"] = "bust"
+        cycle_end = bust[0] - 1
+        while (
+            cycle_end + 1 < len(time_price[price_col])
+            and time_price[price_col][cycle_end + 1] < time_price[price_col][cycle_end]
+        ):
+            cycle_end += 1
+    else:
+        cycle["main_trend"] = "boom"
+        cycle_end = boom[0] - 1
+        while (
+            cycle_end + 1 < len(time_price[price_col])
+            and time_price[price_col][cycle_end + 1] > time_price[price_col][cycle_end]
+        ):
+            cycle_end += 1
+
+    cycle["end"] = time_price["time"][cycle_end]
+
+    price_array = time_price[price_col].iloc[: cycle_end + 1]
+
+    cycle["pre_trend_end"] = time_price["time"][
+        price_array.idxmin() if cycle["main_trend"] == "boom" else price_array.idxmax()
+    ]
+
+    return cycle
+
+
+def boom_bust_periods(
+    time_price: pd.DataFrame,
+    price_col: str = "price",
+    boom_change: float = 0.25,
+    bust_change: float = 0.25,
+) -> list:
+    """
+    Function to aggregate the boom bust periods.
+    """
+    boom_bust_list = []
+    # Sort the time_price dataframe by time
+    time_price = time_price.sort_values(by="time").reset_index(drop=True)
+    end = time_price["time"][0]
+    previous_trend = "none"
+    while end < time_price["time"].iloc[-1]:
+        time_price = time_price[time_price["time"] >= end].reset_index(drop=True)
+        cycle_dict = boom_bust_one_period(
+            time_price, price_col, boom_change, bust_change
+        )
+        if cycle_dict["main_trend"] != "none" and previous_trend != "none":
+            if cycle_dict["main_trend"] == previous_trend:
+                boom_bust_list[-1]["end"] = cycle_dict["end"]
+            else:
+                if "pre_trend_end" in cycle_dict:
+                    boom_bust_list[-1]["end"] = cycle_dict["pre_trend_end"]
+                    boom_bust_list.append(
+                        {
+                            "main_trend": cycle_dict["main_trend"],
+                            "start": cycle_dict["pre_trend_end"],
+                            "end": cycle_dict["end"],
+                        }
+                    )
+                else:
+                    boom_bust_list.append(
+                        {
+                            "main_trend": cycle_dict["main_trend"],
+                            "start": end,
+                            "end": cycle_dict["end"],
+                        }
+                    )
+        else:
+            boom_bust_list.append(
+                {
+                    "main_trend": cycle_dict["main_trend"],
+                    "start": end,
+                    "end": cycle_dict["end"],
+                }
+            )
+        end = cycle_dict["end"]
+        previous_trend = cycle_dict["main_trend"]
+    return boom_bust_list
+
+
 def msd(df: pd.DataFrame, col1: str, col2: str) -> float:
     """
     Function to calculate the mean squared deviation
@@ -59,6 +178,7 @@ def port_eval(
         std = ap_tab[strength].std()
         sharpe = avg / std if not sharpe_annul else (avg / std) * np.sqrt(52)
         t = avg / (std / ap_tab[strength].shape[0] ** 0.5)
+
         cum_ret = (ap_tab[strength] + 1).cumprod().iloc[-1] - 1
 
         if t > 2.58:

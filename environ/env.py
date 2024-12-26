@@ -8,16 +8,15 @@ from typing import Any, Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 from IPython.display import clear_output
 from tqdm import tqdm
 
 from environ.agent import FTAgent
-from environ.constants import FIGURE_PATH, LABEL, PROCESSED_DATA_PATH
+from environ.constants import FIGURE_PATH, LABEL
 from environ.env_datahander import DataHandler
 from environ.env_portfolio import Portfolio
 from environ.utils import predict_explain_split, port_eval
-from environ.exhibits import ap_table, port_fig, port_fig_btc_base, port_table
+from environ.exhibits import port_fig, port_table
 
 
 # Initialize the portfolio
@@ -402,21 +401,16 @@ trend for the upcoming week is {strength}. {explain}"
             path=f"{FIGURE_PATH}/port.pdf",
         )
 
-        # Display the portfolio figure with BTC as base
-        port_fig_btc_base(
-            self.portfolio.cs_agg_ret,
-            path=f"{FIGURE_PATH}/port_btc.pdf",
-        )
-
         # Display the asset pricing table
         ap_table_data = {}
         for data_type, data_name in zip(
             ["cs", "vision", "cs_agg"],
-            ["Crypto Factor", "Vision", "Crypto Emsemble"],
+            ["Factor", "Chart", "Emsemble"],
         ):
             ap_table_data[data_name] = self.portfolio.asset_pricing_table(data_type)
 
-        ap_table(ap_table_data)
+        portfolio.eval.record_ap(ap_table_data)
+        # portfolio.eval.store_ap()
 
         # Display the disagreement
         self.portfolio.mad()

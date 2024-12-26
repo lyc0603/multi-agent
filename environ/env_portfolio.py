@@ -8,14 +8,14 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import accuracy_score, matthews_corrcoef
 
-from environ.evaluator import evaluator
+from environ.evaluator import Evaluator
 from environ.constants import AP_LABEL
 from environ.data_loader import DataLoader
 from environ.utils import port_eval
 
 
 # initialize the evaluator
-eval = evaluator()
+eval = Evaluator()
 
 class Portfolio:
     """

@@ -48,24 +48,28 @@ for factor, factor_cols in factors.items():
 
         dff["mcap_ret"] = dff["daily_ret"] * dff["market_caps"]
 
-        if port_method == "equal_weight":
-            ret_tab = (
-                df.groupby(["year", "week", "time", f])["daily_ret"]
-                .mean()
-                .reset_index()
-            )
-        else:
-            dff["mcap_ret"] = dff["daily_ret"] * dff["market_caps"]
-            ret_tab = (
-                dff.groupby(["year", "week", "time", f])
-                .agg({"market_caps": "sum", "mcap_ret": "sum"})
-                .reset_index()
-            )
-            ret_tab["daily_ret"] = ret_tab["mcap_ret"] / ret_tab["market_caps"]
+        df_port = (
+            df.copy()
+            .groupby(["year", "week", "time", f])["daily_ret"]
+            .mean()
+            .reset_index()
+        )
+
+        # calculate the weekly return for the portfolio
+        df_port.sort_values(["time", f], ascending=True, inplace=True)
+        df_port["daily_ret"] = df_port["daily_ret"] + 1
+        df_port["weekly_ret"] = df_port.groupby(["year", "week", f])[
+            "daily_ret"
+        ].transform("prod")
+        df_port = df_port.drop_duplicates(subset=["year", "week", f])[
+            ["year", "week", "time", f, "weekly_ret"]
+        ]
+        df_port["weekly_ret"] = df_port["weekly_ret"] - 1
+        ret_tab = df_port.copy()
 
         ap_tab = (
             ret_tab.copy()
-            .pivot(index="time", columns=f, values="daily_ret")
+            .pivot(index="time", columns=f, values="weekly_ret")
             .reset_index()
         )
 

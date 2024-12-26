@@ -2,7 +2,9 @@
 Function to tabulate data
 """
 
+import seaborn as sns
 from matplotlib.patches import Rectangle
+import json
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
@@ -12,8 +14,12 @@ from matplotlib.projections import register_projection
 from matplotlib.projections.polar import PolarAxes
 from matplotlib.spines import Spine
 from matplotlib.transforms import Affine2D
+from matplotlib.dates import DateFormatter
+from environ.utils import boom_bust_periods
+import matplotlib.patches as patches
 
-from environ.constants import AP_LABEL, FIGURE_PATH, TABLE_PATH
+
+from environ.constants import AP_LABEL, FIGURE_PATH, TABLE_PATH, PROCESSED_DATA_PATH
 
 FONT_SIZE = 13
 WIDTH = 0.25
@@ -43,10 +49,10 @@ FIGURE_NAME_MAPPING = {
     "BTC": {"name": "Bitcoin", "color": "orange", "linestyle": "dashdot"},
     "mcap_ret": {
         "name": "Market",
-        "color": "green",
+        "color": "dodgerblue",
         "linestyle": "dashdot",
     },
-    "1/N": {"name": "1/N", "color": "red", "linestyle": "dashdot"},
+    "1/N": {"name": "1/N", "color": "cyan", "linestyle": "dashdot"},
 }
 
 
@@ -141,24 +147,144 @@ def port_fig(
     """
     Function to plot the portfolio figure
     """
-    plt.figure()
+    sns.set_theme(style="whitegrid")
+    df1 = df.copy()
+    df2 = df.copy()
 
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(9, 8), sharex=True)
+
+    line_objects = []  # To store line objects for custom legend styling
+    boom_bust_labels = []
+
+    # Plot each line using Seaborn
     for q in lines:
-        plt.plot(
-            (df.set_index("time")[q] + 1).cumprod(),
+        df1[q] = (df1[q] + 1).cumprod()
+
+        line = sns.lineplot(
+            x=df1["time"],
+            y=df1[q],
+            label="",
+            color=FIGURE_NAME_MAPPING[q]["color"],
+            linestyle=FIGURE_NAME_MAPPING[q]["linestyle"],
+            ax = ax1,
+        )
+        line_objects.append((line, FIGURE_NAME_MAPPING[q]["color"]))
+
+        line = sns.lineplot(
+            x=df2["time"],
+            y=(df2[q] + 1).cumprod()
+            / (df2["BTC"] + 1).cumprod(),
             label=FIGURE_NAME_MAPPING[q]["name"],
             color=FIGURE_NAME_MAPPING[q]["color"],
             linestyle=FIGURE_NAME_MAPPING[q]["linestyle"],
+            ax = ax2,
         )
 
-    plt.legend(frameon=False, fontsize=FONT_SIZE)
-    plt.xticks(rotation=45, fontsize=FONT_SIZE)
-    plt.yticks(fontsize=FONT_SIZE)
-    plt.ylabel("Cumulative Return", fontsize=FONT_SIZE)
-    plt.grid(alpha=0.5)
+        if q == "mcap_ret":
+            bb_list = boom_bust_periods(
+                df1[["time", "mcap_ret"]],
+                price_col="mcap_ret",
+                boom_change=0.2,
+                bust_change=0.2,
+            )
+
+    # Bold fonts for all labels and ticks
+    ax1.set_xticklabels(ax1.get_xticklabels(), fontsize=FONT_SIZE - 2, fontweight='bold')
+    ax1.set_yticklabels(ax1.get_yticklabels(), fontsize=FONT_SIZE, fontweight='bold')
+    ax1.set_ylabel("Cumulative Return", fontsize=FONT_SIZE, fontweight="bold")
+    plt.xlabel("Time", fontsize=FONT_SIZE, fontweight="bold")
+
+    ax2.set_xticklabels(ax2.get_xticklabels(), fontsize=FONT_SIZE - 2, fontweight='bold')
+    ax2.set_yticklabels(ax2.get_yticklabels(), fontsize=FONT_SIZE, fontweight='bold')
+    ax2.set_ylabel("Cumulative Return Denominated in Bitcoin", fontsize=FONT_SIZE, fontweight="bold")
+    ax2.axhline(y=1, color="black", linestyle="--")
+
+    # Format x-axis dates as '24-Jan'
+    ax = plt.gca()  # Get the current axes
+    date_format = DateFormatter("%b'%y")  # Define the desired date format
+    ax.xaxis.set_major_formatter(date_format)
+
+    # plot the boom bust shading
+    ymin, ymax = ax1.get_ylim()  # Get current y-axis limits
+    ymin2, ymax2 = ax2.get_ylim()
+    for period in bb_list:
+        if period["main_trend"] == "none":
+            continue
+        match period["main_trend"]:
+            case "boom":
+                edge_color = "green"
+            case "bust":
+                edge_color = "red"
+
+        # Create a dashed rectangle patch
+        rect_1 = patches.Rectangle(
+            (period["start"] + pd.Timedelta(days=1), ymin * 1.02),  # Bottom-left corner
+            period["end"] - period["start"],  # Width
+            (ymax - ymin)*0.98,  # Height
+            linewidth=2,
+            edgecolor=edge_color,
+            facecolor="none",
+            linestyle="--",
+            label=period["main_trend"],
+        )
+        rect_2 = patches.Rectangle(
+            (period["start"] + pd.Timedelta(days=1), ymin2 * 1.01),  # Bottom-left corner
+            period["end"] - period["start"],  # Width
+            (ymax2 - ymin2)*0.98,  # Height
+            linewidth=2,
+            edgecolor=edge_color,
+            facecolor="none",
+            linestyle="--",
+            label=period["main_trend"],
+        )
+        ax1.add_patch(rect_1)
+        ax2.add_patch(rect_2)
+        boom_bust_labels.append((period["main_trend"], edge_color))
+
+    ax1.set_ylim([ymin, ymax])
+    ax2.set_ylim([ymin2, ymax2])
+
+    # Configure the legend above the plot with bold font and three columns
+    legend = plt.legend(
+        frameon=False,
+        fontsize=FONT_SIZE,
+        loc="upper center",
+        ncol=5,
+        bbox_to_anchor=(0.5, 1.15),
+    )
+
+    # Apply bold weight and matching color to legend text
+    for text, (_, color) in zip(legend.get_texts(), line_objects):
+        text.set_fontweight("bold")
+        text.set_color(color)  # Set text color to match the line color
+    
+    # Add boom/bust labels to the legend with corresponding colors
+    for label, color in boom_bust_labels:
+        # Find the corresponding label in the legend and update the color
+        for text in legend.get_texts():
+            if text.get_text() == label:
+                text.set_fontweight("bold")
+                text.set_color(color)
+
+    # Limit x-axis to start and end of the time series
+    start_date = df1["time"].iloc[0]
+    end_date = df1["time"].iloc[-1]
+    ax.set_xlim([start_date, end_date])
+
+    # Add a frame around the figure
+    ax.spines["top"].set_linewidth(0.5)
+    ax.spines["top"].set_color("black")
+    ax.spines["right"].set_linewidth(0.5)
+    ax.spines["right"].set_color("black")
+    ax.spines["bottom"].set_linewidth(0.5)
+    ax.spines["bottom"].set_color("black")
+    ax.spines["left"].set_linewidth(0.5)
+    ax.spines["left"].set_color("black")
+
+    # Tight layout and save or show figure
     plt.tight_layout()
     if path:
-        plt.savefig(path)
+        plt.savefig(path, bbox_inches="tight")
     else:
         plt.show()
 
@@ -197,14 +323,17 @@ def port_table(res_dict: dict, col: list = ["mcap_ret", "1/N", "BTC", "Long"]) -
         f.write(r"\end{tabularx}" + "\n")
 
 
-def ap_table(res_dict: dict) -> None:
+def ap_table(res_list: dict) -> None:
     """
     Function to get the asset pricing table
     """
 
+    res_len = len(res_list)
+
     max_value = max(
         [
             vvv
+            for res_dict in res_list
             for _, v in res_dict.items()
             for _, vv in v.items()
             for vvk, vvv in vv.items()
@@ -213,42 +342,54 @@ def ap_table(res_dict: dict) -> None:
     )
     max_value = round(max_value, 4)
 
-    with open(f"{TABLE_PATH}/asset_pricing.tex", "w", encoding="utf-8") as f:
+    with open(f"{TABLE_PATH}/asset_pricing.tex", "w", encoding="utf-8") as f: 
+        f.write(r"\newcolumntype{N}{>{\hsize=0.5\hsize}X}" + "\n")
         f.write(r"\renewcommand{\maxnum}{" + str(max_value) + r"}" + "\n")
-        f.write(r"\begin{tabularx}{\linewidth}{*{4}{X}}" + "\n")
+        f.write(
+            r"\begin{tabularx}{\linewidth}{*{10}{X}}" + "\n"
+        )
         f.write(r"\toprule" + "\n")
-        for model in res_dict.keys():
-            f.write(r"\multicolumn{4}{c}{" + model + r"}\\" + "\n")
+        f.write(
+            r"&\multicolumn{3}{c}{\makecell{Single GPT-4o\\without fine-tuning}} &\multicolumn{3}{c}{\makecell{Single GPT-4o\\with fine-tuning}} & \multicolumn{3}{c}{\makecell{Multi-agent framework\\(Ours)}}\\"
+            + "\n"
+        )
+        for model in res_list[0].keys():
             f.write(r"\midrule" + "\n")
-            f.write(r" & Mean & Std & t(Mean) & Sharpe \\" + "\n")
+            f.write(model)
+            for _ in range(res_len):
+                f.write(" & ")
+                f.write(
+                    r"$\textnormal{Mean}$ & \textnormal{Std} & \textnormal{Sharpe}"
+                )
+            f.write(r"\\" + "\n")
             f.write(r"\midrule" + "\n")
             for _ in AP_LABEL + ["HML"]:
-
                 f.write(f"{_}")
-                f.write(
-                    r" & "
-                    + " & ".join(
-                        [
-                            (
-                                "${:.4f}$".format(
-                                    round(res_dict[model][_][f"{_}_{col}"], 4)
+                for res_dict in res_list:
+                    f.write(" & ")
+                    f.write(
+                        " & ".join(
+                            [
+                                (
+                                    "${:.4f}$".format(
+                                        round(res_dict[model][_][f"{_}_{col}"], 4)
+                                    )
+                                    if col != "avg"
+                                    else r"\multicolumn{1}{|l|}{" 
+                                    + "\databar{{{:.4f}}}".format(
+                                        round(res_dict[model][_][f"{_}_{col}"], 4)
+                                    )
+                                    + "$^{"
+                                    + res_dict[model][_][f"{_}_a"]                          
+                                    + "}$"
+                                    + "}"
                                 )
-                                if col != "avg"
-                                else "\databar{{{:.4f}}}".format(
-                                    round(res_dict[model][_][f"{_}_{col}"], 4)
-                                )
-                                + "$^{"
-                                + res_dict[model][_][f"{_}_a"]
-                                + "}$"
-                            )
-                            for col in ["avg", "std", "sr"]
-                        ]
+                                for col in ["avg", "std", "sr"]
+                            ]
+                        )
                     )
-                    + r"\\"
-                    + "\n"
-                )
-            f.write(r"\bottomrule" + "\n")
-
+                f.write(r"\\" + "\n")
+        f.write(r"\bottomrule" + "\n")
         f.write(r"\end{tabularx}" + "\n")
 
 
@@ -319,39 +460,44 @@ def radar_factory(num_vars, frame="circle"):
 
 if __name__ == "__main__":
 
-    def example_data():
-        return [
-            [
-                "Professionalism",
-                "Objectiveness",
-                "Clarity & Coherence",
-                "Consistency",
-                "Rationale",
-            ],
-            [
-                [0.93, 0.91, 0.86, 0.85, 0.90],
-                [0.88, 0.86, 0.84, 0.81, 0.86],
-                [0.53, 0.56, 0.75, 0.78, 0.56],
-            ],
-        ]
+    with open(f"{PROCESSED_DATA_PATH}/ap.json", "r", encoding="utf-8") as f:
+        ap_list = json.load(f)
 
-    N = 5
-    theta = radar_factory(N, frame="circle")
+    ap_table(ap_list)
 
-    spoke_labels, data = example_data()
+    # def example_data():
+    #     return [
+    #         [
+    #             "Professionalism",
+    #             "Objectiveness",
+    #             "Clarity & Coherence",
+    #             "Consistency",
+    #             "Rationale",
+    #         ],
+    #         [
+    #             [0.93, 0.91, 0.86, 0.85, 0.90],
+    #             [0.88, 0.86, 0.84, 0.81, 0.86],
+    #             [0.53, 0.56, 0.75, 0.78, 0.56],
+    #         ],
+    #     ]
 
-    fig, ax = plt.subplots(subplot_kw=dict(projection="radar"))
+    # N = 5
+    # theta = radar_factory(N, frame="circle")
 
-    colors = ["b", "g", "r"]
-    for d, color in zip(data, colors):
-        ax.plot(theta, d, color=color)
-        ax.fill(theta, d, facecolor=color, alpha=0.10, label="_nolegend_")
+    # spoke_labels, data = example_data()
 
-    ax.set_varlabels(spoke_labels)
+    # fig, ax = plt.subplots(subplot_kw=dict(projection="radar"))
 
-    legend = plt.legend(
-        METHODS, loc="upper center", bbox_to_anchor=(0.5, -0.02), frameon=False
-    )
+    # colors = ["b", "g", "r"]
+    # for d, color in zip(data, colors):
+    #     ax.plot(theta, d, color=color)
+    #     ax.fill(theta, d, facecolor=color, alpha=0.10, label="_nolegend_")
 
-    plt.tight_layout()
-    plt.savefig(f"{FIGURE_PATH}/radar.pdf")
+    # ax.set_varlabels(spoke_labels)
+
+    # legend = plt.legend(
+    #     METHODS, loc="upper center", bbox_to_anchor=(0.5, -0.02), frameon=False
+    # )
+
+    # plt.tight_layout()
+    # plt.savefig(f"{FIGURE_PATH}/radar.pdf")
