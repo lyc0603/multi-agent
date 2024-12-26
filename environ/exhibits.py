@@ -159,9 +159,9 @@ def port_fig(
     if deno != "USD": plt.axhline(y=1, color="black", linestyle="--")
 
     # Bold fonts for all labels and ticks
-    plt.xticks(fontsize=FONT_SIZE - 2, fontweight="bold")
+    plt.xticks(fontsize=FONT_SIZE - 4, fontweight="bold")
     plt.yticks(fontsize=FONT_SIZE, fontweight="bold")
-    plt.ylabel(f"Cumulative Return Denominated in {deno}", fontsize=FONT_SIZE-2, fontweight="bold")
+    plt.ylabel(f"Cumulative Return\nDenominated in {deno}", fontsize=FONT_SIZE, fontweight="bold")
     plt.xlabel("Time", fontsize=FONT_SIZE, fontweight="bold")
 
     # Format x-axis dates as '24-Jan'
@@ -224,14 +224,14 @@ def port_fig(
     ax.set_xlim([start_date, end_date])
 
     # Add a frame around the figure
-    ax.spines["top"].set_linewidth(0.5)
-    ax.spines["top"].set_color("black")
-    ax.spines["right"].set_linewidth(0.5)
-    ax.spines["right"].set_color("black")
-    ax.spines["bottom"].set_linewidth(0.5)
-    ax.spines["bottom"].set_color("black")
-    ax.spines["left"].set_linewidth(0.5)
-    ax.spines["left"].set_color("black")
+    # ax.spines["top"].set_linewidth(0.5)
+    # ax.spines["top"].set_color("black")
+    # ax.spines["right"].set_linewidth(0.5)
+    # ax.spines["right"].set_color("black")
+    # ax.spines["bottom"].set_linewidth(0.5)
+    # ax.spines["bottom"].set_color("black")
+    # ax.spines["left"].set_linewidth(0.5)
+    # ax.spines["left"].set_color("black")
 
     # Tight layout and save or show figure
     plt.tight_layout()
