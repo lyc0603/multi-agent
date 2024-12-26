@@ -17,6 +17,7 @@ from matplotlib.transforms import Affine2D
 from matplotlib.dates import DateFormatter
 from environ.utils import boom_bust_periods
 import matplotlib.patches as patches
+from typing import Literal
 
 
 from environ.constants import AP_LABEL, FIGURE_PATH, TABLE_PATH, PROCESSED_DATA_PATH
@@ -45,14 +46,14 @@ GROUP = [
 ]
 
 FIGURE_NAME_MAPPING = {
-    "Long": {"name": "Multi-Agent Model", "color": "blue", "linestyle": "solid"},
+    "Long": {"name": "Multi-Agent Model", "color": "purple", "linestyle": "solid"},
     "BTC": {"name": "Bitcoin", "color": "orange", "linestyle": "dashdot"},
     "mcap_ret": {
         "name": "Market",
-        "color": "dodgerblue",
+        "color": "blue",
         "linestyle": "dashdot",
     },
-    "1/N": {"name": "1/N", "color": "cyan", "linestyle": "dashdot"},
+    "1/N": {"name": "1/N", "color": "dodgerblue", "linestyle": "dashdot"},
 }
 
 
@@ -106,98 +107,62 @@ def plot_msd(msd_list: list, path: str | None = None) -> None:
         plt.show()
 
 
-def port_fig_btc_base(
-    df: pd.DataFrame,
-    lines: list[str] = ["Long", "mcap_ret", "1/N"],
-    path: str | None = None,
-) -> None:
-    """
-    Function to plot the portfolio figure
-    """
-    plt.figure()
-    df = df.copy()
-
-    for q in lines:
-        plt.plot(
-            (df.set_index("time")[q] + 1).cumprod()
-            / (df.set_index("time")["BTC"] + 1).cumprod(),
-            label=FIGURE_NAME_MAPPING[q]["name"],
-            color=FIGURE_NAME_MAPPING[q]["color"],
-            linestyle=FIGURE_NAME_MAPPING[q]["linestyle"],
-        )
-
-    plt.legend(frameon=False, fontsize=FONT_SIZE)
-    plt.xticks(rotation=45, fontsize=FONT_SIZE)
-    plt.yticks(fontsize=FONT_SIZE)
-    plt.ylabel("Cumulative Return Denominated in Bitcoin", fontsize=FONT_SIZE)
-    plt.grid(alpha=0.5)
-    plt.tight_layout()
-    plt.axhline(y=1, color="black", linestyle="--")
-    if path:
-        plt.savefig(path)
-    else:
-        plt.show()
-
-
 def port_fig(
     df: pd.DataFrame,
     lines: list[str] = ["Long", "mcap_ret", "1/N"],
+    deno: Literal["USD", "BTC", "ETH"] = "USD",
     path: str | None = None,
 ) -> None:
     """
     Function to plot the portfolio figure
     """
     sns.set_theme(style="whitegrid")
-    df1 = df.copy()
-    df2 = df.copy()
+    df = df.copy()
 
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(9, 8), sharex=True)
+    plt.figure(figsize=(9, 4))  # Adjust figure size for better readability
 
     line_objects = []  # To store line objects for custom legend styling
     boom_bust_labels = []
 
     # Plot each line using Seaborn
     for q in lines:
-        df1[q] = (df1[q] + 1).cumprod()
+        if deno == "USD":
+            df[q] = (df[q] + 1).cumprod()
+            line = sns.lineplot(
+                x=df["time"],
+                y=df[q],
+                label=FIGURE_NAME_MAPPING[q]["name"],
+                color=FIGURE_NAME_MAPPING[q]["color"],
+                linestyle=FIGURE_NAME_MAPPING[q]["linestyle"],
+            )
+        else:
+            line = sns.lineplot(
+                x=df["time"],
+                y=(df[q] + 1).cumprod()
+                / (df[deno] + 1).cumprod(),
+                label=FIGURE_NAME_MAPPING[q]["name"],
+                color=FIGURE_NAME_MAPPING[q]["color"],
+                linestyle=FIGURE_NAME_MAPPING[q]["linestyle"],
+            )
 
-        line = sns.lineplot(
-            x=df1["time"],
-            y=df1[q],
-            label="",
-            color=FIGURE_NAME_MAPPING[q]["color"],
-            linestyle=FIGURE_NAME_MAPPING[q]["linestyle"],
-            ax = ax1,
-        )
         line_objects.append((line, FIGURE_NAME_MAPPING[q]["color"]))
 
-        line = sns.lineplot(
-            x=df2["time"],
-            y=(df2[q] + 1).cumprod()
-            / (df2["BTC"] + 1).cumprod(),
-            label=FIGURE_NAME_MAPPING[q]["name"],
-            color=FIGURE_NAME_MAPPING[q]["color"],
-            linestyle=FIGURE_NAME_MAPPING[q]["linestyle"],
-            ax = ax2,
-        )
-
         if q == "mcap_ret":
+            if deno != "USD": df[q] = (df[q] + 1).cumprod()
             bb_list = boom_bust_periods(
-                df1[["time", "mcap_ret"]],
+                df[["time", "mcap_ret"]],
                 price_col="mcap_ret",
                 boom_change=0.2,
                 bust_change=0.2,
             )
 
-    # Bold fonts for all labels and ticks
-    ax1.set_xticklabels(ax1.get_xticklabels(), fontsize=FONT_SIZE - 2, fontweight='bold')
-    ax1.set_yticklabels(ax1.get_yticklabels(), fontsize=FONT_SIZE, fontweight='bold')
-    ax1.set_ylabel("Cumulative Return", fontsize=FONT_SIZE, fontweight="bold")
-    plt.xlabel("Time", fontsize=FONT_SIZE, fontweight="bold")
+    if deno != "USD": plt.axhline(y=1, color="black", linestyle="--")
 
-    ax2.set_xticklabels(ax2.get_xticklabels(), fontsize=FONT_SIZE - 2, fontweight='bold')
-    ax2.set_yticklabels(ax2.get_yticklabels(), fontsize=FONT_SIZE, fontweight='bold')
-    ax2.set_ylabel("Cumulative Return Denominated in Bitcoin", fontsize=FONT_SIZE, fontweight="bold")
-    ax2.axhline(y=1, color="black", linestyle="--")
+    # Bold fonts for all labels and ticks
+    plt.xticks(fontsize=FONT_SIZE - 2, fontweight="bold")
+    plt.yticks(fontsize=FONT_SIZE, fontweight="bold")
+    plt.ylabel(f"Cumulative Return Denominated in {deno}", fontsize=FONT_SIZE-2, fontweight="bold")
+    plt.xlabel("Time", fontsize=FONT_SIZE, fontweight="bold")
 
     # Format x-axis dates as '24-Jan'
     ax = plt.gca()  # Get the current axes
@@ -205,8 +170,7 @@ def port_fig(
     ax.xaxis.set_major_formatter(date_format)
 
     # plot the boom bust shading
-    ymin, ymax = ax1.get_ylim()  # Get current y-axis limits
-    ymin2, ymax2 = ax2.get_ylim()
+    ymin, ymax = ax.get_ylim()  # Get current y-axis limits
     for period in bb_list:
         if period["main_trend"] == "none":
             continue
@@ -217,8 +181,8 @@ def port_fig(
                 edge_color = "red"
 
         # Create a dashed rectangle patch
-        rect_1 = patches.Rectangle(
-            (period["start"] + pd.Timedelta(days=1), ymin * 1.02),  # Bottom-left corner
+        rect = patches.Rectangle(
+            (period["start"] + pd.Timedelta(days=1), ymin * 1.01),  # Bottom-left corner
             period["end"] - period["start"],  # Width
             (ymax - ymin)*0.98,  # Height
             linewidth=2,
@@ -227,22 +191,10 @@ def port_fig(
             linestyle="--",
             label=period["main_trend"],
         )
-        rect_2 = patches.Rectangle(
-            (period["start"] + pd.Timedelta(days=1), ymin2 * 1.01),  # Bottom-left corner
-            period["end"] - period["start"],  # Width
-            (ymax2 - ymin2)*0.98,  # Height
-            linewidth=2,
-            edgecolor=edge_color,
-            facecolor="none",
-            linestyle="--",
-            label=period["main_trend"],
-        )
-        ax1.add_patch(rect_1)
-        ax2.add_patch(rect_2)
+        ax.add_patch(rect)
         boom_bust_labels.append((period["main_trend"], edge_color))
 
-    ax1.set_ylim([ymin, ymax])
-    ax2.set_ylim([ymin2, ymax2])
+    ax.set_ylim([ymin, ymax])
 
     # Configure the legend above the plot with bold font and three columns
     legend = plt.legend(
@@ -250,7 +202,7 @@ def port_fig(
         fontsize=FONT_SIZE,
         loc="upper center",
         ncol=5,
-        bbox_to_anchor=(0.5, 1.15),
+        bbox_to_anchor=(0.5, 1.2),
     )
 
     # Apply bold weight and matching color to legend text
@@ -267,8 +219,8 @@ def port_fig(
                 text.set_color(color)
 
     # Limit x-axis to start and end of the time series
-    start_date = df1["time"].iloc[0]
-    end_date = df1["time"].iloc[-1]
+    start_date = df["time"].iloc[0]
+    end_date = df["time"].iloc[-1]
     ax.set_xlim([start_date, end_date])
 
     # Add a frame around the figure

@@ -281,6 +281,19 @@ class DataLoader:
 
         return btc
 
+    def get_eth_data(self) -> pd.DataFrame:
+        """
+        Get the Ethereum data
+        """
+
+        eth = pd.read_csv(f"{PROCESSED_DATA_PATH}/env/gecko_daily_env.csv")
+        eth = eth.loc[eth["id"] == "ethereum", ["time", "daily_ret"]]
+        eth["time"] = pd.to_datetime(eth["time"])
+        eth["time"] = eth["time"] - pd.Timedelta(days=7)
+        eth.rename(columns={"daily_ret": "ETH"}, inplace=True)
+
+        return eth
+
 
 if __name__ == "__main__":
     dl = DataLoader()

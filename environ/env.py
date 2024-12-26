@@ -396,10 +396,12 @@ trend for the upcoming week is {strength}. {explain}"
         )
 
         # Display the portfolio figure
-        port_fig(
-            self.portfolio.cs_agg_ret,
-            path=f"{FIGURE_PATH}/port.pdf",
-        )
+        for deno in ["USD", "BTC", "ETH"]:
+            port_fig(
+                self.portfolio.cs_agg_ret,
+                deno=deno,
+                path=f"{FIGURE_PATH}/port_{deno}.pdf",
+            )
 
         # Display the asset pricing table
         ap_table_data = {}

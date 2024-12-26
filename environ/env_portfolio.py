@@ -26,6 +26,7 @@ class Portfolio:
         self.reset()
         data_loader = DataLoader()
         self.btc = data_loader.get_btc_data()
+        self.eth = data_loader.get_eth_data()
         self.cmkt = data_loader.get_cmkt_data()
         self.n = data_loader.get_n_data()
         self.eval = eval
@@ -159,7 +160,7 @@ class Portfolio:
 
         df_port["Long"] = df_port["Very High"]
         df_port["HML"] = df_port["Very High"] - df_port["Very Low"]
-        for _ in [self.cmkt, self.btc, self.n]:
+        for _ in [self.cmkt, self.btc, self.eth, self.n]:
             df_port = df_port.merge(_, on="time", how="left")
 
         return df_port
