@@ -138,8 +138,7 @@ def port_fig(
         else:
             line = sns.lineplot(
                 x=df["time"],
-                y=(df[q] + 1).cumprod()
-                / (df[deno] + 1).cumprod(),
+                y=(df[q] + 1).cumprod() / (df[deno] + 1).cumprod(),
                 label=FIGURE_NAME_MAPPING[q]["name"],
                 color=FIGURE_NAME_MAPPING[q]["color"],
                 linestyle=FIGURE_NAME_MAPPING[q]["linestyle"],
@@ -148,20 +147,26 @@ def port_fig(
         line_objects.append((line, FIGURE_NAME_MAPPING[q]["color"]))
 
         if q == "mcap_ret":
-            if deno != "USD": df[q] = (df[q] + 1).cumprod()
+            if deno != "USD":
+                df[q] = (df[q] + 1).cumprod()
             bb_list = boom_bust_periods(
                 df[["time", "mcap_ret"]],
                 price_col="mcap_ret",
-                boom_change=0.2,
-                bust_change=0.2,
+                boom_change=0.15,
+                bust_change=0.15,
             )
 
-    if deno != "USD": plt.axhline(y=1, color="black", linestyle="--")
+    if deno != "USD":
+        plt.axhline(y=1, color="black", linestyle="--")
 
     # Bold fonts for all labels and ticks
-    plt.xticks(fontsize=FONT_SIZE - 4, fontweight="bold")
+    plt.xticks(fontsize=FONT_SIZE - 1, fontweight="bold")
     plt.yticks(fontsize=FONT_SIZE, fontweight="bold")
-    plt.ylabel(f"Cumulative Return\nDenominated in {deno}", fontsize=FONT_SIZE, fontweight="bold")
+    plt.ylabel(
+        f"Cumulative Return\nDenominated in {deno}",
+        fontsize=FONT_SIZE,
+        fontweight="bold",
+    )
     plt.xlabel("Time", fontsize=FONT_SIZE, fontweight="bold")
 
     # Format x-axis dates as '24-Jan'
@@ -171,28 +176,30 @@ def port_fig(
 
     # plot the boom bust shading
     ymin, ymax = ax.get_ylim()  # Get current y-axis limits
+    counter = 0
     for period in bb_list:
+        counter += 1
         if period["main_trend"] == "none":
             continue
-        match period["main_trend"]:
-            case "boom":
-                edge_color = "green"
-            case "bust":
-                edge_color = "red"
+        if period["main_trend"] == "boom":
+            color = "green"
+            alpha = 0.1
+        elif period["main_trend"] == "bust":
+            color = "red"
+            alpha = 0.1
 
-        # Create a dashed rectangle patch
-        rect = patches.Rectangle(
-            (period["start"] + pd.Timedelta(days=1), ymin * 1.01),  # Bottom-left corner
-            period["end"] - period["start"],  # Width
-            (ymax - ymin)*0.98,  # Height
-            linewidth=2,
-            edgecolor=edge_color,
-            facecolor="none",
-            linestyle="--",
-            label=period["main_trend"],
+        # Use fill_between for shading
+        ax.fill_between(
+            df["time"],
+            ymin,
+            ymax,
+            where=(df["time"] >= period["start"]) & (df["time"] <= period["end"]),
+            color=color,
+            alpha=alpha,
+            label=period["main_trend"] if counter <= 2 else "",
         )
-        ax.add_patch(rect)
-        boom_bust_labels.append((period["main_trend"], edge_color))
+
+        boom_bust_labels.append((period["main_trend"], color))
 
     ax.set_ylim([ymin, ymax])
 
@@ -209,7 +216,7 @@ def port_fig(
     for text, (_, color) in zip(legend.get_texts(), line_objects):
         text.set_fontweight("bold")
         text.set_color(color)  # Set text color to match the line color
-    
+
     # Add boom/bust labels to the legend with corresponding colors
     for label, color in boom_bust_labels:
         # Find the corresponding label in the legend and update the color
@@ -224,14 +231,14 @@ def port_fig(
     ax.set_xlim([start_date, end_date])
 
     # Add a frame around the figure
-    # ax.spines["top"].set_linewidth(0.5)
-    # ax.spines["top"].set_color("black")
-    # ax.spines["right"].set_linewidth(0.5)
-    # ax.spines["right"].set_color("black")
-    # ax.spines["bottom"].set_linewidth(0.5)
-    # ax.spines["bottom"].set_color("black")
-    # ax.spines["left"].set_linewidth(0.5)
-    # ax.spines["left"].set_color("black")
+    ax.spines["top"].set_linewidth(0.5)
+    ax.spines["top"].set_color("black")
+    ax.spines["right"].set_linewidth(0.5)
+    ax.spines["right"].set_color("black")
+    ax.spines["bottom"].set_linewidth(0.5)
+    ax.spines["bottom"].set_color("black")
+    ax.spines["left"].set_linewidth(0.5)
+    ax.spines["left"].set_color("black")
 
     # Tight layout and save or show figure
     plt.tight_layout()
@@ -294,12 +301,10 @@ def ap_table(res_list: dict) -> None:
     )
     max_value = round(max_value, 4)
 
-    with open(f"{TABLE_PATH}/asset_pricing.tex", "w", encoding="utf-8") as f: 
+    with open(f"{TABLE_PATH}/asset_pricing.tex", "w", encoding="utf-8") as f:
         f.write(r"\newcolumntype{N}{>{\hsize=0.5\hsize}X}" + "\n")
         f.write(r"\renewcommand{\maxnum}{" + str(max_value) + r"}" + "\n")
-        f.write(
-            r"\begin{tabularx}{\linewidth}{*{10}{X}}" + "\n"
-        )
+        f.write(r"\begin{tabularx}{\linewidth}{*{10}{X}}" + "\n")
         f.write(r"\toprule" + "\n")
         f.write(
             r"&\multicolumn{3}{c}{\makecell{Single GPT-4o\\without fine-tuning}} &\multicolumn{3}{c}{\makecell{Single GPT-4o\\with fine-tuning}} & \multicolumn{3}{c}{\makecell{Multi-agent framework\\(Ours)}}\\"
@@ -310,9 +315,7 @@ def ap_table(res_list: dict) -> None:
             f.write(model)
             for _ in range(res_len):
                 f.write(" & ")
-                f.write(
-                    r"$\textnormal{Mean}$ & \textnormal{Std} & \textnormal{Sharpe}"
-                )
+                f.write(r"$\textnormal{Mean}$ & \textnormal{Std} & \textnormal{Sharpe}")
             f.write(r"\\" + "\n")
             f.write(r"\midrule" + "\n")
             for _ in AP_LABEL + ["HML"]:
@@ -327,12 +330,12 @@ def ap_table(res_list: dict) -> None:
                                         round(res_dict[model][_][f"{_}_{col}"], 4)
                                     )
                                     if col != "avg"
-                                    else r"\multicolumn{1}{|l|}{" 
+                                    else r"\multicolumn{1}{|l|}{"
                                     + "\databar{{{:.4f}}}".format(
                                         round(res_dict[model][_][f"{_}_{col}"], 4)
                                     )
                                     + "$^{"
-                                    + res_dict[model][_][f"{_}_a"]                          
+                                    + res_dict[model][_][f"{_}_a"]
                                     + "}$"
                                     + "}"
                                 )
