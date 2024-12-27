@@ -22,6 +22,8 @@ class Evaluator:
 
         self.msd_res = []
         self.ap_res = []
+        self.cs_agg = []
+        self.mkt_agg = []
 
     def cal_msd(self, df: pd.DataFrame, col1: str, col2: str) -> None:
         """
@@ -36,6 +38,14 @@ class Evaluator:
         """
 
         self.ap_res.append(ap_tab)
+
+    def record_agg(self, cs_agg: pd.DataFrame, mkt_agg: pd.DataFrame) -> None:
+        """
+        Record the aggregated results
+        """
+
+        self.cs_agg.append(cs_agg)
+        self.mkt_agg.append(mkt_agg)
 
     def store_ap(self, path: str = f"{PROCESSED_DATA_PATH}/ap.json") -> None:
         """

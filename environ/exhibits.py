@@ -25,15 +25,15 @@ from environ.constants import AP_LABEL, FIGURE_PATH, TABLE_PATH, PROCESSED_DATA_
 FONT_SIZE = 13
 WIDTH = 0.25
 METHODS = {
-    "Single GPT-4o without fine-tuning": {
-        "color": "lightblue",
+    "Single GPT-4o\nwithout fine-tuning": {
+        "color": "grey",
         "newline": "Single GPT-4o\nwithout fine-tuning",
     },
-    "Single GPT-4o with fine-tuning": {
-        "color": "cyan",
+    "Single GPT-4o\nwith fine-tuning": {
+        "color": "purple",
         "newline": "Single GPT-4o\nwith fine-tuning",
     },
-    "Multi-agent framework (Ours)": {
+    "Multi-agent\nframework (Ours)": {
         "color": "blue",
         "newline": "Multi-agent\nframework (Ours)",
     },
@@ -46,15 +46,84 @@ GROUP = [
 ]
 
 FIGURE_NAME_MAPPING = {
-    "Long": {"name": "Multi-Agent Model", "color": "purple", "linestyle": "solid"},
+    "Long": {"name": "Multi-Agent Model", "color": "blue", "linestyle": "solid"},
     "BTC": {"name": "Bitcoin", "color": "orange", "linestyle": "dashdot"},
     "mcap_ret": {
         "name": "Market",
-        "color": "blue",
+        "color": "purple",
         "linestyle": "dashdot",
     },
-    "1/N": {"name": "1/N", "color": "dodgerblue", "linestyle": "dashdot"},
+    "1/N": {"name": "1/N", "color": "grey", "linestyle": "dashdot"},
 }
+
+
+def plot_lin_scatter(
+    df_list: list,
+    x_label: str = "Crypto Factor Expert",
+    y_label: str = "Technical Expert",
+    save_path: str | None = None,
+) -> None:
+    """
+    Function to plot the scatter with histogram.
+    """
+    sns.set_theme(style="white")
+
+    plot_df = []
+
+    for df, (name, info) in zip(df_list, METHODS.items()):
+        df = df.drop_duplicates(subset=["year", "week", "name"])[
+            ["lin_prob_x", "lin_prob_y"]
+        ]
+        df["name"] = name
+        plot_df.append(df)
+
+    df = pd.concat(plot_df)
+
+    g = sns.jointplot(
+        x="lin_prob_x",
+        y="lin_prob_y",
+        data=df,
+        hue="name",
+        palette=[info["color"] for _, info in METHODS.items()],
+        kind="scatter",
+        xlim=(0, 1),
+        ylim=(0, 1),
+        color=info["color"],
+        height=5,
+        alpha=0.3,
+        # marginal_kws={"bins": 20, "kde": True},
+    )
+    g.ax_joint.plot([0, 1], [0, 1], ls="--", color="black", linewidth=1)
+
+    # Set labels and ticks
+    g.set_axis_labels(
+        f"Rise Probability from {x_label}",
+        f"Rise Probability from {y_label}",
+        fontsize=FONT_SIZE - 2,
+        fontweight="bold",
+    )
+    g.ax_joint.xaxis.set_tick_params(labelsize=FONT_SIZE)
+    g.ax_joint.yaxis.set_tick_params(labelsize=FONT_SIZE)
+    for label in g.ax_joint.get_xticklabels():
+        label.set_fontweight("bold")
+    for label in g.ax_joint.get_yticklabels():
+        label.set_fontweight("bold")
+
+    legend = g.ax_joint.legend(
+        loc="lower center",  # Center the legend at the bottom
+        bbox_to_anchor=(0.5, -0.3),  # Position it below the plot
+        frameon=False,  # Remove frame
+        fontsize=FONT_SIZE - 4,  # Smaller font size
+        ncols=3,  # 3 columns
+    )
+    legend.set_title(None)  # Remove legend title
+
+    # Make legend labels bold
+    for text in legend.get_texts():
+        text.set_fontweight("bold")
+
+    if save_path:
+        g.fig.savefig(save_path, bbox_inches="tight", dpi=300)
 
 
 def plot_msd(msd_list: list, path: str | None = None) -> None:
@@ -62,47 +131,55 @@ def plot_msd(msd_list: list, path: str | None = None) -> None:
     Function to plot the mean square deviation
     """
 
-    BAR_FONT_SIZE = 16
-
-    _, ax = plt.subplots(figsize=(9.6, 7.2))
-    x = np.arange(len(METHODS))
-    multiplier = 0
-
-    # Adjust the loop logic
-    for idx, (_, plot_info) in enumerate(METHODS.items()):
-        offset = WIDTH * multiplier
-
-        # Correct indexing logic
-        rects = ax.bar(
-            x + offset,
-            msd_list[3 * idx : 3 * (idx + 1)],
-            WIDTH,
-            label=plot_info["newline"],
-            color=plot_info["color"],
-            alpha=0.5,
-            edgecolor="black",
-        )
-        ax.bar_label(rects, padding=3, fmt="%.4f", fontsize=BAR_FONT_SIZE - 2)
-        multiplier += 1
-
-    divider_positions = [0.75, 1.75]
-    for pos in divider_positions:
-        ax.axvline(pos, color="black", linestyle="--", linewidth=2, alpha=0.7)
-
-    ax.set_xticks(x + WIDTH, GROUP, fontsize=BAR_FONT_SIZE)
-    ax.legend(
-        loc="upper center",
-        bbox_to_anchor=(0.5, -0.10),  # Below the chart
-        ncols=3,
-        frameon=False,
-        fontsize=BAR_FONT_SIZE,
+    df = pd.DataFrame(
+        {
+            "Models": [info["newline"] for _, info in METHODS.items()],
+            "Disagreement": msd_list,
+        }
     )
-    ax.set_ylim(0, 0.35)
-    ax.yaxis.set_tick_params(labelsize=BAR_FONT_SIZE)
-    plt.tight_layout()
-    plt.grid(alpha=0.5)
+
+    original_palette = [info["color"] for _, info in METHODS.items()]
+    plt.figure(figsize=(5, 5))
+
+    sns.set_theme(style="whitegrid")
+    g = sns.barplot(x="Models", y="Disagreement", data=df, palette=original_palette)
+
+    # Annotate bars with values
+    for _, row in df.iterrows():
+        g.text(
+            row.Models,
+            row.Disagreement,
+            round(row.Disagreement, 3),
+            color="black",
+            ha="center",
+            fontsize=FONT_SIZE,
+            fontweight="bold",
+        )
+    # Customize x-label, y-label, and tick parameters
+    g.set_xlabel("Models", fontsize=FONT_SIZE - 2, fontweight="bold")  # X-axis label
+    g.set_ylabel(
+        "Disagreement", fontsize=FONT_SIZE - 2, fontweight="bold"
+    )  # Y-axis label
+
+    # Customize tick parameters
+    g.tick_params(axis="x", labelsize=FONT_SIZE - 4)  # X-ticks
+    g.tick_params(axis="y", labelsize=FONT_SIZE)  # Y-ticks
+    for label in g.get_xticklabels():
+        label.set_fontweight("bold")
+    for label in g.get_yticklabels():
+        label.set_fontweight("bold")
+
+    plt.grid(axis="x", color="gray", linestyle="-", linewidth=0.5)
+
+    # set some alpha value for the bar
+    for patch, color in zip(g.patches, original_palette):
+        patch.set_alpha(0.8)  # Set transparency
+        patch.set_edgecolor("black")  # Add black border
+        patch.set_linewidth(1.5)  # Set border thickness
+
+    # Display the plot
     if path:
-        plt.savefig(path)
+        plt.savefig(path, bbox_inches="tight")
     else:
         plt.show()
 

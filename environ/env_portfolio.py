@@ -235,6 +235,8 @@ class Portfolio:
         Method to combine the market and cross-sectional data
         """
 
+        eval.record_agg(self.cs_agg, self.mkt_agg)
+
         self.cs_agg_ret["time"] = pd.to_datetime(self.cs_agg_ret["time"])
         self.cs_agg_ret["year"] = self.cs_agg_ret["time"].dt.year.astype(int)
         self.cs_agg_ret["week"] = self.cs_agg_ret["time"].dt.isocalendar().week.astype(int)

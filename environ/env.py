@@ -16,7 +16,7 @@ from environ.constants import FIGURE_PATH, LABEL
 from environ.env_datahander import DataHandler
 from environ.env_portfolio import Portfolio
 from environ.utils import predict_explain_split, port_eval
-from environ.exhibits import port_fig, port_table
+from environ.exhibits import port_fig, port_table, plot_lin_scatter
 
 
 # Initialize the portfolio
@@ -416,3 +416,17 @@ trend for the upcoming week is {strength}. {explain}"
 
         # Display the disagreement
         self.portfolio.mad()
+
+        # Display the scatter
+        plot_lin_scatter(
+            self.portfolio.eval.cs_agg,
+            "Crypto Factor Expert",
+            "Technical Expert",
+            f"{FIGURE_PATH}/scatter_cs.pdf",
+        )
+        plot_lin_scatter(
+            self.portfolio.eval.mkt_agg,
+            "Market Expert",
+            "News Expert",
+            f"{FIGURE_PATH}/scatter_mkt.pdf",
+        )
