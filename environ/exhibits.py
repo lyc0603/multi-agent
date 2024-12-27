@@ -147,7 +147,7 @@ def plot_msd(msd_list: list, path: str | None = None) -> None:
     )
 
     original_palette = [info["color"] for _, info in METHODS.items()]
-    plt.figure(figsize=(4, 6))
+    plt.figure(figsize=(4, 8))
 
     sns.set_theme(style="whitegrid")
     g = sns.barplot(x="Models", y="Disagreement", data=df, palette=original_palette)
