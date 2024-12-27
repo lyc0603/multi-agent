@@ -196,10 +196,10 @@ def port_fig(
             where=(df["time"] >= period["start"]) & (df["time"] <= period["end"]),
             color=color,
             alpha=alpha,
-            label=period["main_trend"] if counter <= 2 else "",
+            label=period["main_trend"].capitalize() if counter <= 2 else "",
         )
 
-        boom_bust_labels.append((period["main_trend"], color))
+        boom_bust_labels.append((period["main_trend"].capitalize(), color))
 
     ax.set_ylim([ymin, ymax])
 
@@ -209,7 +209,7 @@ def port_fig(
         fontsize=FONT_SIZE,
         loc="upper center",
         ncol=5,
-        bbox_to_anchor=(0.5, 1.2),
+        bbox_to_anchor=(0.45, 1.2),
     )
 
     # Apply bold weight and matching color to legend text
