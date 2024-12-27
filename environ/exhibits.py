@@ -25,17 +25,17 @@ from environ.constants import AP_LABEL, FIGURE_PATH, TABLE_PATH, PROCESSED_DATA_
 FONT_SIZE = 13
 WIDTH = 0.25
 METHODS = {
-    "Single GPT-4o\nwithout fine-tuning": {
+    "Single GPT-4o without fine-tuning": {
         "color": "grey",
-        "newline": "Single GPT-4o\nwithout fine-tuning",
+        "newline": "Single GPT-4o without fine-tuning",
     },
-    "Single GPT-4o\nwith fine-tuning": {
+    "Single GPT-4o with fine-tuning": {
         "color": "purple",
-        "newline": "Single GPT-4o\nwith fine-tuning",
+        "newline": "Single GPT-4o with fine-tuning",
     },
-    "Multi-agent\nframework (Ours)": {
+    "Multi-agent framework (Ours)": {
         "color": "blue",
-        "newline": "Multi-agent\nframework (Ours)",
+        "newline": "Multi-agent framework (Ours)",
     },
 }
 
@@ -96,14 +96,19 @@ def plot_lin_scatter(
     g.ax_joint.plot([0, 1], [0, 1], ls="--", color="black", linewidth=1)
 
     # Set labels and ticks
-    g.set_axis_labels(
+    g.ax_joint.set_xlabel(
         f"Rise Probability from {x_label}",
+        fontsize=FONT_SIZE + 2,
+        fontweight="bold",
+        labelpad=20,  # Move the x-label down
+    )
+    g.ax_joint.set_ylabel(
         f"Rise Probability from {y_label}",
-        fontsize=FONT_SIZE - 2,
+        fontsize=FONT_SIZE + 2,
         fontweight="bold",
     )
-    g.ax_joint.xaxis.set_tick_params(labelsize=FONT_SIZE)
-    g.ax_joint.yaxis.set_tick_params(labelsize=FONT_SIZE)
+    g.ax_joint.xaxis.set_tick_params(labelsize=FONT_SIZE + 2)
+    g.ax_joint.yaxis.set_tick_params(labelsize=FONT_SIZE + 2)
     for label in g.ax_joint.get_xticklabels():
         label.set_fontweight("bold")
     for label in g.ax_joint.get_yticklabels():
@@ -111,12 +116,15 @@ def plot_lin_scatter(
 
     legend = g.ax_joint.legend(
         loc="lower center",  # Center the legend at the bottom
-        bbox_to_anchor=(0.5, -0.3),  # Position it below the plot
+        bbox_to_anchor=(0.5, -0.6),  # Position it below the plot
         frameon=False,  # Remove frame
-        fontsize=FONT_SIZE - 4,  # Smaller font size
-        ncols=3,  # 3 columns
+        fontsize=FONT_SIZE + 2,  # Smaller font size
+        ncols=1,  # 3 columns
     )
     legend.set_title(None)  # Remove legend title
+
+    for handle in legend.legendHandles:
+        handle.set_alpha(1.0)  # Remove transparency
 
     # Make legend labels bold
     for text in legend.get_texts():
@@ -134,12 +142,12 @@ def plot_msd(msd_list: list, path: str | None = None) -> None:
     df = pd.DataFrame(
         {
             "Models": [info["newline"] for _, info in METHODS.items()],
-            "Disagreement": msd_list,
+            "Disagreement": [val * 100 for val in msd_list],
         }
     )
 
     original_palette = [info["color"] for _, info in METHODS.items()]
-    plt.figure(figsize=(5, 5))
+    plt.figure(figsize=(4, 6))
 
     sns.set_theme(style="whitegrid")
     g = sns.barplot(x="Models", y="Disagreement", data=df, palette=original_palette)
@@ -149,21 +157,42 @@ def plot_msd(msd_list: list, path: str | None = None) -> None:
         g.text(
             row.Models,
             row.Disagreement,
-            round(row.Disagreement, 3),
+            f"{round(row.Disagreement, 2)}",
             color="black",
             ha="center",
-            fontsize=FONT_SIZE,
+            fontsize=FONT_SIZE + 2,
             fontweight="bold",
         )
     # Customize x-label, y-label, and tick parameters
-    g.set_xlabel("Models", fontsize=FONT_SIZE - 2, fontweight="bold")  # X-axis label
     g.set_ylabel(
-        "Disagreement", fontsize=FONT_SIZE - 2, fontweight="bold"
+        "Disagreement (%)", fontsize=FONT_SIZE + 2, fontweight="bold"
     )  # Y-axis label
 
+    # Remove x-ticks and x-axis
+    g.set_xlabel("")
+    g.tick_params(axis="x", bottom=False, labelbottom=False)
+
+    # Add legend
+    legend_labels = [info["newline"] for _, info in METHODS.items()]
+    legend_colors = [info["color"] for _, info in METHODS.items()]
+    handles = [
+        plt.Line2D([0], [0], color=color, lw=8, label=label)
+        for label, color in zip(legend_labels, legend_colors)
+    ]
+    legend = g.legend(
+        handles=handles,
+        loc="lower center",
+        bbox_to_anchor=(0.5, -0.25),  # Position outside the plot
+        frameon=False,
+        fontsize=FONT_SIZE + 2,
+    )
+
+    for text in legend.get_texts():
+        text.set_fontweight("bold")
+
     # Customize tick parameters
-    g.tick_params(axis="x", labelsize=FONT_SIZE - 4)  # X-ticks
-    g.tick_params(axis="y", labelsize=FONT_SIZE)  # Y-ticks
+    g.tick_params(axis="x", labelsize=FONT_SIZE + 2)  # X-ticks
+    g.tick_params(axis="y", labelsize=FONT_SIZE + 2)  # Y-ticks
     for label in g.get_xticklabels():
         label.set_fontweight("bold")
     for label in g.get_yticklabels():
@@ -174,7 +203,7 @@ def plot_msd(msd_list: list, path: str | None = None) -> None:
     # set some alpha value for the bar
     for patch, color in zip(g.patches, original_palette):
         patch.set_alpha(0.8)  # Set transparency
-        patch.set_edgecolor("black")  # Add black border
+        patch.set_edgecolor(color)  # Add black border
         patch.set_linewidth(1.5)  # Set border thickness
 
     # Display the plot
