@@ -160,12 +160,12 @@ def plot_msd(msd_list: list, path: str | None = None) -> None:
             f"{round(row.Disagreement, 2)}",
             color="black",
             ha="center",
-            fontsize=FONT_SIZE + 2,
+            fontsize=FONT_SIZE + 4,
             fontweight="bold",
         )
     # Customize x-label, y-label, and tick parameters
     g.set_ylabel(
-        "Disagreement (%)", fontsize=FONT_SIZE + 2, fontweight="bold"
+        "Disagreement (%)", fontsize=FONT_SIZE + 4, fontweight="bold"
     )  # Y-axis label
 
     # Remove x-ticks and x-axis
@@ -184,15 +184,15 @@ def plot_msd(msd_list: list, path: str | None = None) -> None:
         loc="lower center",
         bbox_to_anchor=(0.5, -0.25),  # Position outside the plot
         frameon=False,
-        fontsize=FONT_SIZE + 2,
+        fontsize=FONT_SIZE + 4,
     )
 
     for text in legend.get_texts():
         text.set_fontweight("bold")
 
     # Customize tick parameters
-    g.tick_params(axis="x", labelsize=FONT_SIZE + 2)  # X-ticks
-    g.tick_params(axis="y", labelsize=FONT_SIZE + 2)  # Y-ticks
+    g.tick_params(axis="x", labelsize=FONT_SIZE + 4)  # X-ticks
+    g.tick_params(axis="y", labelsize=FONT_SIZE + 4)  # Y-ticks
     for label in g.get_xticklabels():
         label.set_fontweight("bold")
     for label in g.get_yticklabels():
