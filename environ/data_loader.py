@@ -16,6 +16,8 @@ from environ.constants import (
     PROCESSED_DATA_PATH,
 )
 from scripts.process.signal.market_factors import market_factors
+from scripts.sp import sp_df
+from scripts.nasdaq import nasdaq_df
 
 
 class DataLoader:
@@ -261,10 +263,9 @@ class DataLoader:
         Get the market data
         """
 
-        cmkt = pd.read_csv(PROCESSED_DATA_PATH / "market" / "cmkt_daily_ret.csv")
+        cmkt = nasdaq_df
         cmkt["time"] = pd.to_datetime(cmkt["time"])
         cmkt["time"] = cmkt["time"] - pd.Timedelta(days=7)
-        cmkt.rename(columns={"cmkt": "CMKT"}, inplace=True)
 
         return cmkt
 

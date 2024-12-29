@@ -1,34 +1,48 @@
-\newcolumntype{N}{>{\hsize=0.5\hsize}X}
 \renewcommand{\maxnum}{0.0172}
-\begin{tabularx}{\linewidth}{*{10}{X}}
+\begin{tabular}{wm{0.6cm}wm{1.3cm}wm{1cm}wm{1.5cm}wm{1.5cm}wm{1cm}wm{1.5cm}wm{1.5cm}wm{1cm}wm{1.5cm}wm{1.5cm}}
 \toprule
-&\multicolumn{3}{c}{\makecell{Single GPT-4o\\without fine-tuning}} &\multicolumn{3}{c}{\makecell{Single GPT-4o\\with fine-tuning}} & \multicolumn{3}{c}{\makecell{Multi-agent framework\\(Ours)}}\\
+\multirow{2}{*}{\textbf{\makecell{Expert\\agent}}}&\multirow{2}{*}{\textbf{\makecell{Portfolio}}}&\multicolumn{3}{c}{\textbf{\makecell{Single GPT-4o\\without fine-tuning}}} &\multicolumn{3}{c}{\textbf{\makecell{Single GPT-4o\\with fine-tuning}}} & \multicolumn{3}{c}{\textbf{\makecell{Multi-agent framework\\(Ours)}}}\\
+\cline{3-11}
+&&$\textnormal{Mean}$ & \textnormal{Std} & \textnormal{Sharpe}&$\textnormal{Mean}$ & \textnormal{Std} & \textnormal{Sharpe}&$\textnormal{Mean}$ & \textnormal{Std} & \textnormal{Sharpe}\\
 \midrule
-Factor & $\textnormal{Mean}$ & \textnormal{Std} & \textnormal{Sharpe} & $\textnormal{Mean}$ & \textnormal{Std} & \textnormal{Sharpe} & $\textnormal{Mean}$ & \textnormal{Std} & \textnormal{Sharpe}\\
+\multicolumn{1}{c|}{\multirow{6}{*}{\rotatebox[origin=c]{90}{\textbf{Crypto Factor}}}}&\multicolumn{1}{l}{Very Low} & \multicolumn{1}{|@{}l@{}|}{\databar{0.0066}$^{}$} & $0.0919$ & $0.0713$ & \multicolumn{1}{|@{}l@{}|}{\databar{0.0086}$^{}$} & $0.0772$ & $0.1112$ & \multicolumn{1}{|@{}l@{}|}{\databar{0.0036}$^{}$} & $0.0785$ & $0.0464$\\
+\cline{3-3}\cline{6-6}\cline{9-9}
+\multicolumn{1}{c|}{}&\multicolumn{1}{l}{Low} & \multicolumn{1}{|@{}l@{}|}{\databar{0.0066}$^{}$} & $0.1038$ & $0.0633$ & \multicolumn{1}{|@{}l@{}|}{\databar{0.0115}$^{}$} & $0.0925$ & $0.1239$ & \multicolumn{1}{|@{}l@{}|}{\databar{0.0093}$^{}$} & $0.0944$ & $0.0983$\\
+\cline{3-3}\cline{6-6}\cline{9-9}
+\multicolumn{1}{c|}{}&\multicolumn{1}{l}{Medium} & \multicolumn{1}{|@{}l@{}|}{\databar{0.0019}$^{}$} & $0.0898$ & $0.0210$ & \multicolumn{1}{|@{}l@{}|}{\databar{0.0090}$^{}$} & $0.0963$ & $0.0933$ & \multicolumn{1}{|@{}l@{}|}{\databar{0.0072}$^{}$} & $0.0850$ & $0.0851$\\
+\cline{3-3}\cline{6-6}\cline{9-9}
+\multicolumn{1}{c|}{}&\multicolumn{1}{l}{High} & \multicolumn{1}{|@{}l@{}|}{\databar{0.0110}$^{}$} & $0.0807$ & $0.1360$ & \multicolumn{1}{|@{}l@{}|}{\databar{-0.0001}$^{}$} & $0.0865$ & $-0.0012$ & \multicolumn{1}{|@{}l@{}|}{\databar{0.0067}$^{}$} & $0.0934$ & $0.0719$\\
+\cline{3-3}\cline{6-6}\cline{9-9}
+\multicolumn{1}{c|}{}&\multicolumn{1}{l}{Very High} & \multicolumn{1}{|@{}l@{}|}{\databar{0.0153}$^{}$} & $0.0843$ & $0.1810$ & \multicolumn{1}{|@{}l@{}|}{\databar{0.0122}$^{}$} & $0.0947$ & $0.1283$ & \multicolumn{1}{|@{}l@{}|}{\databar{0.0144}$^{}$} & $0.0956$ & $0.1510$\\
+\cline{3-3}\cline{6-6}\cline{9-9}
+\multicolumn{1}{c|}{}&\multicolumn{1}{l}{HML} & \multicolumn{1}{|@{}l@{}|}{\databar{0.0087}$^{}$} & $0.0630$ & $0.1382$ & \multicolumn{1}{|@{}l@{}|}{\databar{0.0036}$^{}$} & $0.0589$ & $0.0606$ & \multicolumn{1}{|@{}l@{}|}{\databar{0.0108}$^{}$} & $0.0611$ & $0.1766$\\
 \midrule
-Very Low & \multicolumn{1}{|l|}{\databar{0.0066}$^{}$} & $0.0919$ & $0.0713$ & \multicolumn{1}{|l|}{\databar{0.0086}$^{}$} & $0.0772$ & $0.1112$ & \multicolumn{1}{|l|}{\databar{0.0036}$^{}$} & $0.0785$ & $0.0464$\\
-Low & \multicolumn{1}{|l|}{\databar{0.0066}$^{}$} & $0.1038$ & $0.0633$ & \multicolumn{1}{|l|}{\databar{0.0115}$^{}$} & $0.0925$ & $0.1239$ & \multicolumn{1}{|l|}{\databar{0.0093}$^{}$} & $0.0944$ & $0.0983$\\
-Medium & \multicolumn{1}{|l|}{\databar{0.0019}$^{}$} & $0.0898$ & $0.0210$ & \multicolumn{1}{|l|}{\databar{0.0090}$^{}$} & $0.0963$ & $0.0933$ & \multicolumn{1}{|l|}{\databar{0.0072}$^{}$} & $0.0850$ & $0.0851$\\
-High & \multicolumn{1}{|l|}{\databar{0.0110}$^{}$} & $0.0807$ & $0.1360$ & \multicolumn{1}{|l|}{\databar{-0.0001}$^{}$} & $0.0865$ & $-0.0012$ & \multicolumn{1}{|l|}{\databar{0.0067}$^{}$} & $0.0934$ & $0.0719$\\
-Very High & \multicolumn{1}{|l|}{\databar{0.0153}$^{}$} & $0.0843$ & $0.1810$ & \multicolumn{1}{|l|}{\databar{0.0122}$^{}$} & $0.0947$ & $0.1283$ & \multicolumn{1}{|l|}{\databar{0.0144}$^{}$} & $0.0956$ & $0.1510$\\
-HML & \multicolumn{1}{|l|}{\databar{0.0087}$^{}$} & $0.0630$ & $0.1382$ & \multicolumn{1}{|l|}{\databar{0.0036}$^{}$} & $0.0589$ & $0.0606$ & \multicolumn{1}{|l|}{\databar{0.0108}$^{}$} & $0.0611$ & $0.1766$\\
+&&$\textnormal{Mean}$ & \textnormal{Std} & \textnormal{Sharpe}&$\textnormal{Mean}$ & \textnormal{Std} & \textnormal{Sharpe}&$\textnormal{Mean}$ & \textnormal{Std} & \textnormal{Sharpe}\\
 \midrule
-Chart & $\textnormal{Mean}$ & \textnormal{Std} & \textnormal{Sharpe} & $\textnormal{Mean}$ & \textnormal{Std} & \textnormal{Sharpe} & $\textnormal{Mean}$ & \textnormal{Std} & \textnormal{Sharpe}\\
+\multicolumn{1}{c|}{\multirow{6}{*}{\rotatebox[origin=c]{90}{\textbf{Technical}}}}&\multicolumn{1}{l}{Very Low} & \multicolumn{1}{|@{}l@{}|}{\databar{0.0057}$^{}$} & $0.0774$ & $0.0740$ & \multicolumn{1}{|@{}l@{}|}{\databar{0.0108}$^{}$} & $0.0787$ & $0.1369$ & \multicolumn{1}{|@{}l@{}|}{\databar{0.0038}$^{}$} & $0.0791$ & $0.0475$\\
+\cline{3-3}\cline{6-6}\cline{9-9}
+\multicolumn{1}{c|}{}&\multicolumn{1}{l}{Low} & \multicolumn{1}{|@{}l@{}|}{\databar{0.0048}$^{}$} & $0.0939$ & $0.0507$ & \multicolumn{1}{|@{}l@{}|}{\databar{0.0069}$^{}$} & $0.1026$ & $0.0674$ & \multicolumn{1}{|@{}l@{}|}{\databar{0.0055}$^{}$} & $0.0995$ & $0.0553$\\
+\cline{3-3}\cline{6-6}\cline{9-9}
+\multicolumn{1}{c|}{}&\multicolumn{1}{l}{Medium} & \multicolumn{1}{|@{}l@{}|}{\databar{0.0015}$^{}$} & $0.0975$ & $0.0157$ & \multicolumn{1}{|@{}l@{}|}{\databar{0.0049}$^{}$} & $0.0913$ & $0.0535$ & \multicolumn{1}{|@{}l@{}|}{\databar{0.0082}$^{}$} & $0.0850$ & $0.0960$\\
+\cline{3-3}\cline{6-6}\cline{9-9}
+\multicolumn{1}{c|}{}&\multicolumn{1}{l}{High} & \multicolumn{1}{|@{}l@{}|}{\databar{0.0172}$^{}$} & $0.0925$ & $0.1860$ & \multicolumn{1}{|@{}l@{}|}{\databar{0.0032}$^{}$} & $0.0829$ & $0.0384$ & \multicolumn{1}{|@{}l@{}|}{\databar{0.0132}$^{}$} & $0.0903$ & $0.1461$\\
+\cline{3-3}\cline{6-6}\cline{9-9}
+\multicolumn{1}{c|}{}&\multicolumn{1}{l}{Very High} & \multicolumn{1}{|@{}l@{}|}{\databar{0.0119}$^{}$} & $0.0847$ & $0.1407$ & \multicolumn{1}{|@{}l@{}|}{\databar{0.0152}$^{}$} & $0.0870$ & $0.1749$ & \multicolumn{1}{|@{}l@{}|}{\databar{0.0103}$^{}$} & $0.0869$ & $0.1187$\\
+\cline{3-3}\cline{6-6}\cline{9-9}
+\multicolumn{1}{c|}{}&\multicolumn{1}{l}{HML} & \multicolumn{1}{|@{}l@{}|}{\databar{0.0062}$^{}$} & $0.0586$ & $0.1057$ & \multicolumn{1}{|@{}l@{}|}{\databar{0.0044}$^{}$} & $0.0590$ & $0.0752$ & \multicolumn{1}{|@{}l@{}|}{\databar{0.0066}$^{}$} & $0.0524$ & $0.1250$\\
 \midrule
-Very Low & \multicolumn{1}{|l|}{\databar{0.0057}$^{}$} & $0.0774$ & $0.0740$ & \multicolumn{1}{|l|}{\databar{0.0108}$^{}$} & $0.0787$ & $0.1369$ & \multicolumn{1}{|l|}{\databar{0.0038}$^{}$} & $0.0791$ & $0.0475$\\
-Low & \multicolumn{1}{|l|}{\databar{0.0048}$^{}$} & $0.0939$ & $0.0507$ & \multicolumn{1}{|l|}{\databar{0.0069}$^{}$} & $0.1026$ & $0.0674$ & \multicolumn{1}{|l|}{\databar{0.0055}$^{}$} & $0.0995$ & $0.0553$\\
-Medium & \multicolumn{1}{|l|}{\databar{0.0015}$^{}$} & $0.0975$ & $0.0157$ & \multicolumn{1}{|l|}{\databar{0.0049}$^{}$} & $0.0913$ & $0.0535$ & \multicolumn{1}{|l|}{\databar{0.0082}$^{}$} & $0.0850$ & $0.0960$\\
-High & \multicolumn{1}{|l|}{\databar{0.0172}$^{}$} & $0.0925$ & $0.1860$ & \multicolumn{1}{|l|}{\databar{0.0032}$^{}$} & $0.0829$ & $0.0384$ & \multicolumn{1}{|l|}{\databar{0.0132}$^{}$} & $0.0903$ & $0.1461$\\
-Very High & \multicolumn{1}{|l|}{\databar{0.0119}$^{}$} & $0.0847$ & $0.1407$ & \multicolumn{1}{|l|}{\databar{0.0152}$^{}$} & $0.0870$ & $0.1749$ & \multicolumn{1}{|l|}{\databar{0.0103}$^{}$} & $0.0869$ & $0.1187$\\
-HML & \multicolumn{1}{|l|}{\databar{0.0062}$^{}$} & $0.0586$ & $0.1057$ & \multicolumn{1}{|l|}{\databar{0.0044}$^{}$} & $0.0590$ & $0.0752$ & \multicolumn{1}{|l|}{\databar{0.0066}$^{}$} & $0.0524$ & $0.1250$\\
+&&$\textnormal{Mean}$ & \textnormal{Std} & \textnormal{Sharpe}&$\textnormal{Mean}$ & \textnormal{Std} & \textnormal{Sharpe}&$\textnormal{Mean}$ & \textnormal{Std} & \textnormal{Sharpe}\\
 \midrule
-Emsemble & $\textnormal{Mean}$ & \textnormal{Std} & \textnormal{Sharpe} & $\textnormal{Mean}$ & \textnormal{Std} & \textnormal{Sharpe} & $\textnormal{Mean}$ & \textnormal{Std} & \textnormal{Sharpe}\\
-\midrule
-Very Low & \multicolumn{1}{|l|}{\databar{0.0058}$^{}$} & $0.0900$ & $0.0640$ & \multicolumn{1}{|l|}{\databar{0.0096}$^{}$} & $0.0776$ & $0.1235$ & \multicolumn{1}{|l|}{\databar{-0.0009}$^{}$} & $0.0792$ & $-0.0116$\\
-Low & \multicolumn{1}{|l|}{\databar{0.0070}$^{}$} & $0.1016$ & $0.0688$ & \multicolumn{1}{|l|}{\databar{0.0086}$^{}$} & $0.1046$ & $0.0827$ & \multicolumn{1}{|l|}{\databar{0.0140}$^{}$} & $0.0958$ & $0.1462$\\
-Medium & \multicolumn{1}{|l|}{\databar{0.0101}$^{}$} & $0.0974$ & $0.1039$ & \multicolumn{1}{|l|}{\databar{0.0089}$^{}$} & $0.0915$ & $0.0971$ & \multicolumn{1}{|l|}{\databar{0.0041}$^{}$} & $0.0838$ & $0.0492$\\
-High & \multicolumn{1}{|l|}{\databar{0.0091}$^{}$} & $0.0801$ & $0.1131$ & \multicolumn{1}{|l|}{\databar{0.0046}$^{}$} & $0.0972$ & $0.0472$ & \multicolumn{1}{|l|}{\databar{0.0079}$^{}$} & $0.0951$ & $0.0832$\\
-Very High & \multicolumn{1}{|l|}{\databar{0.0094}$^{}$} & $0.0849$ & $0.1107$ & \multicolumn{1}{|l|}{\databar{0.0100}$^{}$} & $0.0813$ & $0.1230$ & \multicolumn{1}{|l|}{\databar{0.0160}$^{}$} & $0.0899$ & $0.1779$\\
-HML & \multicolumn{1}{|l|}{\databar{0.0036}$^{}$} & $0.0695$ & $0.0523$ & \multicolumn{1}{|l|}{\databar{0.0004}$^{}$} & $0.0512$ & $0.0081$ & \multicolumn{1}{|l|}{\databar{0.0169}$^{**}$} & $0.0558$ & $0.3030$\\
+\multicolumn{1}{c|}{\multirow{6}{*}{\rotatebox[origin=c]{90}{\textbf{Collaboration}}}}&\multicolumn{1}{l}{Very Low} & \multicolumn{1}{|@{}l@{}|}{\databar{0.0058}$^{}$} & $0.0900$ & $0.0640$ & \multicolumn{1}{|@{}l@{}|}{\databar{0.0096}$^{}$} & $0.0776$ & $0.1235$ & \multicolumn{1}{|@{}l@{}|}{\databar{-0.0009}$^{}$} & $0.0792$ & $-0.0116$\\
+\cline{3-3}\cline{6-6}\cline{9-9}
+\multicolumn{1}{c|}{}&\multicolumn{1}{l}{Low} & \multicolumn{1}{|@{}l@{}|}{\databar{0.0070}$^{}$} & $0.1016$ & $0.0688$ & \multicolumn{1}{|@{}l@{}|}{\databar{0.0086}$^{}$} & $0.1046$ & $0.0827$ & \multicolumn{1}{|@{}l@{}|}{\databar{0.0140}$^{}$} & $0.0958$ & $0.1462$\\
+\cline{3-3}\cline{6-6}\cline{9-9}
+\multicolumn{1}{c|}{}&\multicolumn{1}{l}{Medium} & \multicolumn{1}{|@{}l@{}|}{\databar{0.0101}$^{}$} & $0.0974$ & $0.1039$ & \multicolumn{1}{|@{}l@{}|}{\databar{0.0089}$^{}$} & $0.0915$ & $0.0971$ & \multicolumn{1}{|@{}l@{}|}{\databar{0.0041}$^{}$} & $0.0838$ & $0.0492$\\
+\cline{3-3}\cline{6-6}\cline{9-9}
+\multicolumn{1}{c|}{}&\multicolumn{1}{l}{High} & \multicolumn{1}{|@{}l@{}|}{\databar{0.0091}$^{}$} & $0.0801$ & $0.1131$ & \multicolumn{1}{|@{}l@{}|}{\databar{0.0046}$^{}$} & $0.0972$ & $0.0472$ & \multicolumn{1}{|@{}l@{}|}{\databar{0.0079}$^{}$} & $0.0951$ & $0.0832$\\
+\cline{3-3}\cline{6-6}\cline{9-9}
+\multicolumn{1}{c|}{}&\multicolumn{1}{l}{Very High} & \multicolumn{1}{|@{}l@{}|}{\databar{0.0094}$^{}$} & $0.0849$ & $0.1107$ & \multicolumn{1}{|@{}l@{}|}{\databar{0.0100}$^{}$} & $0.0813$ & $0.1230$ & \multicolumn{1}{|@{}l@{}|}{\databar{0.0160}$^{}$} & $0.0899$ & $0.1779$\\
+\cline{3-3}\cline{6-6}\cline{9-9}
+\multicolumn{1}{c|}{}&\multicolumn{1}{l}{HML} & \multicolumn{1}{|@{}l@{}|}{\databar{0.0036}$^{}$} & $0.0695$ & $0.0523$ & \multicolumn{1}{|@{}l@{}|}{\databar{0.0004}$^{}$} & $0.0512$ & $0.0081$ & \multicolumn{1}{|@{}l@{}|}{\databar{0.0169}$^{**}$} & $0.0558$ & $0.3030$\\
 \bottomrule
-\end{tabularx}
+\end{tabular}

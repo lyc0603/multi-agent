@@ -12,10 +12,10 @@ from IPython.display import clear_output
 from tqdm import tqdm
 
 from environ.agent import FTAgent
-from environ.constants import FIGURE_PATH, LABEL
+from environ.constants import FIGURE_PATH, LABEL, PROCESSED_DATA_PATH
 from environ.env_datahander import DataHandler
 from environ.env_portfolio import Portfolio
-from environ.utils import predict_explain_split, port_eval
+from environ.utils import predict_explain_split, port_eval, boom_bust_split
 from environ.exhibits import port_fig, port_table, plot_lin_scatter
 
 
@@ -385,16 +385,6 @@ trend for the upcoming week is {strength}. {explain}"
         # Integrate the cash-crypto allocation
         self.portfolio.mkt_cs_comb()
 
-        # Display the portfolio table
-        port_table(
-            port_eval(
-                self.portfolio.cs_agg_ret,
-                col=["Long", "mcap_ret", "1/N", "BTC"],
-                sharpe_annul=True,
-                weekly=True,
-            )
-        )
-
         # Display the portfolio figure
         for deno in ["USD", "BTC", "ETH"]:
             port_fig(
@@ -402,6 +392,21 @@ trend for the upcoming week is {strength}. {explain}"
                 deno=deno,
                 path=f"{FIGURE_PATH}/port_{deno}.pdf",
             )
+
+        # Display the portfolio table
+        port_table(
+            port_eval(
+                boom_bust_split(
+                    self.portfolio.cs_agg_ret,
+                    boom_bust_list=pickle.load(
+                        open(f"{PROCESSED_DATA_PATH}/boom_bust.pkl", "rb")
+                    ),
+                ),
+                col=["Long", "CMKT", "1/N", "BTC", "ETH"],
+                sharpe_annul=True,
+                weekly=True,
+            )
+        )
 
         # Display the asset pricing table
         ap_table_data = {}

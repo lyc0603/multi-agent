@@ -270,7 +270,7 @@ class Portfolio:
         ap_tab["week"] = ap_tab["time"].dt.isocalendar().week
         ap_tab = ap_tab.drop(columns=["time"])
 
-        return port_eval(ap_tab)
+        return port_eval(ap_tab)[0]
 
     def mad(self) -> None:
         """

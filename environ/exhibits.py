@@ -2,25 +2,24 @@
 Function to tabulate data
 """
 
-import seaborn as sns
-from matplotlib.patches import Rectangle
 import json
+from typing import Literal, Iterable
+
+import matplotlib.patches as patches
 import numpy as np
 import pandas as pd
+import seaborn as sns
 from matplotlib import pyplot as plt
-from matplotlib.patches import Circle, RegularPolygon
+from matplotlib.dates import DateFormatter
+from matplotlib.patches import Circle, Rectangle, RegularPolygon
 from matplotlib.path import Path
 from matplotlib.projections import register_projection
 from matplotlib.projections.polar import PolarAxes
 from matplotlib.spines import Spine
 from matplotlib.transforms import Affine2D
-from matplotlib.dates import DateFormatter
+
+from environ.constants import AP_LABEL, FIGURE_PATH, PROCESSED_DATA_PATH, TABLE_PATH
 from environ.utils import boom_bust_periods
-import matplotlib.patches as patches
-from typing import Literal
-
-
-from environ.constants import AP_LABEL, FIGURE_PATH, TABLE_PATH, PROCESSED_DATA_PATH
 
 FONT_SIZE = 13
 WIDTH = 0.25
@@ -46,14 +45,36 @@ GROUP = [
 ]
 
 FIGURE_NAME_MAPPING = {
-    "Long": {"name": "Multi-Agent Model", "color": "blue", "linestyle": "solid"},
-    "BTC": {"name": "Bitcoin", "color": "orange", "linestyle": "dashdot"},
-    "mcap_ret": {
+    "Long": {
+        "name": "Ours",
+        "color": "blue",
+        "linestyle": "solid",
+        "latex_color": "blue",
+    },
+    "BTC": {
+        "name": "Bitcoin",
+        "color": "orange",
+        "linestyle": "dashdot",
+        "latex_color": "orange",
+    },
+    "ETH": {
+        "name": "Ethereum",
+        "color": "black",
+        "linestyle": "dashed",
+        "latex_color": "black",
+    },
+    "CMKT": {
         "name": "Market",
         "color": "purple",
         "linestyle": "dashdot",
+        "latex_color": "Purple",
     },
-    "1/N": {"name": "1/N", "color": "grey", "linestyle": "dashdot"},
+    "1/N": {
+        "name": "1/N",
+        "color": "grey",
+        "linestyle": "dashdot",
+        "latex_color": "gray",
+    },
 }
 
 
@@ -215,7 +236,7 @@ def plot_msd(msd_list: list, path: str | None = None) -> None:
 
 def port_fig(
     df: pd.DataFrame,
-    lines: list[str] = ["Long", "mcap_ret", "1/N"],
+    lines: list[str] = ["Long", "CMKT", "1/N"],
     deno: Literal["USD", "BTC", "ETH"] = "USD",
     path: str | None = None,
 ) -> None:
@@ -252,12 +273,12 @@ def port_fig(
 
         line_objects.append((line, FIGURE_NAME_MAPPING[q]["color"]))
 
-        if q == "mcap_ret":
+        if q == "CMKT":
             if deno != "USD":
                 df[q] = (df[q] + 1).cumprod()
             bb_list = boom_bust_periods(
-                df[["time", "mcap_ret"]],
-                price_col="mcap_ret",
+                df[["time", "CMKT"]],
+                price_col="CMKT",
                 boom_change=0.15,
                 bust_change=0.15,
             )
@@ -354,36 +375,64 @@ def port_fig(
         plt.show()
 
 
-def port_table(res_dict: dict, col: list = ["mcap_ret", "1/N", "BTC", "Long"]) -> None:
+def port_table(
+    res_list: list,
+    col: list = ["Long", "CMKT", "1/N", "BTC", "ETH"],
+    periods: list = ["All", r"\textcolor{Green}{Boom}", r"\textcolor{Red}{Bust}"],
+) -> None:
     """
     Function to get the portfolio table
     """
 
     with open(f"{TABLE_PATH}/portfolio.tex", "w", encoding="utf-8") as f:
-        f.write(r"\begin{tabularx}{\linewidth}{*{5}{X}}" + "\n")
+        f.write(r"\begin{tabularx}{\linewidth}{*5{X}}" + "\n")
         f.write(r"\toprule" + "\n")
-        f.write(r"Portfolio & Cumulative & Mean & Std & Annualized Sharpe \\" + "\n")
-        f.write(r"\midrule" + "\n")
-        for port_name in col:
-            port_dict = res_dict[port_name]
-            f.write(f"{FIGURE_NAME_MAPPING[port_name]['name']}")
-            f.write(
-                r" & "
-                + " & ".join(
-                    [
-                        (
-                            "${:.4f}$".format(round(port_dict[f"{port_name}_{col}"], 4))
-                            if col != "cum"
-                            else "${:.4f}$".format(
-                                round(port_dict[f"{port_name}_{col}"], 4)
-                            )
-                        )
-                        for col in ["cum", "avg", "std", "sr"]
-                    ]
+        f.write(
+            r"\textbf{Period} & \textbf{Portfolio} & \textbf{Mean} & \textbf{Std} & \textbf{Sharpe} \\"
+            + "\n"
+        )
+        for res_dict, period in zip(res_list, periods):
+            f.write(r"\midrule" + "\n")
+            for port_name in col:
+                if port_name == "Long":
+                    f.write(
+                        r"\multicolumn{1}{c|}{\multirow{"
+                        + str(len(col))
+                        + r"}{*}{\rotatebox[origin=c]{90}{\textbf{\makecell{"
+                        + period
+                        + r"}}}}}"
+                    )
+                else:
+                    f.write(r"\multicolumn{1}{c|}{}")
+                f.write(r"&")
+                port_dict = res_dict[port_name]
+                f.write(
+                    r"\textcolor{"
+                    + FIGURE_NAME_MAPPING[port_name]["latex_color"]
+                    + r"}{"
+                    + f"{FIGURE_NAME_MAPPING[port_name]['name']}"
+                    + r"}"
                 )
-                + r"\\"
-                + "\n"
-            )
+                f.write(
+                    r" & "
+                    + " & ".join(
+                        [
+                            (
+                                "${:.4f}$".format(
+                                    round(port_dict[f"{port_name}_{col}"], 4)
+                                )
+                                if col != "cum"
+                                else "${:.4f}$".format(
+                                    round(port_dict[f"{port_name}_{col}"], 4)
+                                )
+                            )
+                            for col in ["avg", "std", "sr"]
+                        ]
+                    )
+                    + r"\\"
+                    + "\n"
+                )
+
         f.write(r"\bottomrule" + "\n")
         f.write(r"\end{tabularx}" + "\n")
 
@@ -392,6 +441,12 @@ def ap_table(res_list: dict) -> None:
     """
     Function to get the asset pricing table
     """
+
+    MODEL_MAPPING = {
+        "Factor": "Crypto Factor",
+        "Chart": "Technical",
+        "Emsemble": "Collaboration",
+    }
 
     res_len = len(res_list)
 
@@ -408,24 +463,41 @@ def ap_table(res_list: dict) -> None:
     max_value = round(max_value, 4)
 
     with open(f"{TABLE_PATH}/asset_pricing.tex", "w", encoding="utf-8") as f:
-        f.write(r"\newcolumntype{N}{>{\hsize=0.5\hsize}X}" + "\n")
         f.write(r"\renewcommand{\maxnum}{" + str(max_value) + r"}" + "\n")
-        f.write(r"\begin{tabularx}{\linewidth}{*{10}{X}}" + "\n")
+        f.write(
+            r"\begin{tabular}{wm{0.6cm}wm{1.3cm}wm{1cm}wm{1.5cm}wm{1.5cm}wm{1cm}wm{1.5cm}wm{1.5cm}wm{1cm}wm{1.5cm}wm{1.5cm}}"
+            + "\n"
+        )
         f.write(r"\toprule" + "\n")
         f.write(
-            r"&\multicolumn{3}{c}{\makecell{Single GPT-4o\\without fine-tuning}} &\multicolumn{3}{c}{\makecell{Single GPT-4o\\with fine-tuning}} & \multicolumn{3}{c}{\makecell{Multi-agent framework\\(Ours)}}\\"
+            r"\multirow{2}{*}{\textbf{\makecell{Expert\\agent}}}&\multirow{2}{*}{\textbf{\makecell{Portfolio}}}&\multicolumn{3}{c}{\textbf{\makecell{Single GPT-4o\\without fine-tuning}}} &\multicolumn{3}{c}{\textbf{\makecell{Single GPT-4o\\with fine-tuning}}} & \multicolumn{3}{c}{\textbf{\makecell{Multi-agent framework\\(Ours)}}}\\"
             + "\n"
         )
         for model in res_list[0].keys():
-            f.write(r"\midrule" + "\n")
-            f.write(model)
+            if model == "Factor":
+                f.write(r"\cline{3-11}" + "\n")
+            else:
+                f.write(r"\midrule" + "\n")
+            # f.write(model)
+            f.write(r"&")
             for _ in range(res_len):
-                f.write(" & ")
+                f.write(r"&")
                 f.write(r"$\textnormal{Mean}$ & \textnormal{Std} & \textnormal{Sharpe}")
             f.write(r"\\" + "\n")
             f.write(r"\midrule" + "\n")
             for _ in AP_LABEL + ["HML"]:
+                if _ == "Very Low":
+                    f.write(
+                        r"\multicolumn{1}{c|}{\multirow{6}{*}{\rotatebox[origin=c]{90}{\textbf{"
+                        + MODEL_MAPPING[model]
+                        + r"}}}}"
+                    )
+                else:
+                    f.write(r"\multicolumn{1}{c|}{}")
+                f.write(r"&")
+                f.write(r"\multicolumn{1}{l}{")
                 f.write(f"{_}")
+                f.write(r"}")
                 for res_dict in res_list:
                     f.write(" & ")
                     f.write(
@@ -436,7 +508,7 @@ def ap_table(res_list: dict) -> None:
                                         round(res_dict[model][_][f"{_}_{col}"], 4)
                                     )
                                     if col != "avg"
-                                    else r"\multicolumn{1}{|l|}{"
+                                    else r"\multicolumn{1}{|@{}l@{}|}{"
                                     + "\databar{{{:.4f}}}".format(
                                         round(res_dict[model][_][f"{_}_{col}"], 4)
                                     )
@@ -450,8 +522,10 @@ def ap_table(res_list: dict) -> None:
                         )
                     )
                 f.write(r"\\" + "\n")
+                if _ != "HML":
+                    f.write(r"\cline{3-3}" + r"\cline{6-6}" + r"\cline{9-9}" "\n")
         f.write(r"\bottomrule" + "\n")
-        f.write(r"\end{tabularx}" + "\n")
+        f.write(r"\end{tabular}" + "\n")
 
 
 def radar_factory(num_vars, frame="circle"):

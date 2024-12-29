@@ -2,14 +2,16 @@
 Utility functions
 """
 
+import pickle
 import warnings
 
 import numpy as np
 import pandas as pd
 from langchain_community.document_loaders.pdf import PyPDFLoader
 from sklearn.linear_model import LinearRegression
+from typing import Iterable
 
-from environ.constants import PROCESSED_DATA_PATH, AP_LABEL
+from environ.constants import AP_LABEL, PROCESSED_DATA_PATH
 
 warnings.filterwarnings("ignore")
 
@@ -89,6 +91,7 @@ def boom_bust_periods(
     price_col: str = "price",
     boom_change: float = 0.25,
     bust_change: float = 0.25,
+    save_path: str = f"{PROCESSED_DATA_PATH}/boom_bust.pkl",
 ) -> list:
     """
     Function to aggregate the boom bust periods.
@@ -134,7 +137,38 @@ def boom_bust_periods(
             )
         end = cycle_dict["end"]
         previous_trend = cycle_dict["main_trend"]
+
+        with open(save_path, "wb") as f:
+            pickle.dump(boom_bust_list, f)
+
     return boom_bust_list
+
+
+def boom_bust_split(
+    df: pd.DataFrame,
+    boom_bust_list: list,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """
+    Function to split the data into boom and bust periods
+    """
+
+    df = df.copy()
+
+    df["trend"] = "none"
+
+    for boom_bust in boom_bust_list:
+        df.loc[
+            (df["time"] >= boom_bust["start"]) & (df["time"] < boom_bust["end"]),
+            "trend",
+        ] = boom_bust["main_trend"]
+
+    # for each week, the dominant trend is the trend that appears the most
+    df["trend"] = df.groupby(["year", "week"])["trend"].transform(
+        lambda x: x.value_counts().idxmax()
+    )
+
+    # split the data into boom and bust periods
+    return df, df[df["trend"] == "boom"], df[df["trend"] == "bust"]
 
 
 def msd(df: pd.DataFrame, col1: str, col2: str) -> float:
@@ -152,54 +186,59 @@ def msd(df: pd.DataFrame, col1: str, col2: str) -> float:
 
 
 def port_eval(
-    ap_tab: pd.DataFrame,
+    ap: pd.DataFrame | Iterable,
     col: list = AP_LABEL + ["HML"],
     sharpe_annul: bool = False,
     weekly: bool = False,
-) -> dict:
+) -> list:
     """
     Function to evaluate the portfolio
     """
 
-    res_dict = {}
+    res_list = []
+    if isinstance(ap, pd.DataFrame):
+        ap = [ap]
 
-    if weekly:
-        ap_tab = ap_tab.copy()
-        for df_col in col:
-            ap_tab[df_col] = ap_tab[df_col] + 1
+    for ap_tab in ap:
+        res_dict = {}
 
-        ap_tab = ap_tab.groupby(["year", "week"])[col].prod()
+        if weekly:
+            ap_tab = ap_tab.copy()
+            for df_col in col:
+                ap_tab[df_col] = ap_tab[df_col] + 1
 
-        for df_col in col:
-            ap_tab[df_col] = ap_tab[df_col] - 1
+            ap_tab = ap_tab.groupby(["year", "week"])[col].prod()
 
-    for strength in col:
-        avg = ap_tab[strength].mean()
-        std = ap_tab[strength].std()
-        sharpe = avg / std if not sharpe_annul else (avg / std) * np.sqrt(52)
-        t = avg / (std / ap_tab[strength].shape[0] ** 0.5)
+            for df_col in col:
+                ap_tab[df_col] = ap_tab[df_col] - 1
 
-        cum_ret = (ap_tab[strength] + 1).cumprod().iloc[-1] - 1
+        for strength in col:
+            avg = ap_tab[strength].mean()
+            std = ap_tab[strength].std()
+            sharpe = avg / std if not sharpe_annul else (avg / std) * np.sqrt(52)
+            t = avg / (std / ap_tab[strength].shape[0] ** 0.5)
 
-        if t > 2.58:
-            asterisk = "***"
-        elif t > 1.96:
-            asterisk = "**"
-        elif t > 1.64:
-            asterisk = "*"
-        else:
-            asterisk = ""
+            cum_ret = (ap_tab[strength] + 1).cumprod().iloc[-1] - 1
 
-        res_dict[strength] = {
-            f"{strength}_avg": avg,
-            f"{strength}_std": std,
-            f"{strength}_t": t,
-            f"{strength}_sr": sharpe,
-            f"{strength}_a": asterisk,
-            f"{strength}_cum": cum_ret,
-        }
+            if t > 2.58:
+                asterisk = "***"
+            elif t > 1.96:
+                asterisk = "**"
+            elif t > 1.64:
+                asterisk = "*"
+            else:
+                asterisk = ""
 
-    return res_dict
+            res_dict[strength] = {
+                f"{strength}_avg": avg,
+                f"{strength}_std": std,
+                f"{strength}_t": t,
+                f"{strength}_sr": sharpe,
+                f"{strength}_a": asterisk,
+                f"{strength}_cum": cum_ret,
+            }
+        res_list.append(res_dict)
+    return res_list
 
 
 def predict_explain_split(output: str) -> tuple[str, str]:
