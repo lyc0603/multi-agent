@@ -4,12 +4,12 @@ Utility functions
 
 import pickle
 import warnings
+from typing import Iterable
 
 import numpy as np
 import pandas as pd
 from langchain_community.document_loaders.pdf import PyPDFLoader
 from sklearn.linear_model import LinearRegression
-from typing import Iterable
 
 from environ.constants import AP_LABEL, PROCESSED_DATA_PATH
 

@@ -2,8 +2,8 @@
 Script to test the conditional formatting of the excel sheet
 """
 
-import pandas as pd
 import matplotlib.pyplot as plt
+import pandas as pd
 from matplotlib.colors import LinearSegmentedColormap
 
 # Data from the LaTeX table
@@ -16,14 +16,14 @@ data = {
         "w/o News Expert",
         "w/o collab",
     ],
-    "Cumulative": [1.5425, 1.1395, 1.1354, 1.3968, 1.3576, 1.4926],
+    "Cumulative": [0.8347, 0.4707, 0.5003, 0.7168, 0.7024, 0.8132],
 }
 
 # Creating a DataFrame
 df = pd.DataFrame(data)
 
 # Conditional formatting: White to Blue
-cmap_lighter = LinearSegmentedColormap.from_list("white_to_blue", ["white", "#478ecc"])
+cmap_lighter = LinearSegmentedColormap.from_list("white_to_blue", ["white", "#9bbf8a"])
 norm = plt.Normalize(df["Cumulative"].min(), df["Cumulative"].max())
 
 # Generating a plain LaTeX table

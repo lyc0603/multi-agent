@@ -282,7 +282,7 @@ class Portfolio:
             self.mkt_agg[["lin_prob_x", "lin_prob_y"]]
         ])
 
-        for df in [self.mkt_agg, self.cs_agg, cs_mkt_concat]:
+        for df in [self.cs_agg, self.mkt_agg, cs_mkt_concat]:
             self.eval.cal_msd(df, "lin_prob_x", "lin_prob_y")
 
 if __name__ == "__main__":

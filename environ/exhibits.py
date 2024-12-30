@@ -3,13 +3,14 @@ Function to tabulate data
 """
 
 import json
-from typing import Literal, Iterable
+from typing import Iterable, Literal
 
 import matplotlib.patches as patches
 import numpy as np
 import pandas as pd
 import seaborn as sns
 from matplotlib import pyplot as plt
+from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.dates import DateFormatter
 from matplotlib.patches import Circle, Rectangle, RegularPolygon
 from matplotlib.path import Path
@@ -76,6 +77,33 @@ FIGURE_NAME_MAPPING = {
         "latex_color": "gray",
     },
 }
+
+PERIOD_COLOR_MAPPING = {
+    "All": {"min_color": "white", "max_color": "#9bbf8a"},
+    "Boom": {"min_color": "white", "max_color": "#9bbf8a"},
+    "Bust": {"min_color": "#c82423", "max_color": "white"},
+}
+
+PERIOD_FORMATTING_MAPPING = {
+    "All": r"All",
+    "Boom": r"\textcolor{Green}{Boom}",
+    "Bust": r"\textcolor{Red}{Bust}",
+}
+
+
+def con_format(
+    value: float, min_value: float, max_value: float, min_color: str, max_color: str
+) -> str:
+    """
+    Function to simulate the conditional formatting
+    """
+    cmap_lighter = LinearSegmentedColormap.from_list("", [min_color, max_color])
+    norm = plt.Normalize(min_value, max_value)
+    rgba = cmap_lighter(norm(value))
+    hex_color = "#{:02x}{:02x}{:02x}".format(
+        int(rgba[0] * 255), int(rgba[1] * 255), int(rgba[2] * 255)
+    )
+    return f"\\cellcolor[HTML]{{{hex_color[1:]}}} {value:.4f}"
 
 
 def plot_lin_scatter(
@@ -377,8 +405,8 @@ def port_fig(
 
 def port_table(
     res_list: list,
-    col: list = ["Long", "CMKT", "1/N", "BTC", "ETH"],
-    periods: list = ["All", r"\textcolor{Green}{Boom}", r"\textcolor{Red}{Bust}"],
+    col: list = ["Long", "CMKT", "1/N", "BTC"],
+    periods: list = ["All", "Boom", "Bust"],
 ) -> None:
     """
     Function to get the portfolio table
@@ -391,7 +419,16 @@ def port_table(
             r"\textbf{Period} & \textbf{Portfolio} & \textbf{Mean} & \textbf{Std} & \textbf{Sharpe} \\"
             + "\n"
         )
+
         for res_dict, period in zip(res_list, periods):
+            avg_dict = [
+                v
+                for info_dict in res_dict.values()
+                for k, v in info_dict.items()
+                if "_avg" in k
+            ]
+            avg_max = max(avg_dict)
+            avg_min = min(avg_dict)
             f.write(r"\midrule" + "\n")
             for port_name in col:
                 if port_name == "Long":
@@ -399,7 +436,7 @@ def port_table(
                         r"\multicolumn{1}{c|}{\multirow{"
                         + str(len(col))
                         + r"}{*}{\rotatebox[origin=c]{90}{\textbf{\makecell{"
-                        + period
+                        + PERIOD_FORMATTING_MAPPING[period]
                         + r"}}}}}"
                     )
                 else:
@@ -421,9 +458,13 @@ def port_table(
                                 "${:.4f}$".format(
                                     round(port_dict[f"{port_name}_{col}"], 4)
                                 )
-                                if col != "cum"
-                                else "${:.4f}$".format(
-                                    round(port_dict[f"{port_name}_{col}"], 4)
+                                if col != "avg"
+                                else con_format(
+                                    round(port_dict[f"{port_name}_{col}"], 4),
+                                    avg_min,
+                                    avg_max,
+                                    PERIOD_COLOR_MAPPING[period]["min_color"],
+                                    PERIOD_COLOR_MAPPING[period]["max_color"],
                                 )
                             )
                             for col in ["avg", "std", "sr"]
@@ -475,7 +516,7 @@ def ap_table(res_list: dict) -> None:
         )
         for model in res_list[0].keys():
             if model == "Factor":
-                f.write(r"\cline{3-11}" + "\n")
+                f.write(r"\cmidrule(lr){3-11}" + "\n")
             else:
                 f.write(r"\midrule" + "\n")
             # f.write(model)
