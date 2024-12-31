@@ -653,9 +653,9 @@ if __name__ == "__main__":
                 "Rationale",
             ],
             [
-                [0.83, 0.85, 0.85, 0.87, 0.80],
-                [0.80, 0.78, 0.83, 0.70, 0.76],
-                [0.53, 0.56, 0.74, 0.78, 0.56],
+                [0.90, 0.91, 0.86, 0.85, 0.90],
+                [0.86, 0.81, 0.84, 0.67, 0.86],
+                [0.53, 0.56, 0.75, 0.78, 0.56],
             ],
         ]
 
@@ -690,4 +690,4 @@ if __name__ == "__main__":
         label.set_fontweight("bold")
 
     plt.tight_layout()
-    plt.savefig(f"{FIGURE_PATH}/radar_mkt.pdf")
+    plt.savefig(f"{FIGURE_PATH}/radar_cs.pdf")
