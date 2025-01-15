@@ -100,8 +100,9 @@ legend = ax.legend(
     title_fontsize=12,
     fontsize=15,
     loc="upper center",  # Center the legend horizontally
-    bbox_to_anchor=(-0.2, 0),  # Place the legend below the plot
+    bbox_to_anchor=(-0.13, 0),  # Place the legend below the plot
     ncol=2,  # Arrange legend items in 4 columns
+    frameon=False,  # Disable the legend frame
 )
 legend.get_title().set_fontweight("bold")  # Bold the legend title
 
