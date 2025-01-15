@@ -262,6 +262,24 @@ def plot_msd(msd_list: list, path: str | None = None) -> None:
         plt.show()
 
 
+def hyperparameter_fig(
+    res_dict: dict,
+) -> None:
+    """
+    Function to plot the hyperparameter figure
+    """
+
+    sns.set_theme(style="whitegrid")
+    plt.figure(figsize=(4, 4))
+
+    line = sns.lineplot(
+        x=res_dict["fall_w"],
+        y=res_dict["cum_ret"],
+        marker="o",
+        color="blue",
+    )
+
+
 def port_fig(
     df: pd.DataFrame,
     lines: list[str] = ["Long", "CMKT", "1/N"],
@@ -478,7 +496,46 @@ def port_table(
         f.write(r"\end{tabularx}" + "\n")
 
 
-def ap_table(res_list: dict) -> None:
+def mkt_table(res_list: list) -> None:
+    """
+    Function to get the market table
+    """
+    res_list = [_ for i, _ in enumerate(res_list) if (i - 2) % 3 == 0]
+    max_value = max([v for res_dict in res_list for k, v in res_dict.items()])
+    max_value = round(max_value, 4)
+    with open(f"{TABLE_PATH}/mkt_ap.tex", "w", encoding="utf-8") as f:
+        f.write(r"\renewcommand{\maxnum}{" + str(max_value) + r"}" + "\n")
+        f.write(r"\begin{tabularx}{\linewidth}{*4{X}}" + "\n" + "\n")
+        f.write(r"\toprule" + "\n")
+        f.write(
+            r"&\textbf{\makecell[c]{Single GPT-4o\\without\\fine-tuning}} &\textbf{\makecell[c]{Single GPT-4o\\with\\fine-tuning}} & \textbf{\makecell[c]{Multi-agent\\framework\\(Ours)}}\\"
+            + "\n"
+        )
+        for type in ["Rise", "Fall", "Diff"]:
+            f.write(r"\midrule" + "\n")
+            f.write(
+                r"\textbf{"
+                + str(type)
+                + r"}"
+                + r"&"
+                + " & ".join(
+                    [
+                        (
+                            r"\multicolumn{1}{|@{}l@{}|}{"
+                            + "\databar{{{:.4f}}}".format(round(res_dict[type], 4))
+                            + "}"
+                        )
+                        for res_dict in res_list
+                    ]
+                )
+                + r"\\"
+                + "\n"
+            )
+        f.write(r"\bottomrule" + "\n")
+        f.write(r"\end{tabularx}" + "\n")
+
+
+def ap_table(res_list: dict, benchmark: list | None) -> None:
     """
     Function to get the asset pricing table
     """
@@ -488,6 +545,8 @@ def ap_table(res_list: dict) -> None:
         "Chart": "Technical",
         "Emsemble": "Collaboration",
     }
+
+    BENCHMARK = ["MOM 1,0", "MOM 4,0", "MOM 4,1"]
 
     res_len = len(res_list)
 
@@ -511,7 +570,7 @@ def ap_table(res_list: dict) -> None:
         )
         f.write(r"\toprule" + "\n")
         f.write(
-            r"\multirow{2}{*}{\textbf{\makecell{Expert\\agent}}}&\multirow{2}{*}{\textbf{\makecell{Portfolio}}}&\multicolumn{3}{c}{\textbf{\makecell{Single GPT-4o\\without fine-tuning}}} &\multicolumn{3}{c}{\textbf{\makecell{Single GPT-4o\\with fine-tuning}}} & \multicolumn{3}{c}{\textbf{\makecell{Multi-agent framework\\(Ours)}}}\\"
+            r"\multirow{2}{*}{\textbf{\makecell{Expert\\agent}}}&\multirow{2}{*}{\textbf{\makecell{Portfolio}}}&\multicolumn{3}{c}{\textbf{\makecell{Single GPT-4o\\without fine-tuning}}} &\multicolumn{3}{c}{\textbf{\makecell{Single GPT-4o\\with fine-tuning}}} & \multicolumn{3}{c}{\textbf{\makecell{Multi-agent\\framework (Ours)}}}\\"
             + "\n"
         )
         for model in res_list[0].keys():
@@ -567,6 +626,67 @@ def ap_table(res_list: dict) -> None:
                     f.write(r"\cline{3-3}" + r"\cline{6-6}" + r"\cline{9-9}" "\n")
         f.write(r"\bottomrule" + "\n")
         f.write(r"\end{tabular}" + "\n")
+
+    if benchmark:
+        with open(f"{TABLE_PATH}/ap_bench.tex", "w", encoding="utf-8") as f:
+            f.write(r"\renewcommand{\maxnum}{" + str(max_value) + r"}" + "\n")
+            f.write(
+                r"\begin{tabular}{wm{0.6cm}wm{1.3cm}wm{1cm}wm{1.5cm}wm{1.5cm}wm{1cm}wm{1.5cm}wm{1.5cm}wm{1cm}wm{1.5cm}wm{1.5cm}}"
+                + "\n"
+            )
+            f.write(r"\toprule" + "\n")
+            f.write(
+                r"\multirow{2}{*}{\textbf{\makecell{Factor}}}&\multirow{2}{*}{\textbf{\makecell{Portfolio}}}&\multicolumn{3}{c}{\textbf{\makecell{MOM 1,0}}} &\multicolumn{3}{c}{\textbf{\makecell{MOM 4,0}}} & \multicolumn{3}{c}{\textbf{\makecell{MOM 4,1}}}\\"
+                + "\n"
+            )
+            f.write(r"\cmidrule(lr){3-11}" + "\n")
+            f.write(r"& &")
+            for idx, _ in enumerate(benchmark):
+                f.write(r"$\textnormal{Mean}$ & \textnormal{Std} & \textnormal{Sharpe}")
+                if idx != len(benchmark) - 1:
+                    f.write(" & ")
+            f.write(r"\\" + "\n")
+            f.write(r"\midrule" + "\n")
+
+            for _ in AP_LABEL + ["HML"]:
+                if _ == "Very Low":
+                    f.write(
+                        r"\multicolumn{1}{c|}{\multirow{6}{*}{\rotatebox[origin=c]{90}{\textbf{Top 3 Factor}}}}"
+                    )
+                else:
+                    f.write(r"\multicolumn{1}{c|}{}")
+                f.write(r"&")
+                f.write(r"\multicolumn{1}{l}{")
+                f.write(f"{_}")
+                f.write(r"}")
+                for res_dict in benchmark:
+                    f.write(" & ")
+                    f.write(
+                        " & ".join(
+                            [
+                                (
+                                    "${:.4f}$".format(
+                                        round(res_dict[_][f"{_}_{col}"], 4)
+                                    )
+                                    if col != "avg"
+                                    else r"\multicolumn{1}{|@{}l@{}|}{"
+                                    + "\databar{{{:.4f}}}".format(
+                                        round(res_dict[_][f"{_}_{col}"], 4)
+                                    )
+                                    + "$^{"
+                                    + res_dict[_][f"{_}_a"]
+                                    + "}$"
+                                    + "}"
+                                )
+                                for col in ["avg", "std", "sr"]
+                            ]
+                        )
+                    )
+                f.write(r"\\" + "\n")
+                if _ != "HML":
+                    f.write(r"\cline{3-3}" + r"\cline{6-6}" + r"\cline{9-9}" "\n")
+            f.write(r"\bottomrule" + "\n")
+            f.write(r"\end{tabular}" + "\n")
 
 
 def radar_factory(num_vars, frame="circle"):
@@ -638,56 +758,59 @@ def radar_factory(num_vars, frame="circle"):
 
 if __name__ == "__main__":
 
-    # with open(f"{PROCESSED_DATA_PATH}/ap.json", "r", encoding="utf-8") as f:
-    #     ap_list = json.load(f)
+    with open(f"{PROCESSED_DATA_PATH}/ap.json", "r", encoding="utf-8") as f:
+        ap_list = json.load(f)
 
-    # ap_table(ap_list)
+    with open(f"{PROCESSED_DATA_PATH}/trad_ap.json", "r", encoding="utf-8") as f:
+        benchmark = json.load(f)
 
-    def example_data():
-        return [
-            [
-                "Professionalism",
-                "Objectiveness",
-                "Clarity & Coherence",
-                "Consistency",
-                "Rationale",
-            ],
-            [
-                [0.90, 0.91, 0.86, 0.85, 0.90],
-                [0.86, 0.81, 0.84, 0.67, 0.86],
-                [0.53, 0.56, 0.75, 0.78, 0.56],
-            ],
-        ]
+    ap_table(res_list=ap_list, benchmark=benchmark)
 
-    N = 5
-    theta = radar_factory(N, frame="circle")
+    # def example_data():
+    #     return [
+    #         [
+    #             "Professionalism",
+    #             "Objectiveness",
+    #             "Clarity & Coherence",
+    #             "Consistency",
+    #             "Rationale",
+    #         ],
+    #         [
+    #             [0.90, 0.91, 0.86, 0.85, 0.90],
+    #             [0.86, 0.81, 0.84, 0.67, 0.86],
+    #             [0.53, 0.56, 0.75, 0.78, 0.56],
+    #         ],
+    #     ]
 
-    spoke_labels, data = example_data()
+    # N = 5
+    # theta = radar_factory(N, frame="circle")
 
-    fig, ax = plt.subplots(subplot_kw=dict(projection="radar"))
+    # spoke_labels, data = example_data()
 
-    colors = [_["color"] for _, _ in METHODS.items()]
-    for d, color in zip(data, colors):
-        ax.plot(theta, d, color=color)
-        ax.fill(theta, d, facecolor=color, alpha=0.10, label="_nolegend_")
+    # fig, ax = plt.subplots(subplot_kw=dict(projection="radar"))
 
-    ax.set_varlabels(spoke_labels)
+    # colors = [_["color"] for _, _ in METHODS.items()]
+    # for d, color in zip(data, colors):
+    #     ax.plot(theta, d, color=color)
+    #     ax.fill(theta, d, facecolor=color, alpha=0.10, label="_nolegend_")
 
-    legend = plt.legend(
-        METHODS,
-        loc="upper center",
-        bbox_to_anchor=(0.5, -0.02),
-        frameon=False,
-        prop={"weight": "bold", "size": FONT_SIZE},
-    )
-    # Update tick labels
-    ax.tick_params(
-        axis="both", labelsize=FONT_SIZE, labelrotation=0, which="major", length=6
-    )
-    for label in ax.get_xticklabels():
-        label.set_fontweight("bold")
-    for label in ax.get_yticklabels():
-        label.set_fontweight("bold")
+    # ax.set_varlabels(spoke_labels)
 
-    plt.tight_layout()
-    plt.savefig(f"{FIGURE_PATH}/radar_cs.pdf")
+    # legend = plt.legend(
+    #     METHODS,
+    #     loc="upper center",
+    #     bbox_to_anchor=(0.5, -0.02),
+    #     frameon=False,
+    #     prop={"weight": "bold", "size": FONT_SIZE},
+    # )
+    # # Update tick labels
+    # ax.tick_params(
+    #     axis="both", labelsize=FONT_SIZE, labelrotation=0, which="major", length=6
+    # )
+    # for label in ax.get_xticklabels():
+    #     label.set_fontweight("bold")
+    # for label in ax.get_yticklabels():
+    #     label.set_fontweight("bold")
+
+    # plt.tight_layout()
+    # plt.savefig(f"{FIGURE_PATH}/radar_cs.pdf")

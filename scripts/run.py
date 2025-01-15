@@ -4,43 +4,44 @@ Script to run the multi-agent environment
 
 from environ.constants import PROCESSED_DATA_PATH
 from environ.env import Environment
+import numpy as np
 
-# Control group
-# Single GPT-4o without fine-tuning
-env = Environment(
-    cs_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/gpt_4o.pkl",
-    mkt_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/gpt_4o.pkl",
-    vision_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/gpt_4o.pkl",
-    news_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/gpt_4o.pkl",
-)
-# env.run("cs", f"{PROCESSED_DATA_PATH}/record/record_cs_gpt_4o_1125.json")
-# env.run("vision", f"{PROCESSED_DATA_PATH}/record/record_vs_gpt_4o_1125.json")
-# env.run("mkt", f"{PROCESSED_DATA_PATH}/record/record_mkt_gpt_4o_1125.json")
-# env.run("news", f"{PROCESSED_DATA_PATH}/record/record_news_gpt_4o_1125.json")
-env.replay(
-    cs_record_path=f"{PROCESSED_DATA_PATH}/record/record_cs_gpt_4o_1125.json",
-    vision_record_path=f"{PROCESSED_DATA_PATH}/record/record_vs_gpt_4o_1125.json",
-    mkt_record_path=f"{PROCESSED_DATA_PATH}/record/record_mkt_gpt_4o_1125.json",
-    news_record_path=f"{PROCESSED_DATA_PATH}/record/record_news_gpt_4o_1125.json",
-)
+# # Control group
+# # Single GPT-4o without fine-tuning
+# env = Environment(
+#     cs_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/gpt_4o.pkl",
+#     mkt_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/gpt_4o.pkl",
+#     vision_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/gpt_4o.pkl",
+#     news_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/gpt_4o.pkl",
+# )
+# # env.run("cs", f"{PROCESSED_DATA_PATH}/record/record_cs_gpt_4o_1125.json")
+# # env.run("vision", f"{PROCESSED_DATA_PATH}/record/record_vs_gpt_4o_1125.json")
+# # env.run("mkt", f"{PROCESSED_DATA_PATH}/record/record_mkt_gpt_4o_1125.json")
+# # env.run("news", f"{PROCESSED_DATA_PATH}/record/record_news_gpt_4o_1125.json")
+# env.replay(
+#     cs_record_path=f"{PROCESSED_DATA_PATH}/record/record_cs_gpt_4o_1125.json",
+#     vision_record_path=f"{PROCESSED_DATA_PATH}/record/record_vs_gpt_4o_1125.json",
+#     mkt_record_path=f"{PROCESSED_DATA_PATH}/record/record_mkt_gpt_4o_1125.json",
+#     news_record_path=f"{PROCESSED_DATA_PATH}/record/record_news_gpt_4o_1125.json",
+# )
 
-# Single GPT-4o with fine-tuning
-env = Environment(
-    cs_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/comb_1126.pkl",
-    mkt_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/comb_1126.pkl",
-    vision_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/comb_1126.pkl",
-    news_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/comb_1126.pkl",
-)
-# env.run("cs", f"{PROCESSED_DATA_PATH}/record/record_cs_comb_1126.json")
-# env.run("vision", f"{PROCESSED_DATA_PATH}/record/record_vs_comb_1126.json")
-# env.run("mkt", f"{PROCESSED_DATA_PATH}/record/record_mkt_comb_1126.json")
-# env.run("news", f"{PROCESSED_DATA_PATH}/record/record_news_comb_1126.json")
-env.replay(
-    cs_record_path=f"{PROCESSED_DATA_PATH}/record/record_cs_comb_1126.json",
-    vision_record_path=f"{PROCESSED_DATA_PATH}/record/record_vs_comb_1126.json",
-    mkt_record_path=f"{PROCESSED_DATA_PATH}/record/record_mkt_comb_1126.json",
-    news_record_path=f"{PROCESSED_DATA_PATH}/record/record_news_comb_1126.json",
-)
+# # Single GPT-4o with fine-tuning
+# env = Environment(
+#     cs_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/comb_1126.pkl",
+#     mkt_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/comb_1126.pkl",
+#     vision_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/comb_1126.pkl",
+#     news_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/comb_1126.pkl",
+# )
+# # env.run("cs", f"{PROCESSED_DATA_PATH}/record/record_cs_comb_1126.json")
+# # env.run("vision", f"{PROCESSED_DATA_PATH}/record/record_vs_comb_1126.json")
+# # env.run("mkt", f"{PROCESSED_DATA_PATH}/record/record_mkt_comb_1126.json")
+# # env.run("news", f"{PROCESSED_DATA_PATH}/record/record_news_comb_1126.json")
+# env.replay(
+#     cs_record_path=f"{PROCESSED_DATA_PATH}/record/record_cs_comb_1126.json",
+#     vision_record_path=f"{PROCESSED_DATA_PATH}/record/record_vs_comb_1126.json",
+#     mkt_record_path=f"{PROCESSED_DATA_PATH}/record/record_mkt_comb_1126.json",
+#     news_record_path=f"{PROCESSED_DATA_PATH}/record/record_news_comb_1126.json",
+# )
 
 
 # Treatment group

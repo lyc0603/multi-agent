@@ -17,6 +17,7 @@ class DataHandler:
         self.dl = DataLoader()
         self.pg = PromptGenerator()
         self.env_data = self.dl.get_env_data()
+        self.cmkt_data = self.dl.get_cmkt_data()
         self.cs_test_data = self.load_cs_test_data()
         self.mkt_test_data = self.load_mkt_test_data()
         self.vision_test_data = self.load_vision_test_data()

@@ -22,9 +22,11 @@ class Portfolio:
     Portfolio class to keep track of the portfolio
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.reset()
         data_loader = DataLoader()
+        self.rise_w = 1.0
+        self.fall_w = 0.5
         self.btc = data_loader.get_btc_data()
         self.eth = data_loader.get_eth_data()
         self.cmkt = data_loader.get_cmkt_data()
@@ -235,7 +237,7 @@ class Portfolio:
         Method to combine the market and cross-sectional data
         """
 
-        eval.record_agg(self.cs_agg, self.mkt_agg)
+        eval.record_agg(self.cs_agg.copy(), self.mkt_agg.copy())
 
         self.cs_agg_ret["time"] = pd.to_datetime(self.cs_agg_ret["time"])
         self.cs_agg_ret["year"] = self.cs_agg_ret["time"].dt.year.astype(int)
@@ -251,8 +253,8 @@ class Portfolio:
 
         df_mkt = df_mkt.replace(
             {
-                "Rise": 1,
-                "Fall": 0.5,
+                "Rise": self.rise_w,
+                "Fall": self.fall_w,
             },
         )
         self.cs_agg_ret = self.cs_agg_ret.merge(df_mkt, on=["year", "week"], how="left")

@@ -29,12 +29,16 @@ class Environment:
     Manages data handling, agents, and portfolio operations.
     """
 
-    def __init__(self, **agent_paths: str) -> None:
+    def __init__(
+        self, rise_w: float = 1.0, fall_w: float = 0.5, **agent_paths: str
+    ) -> None:
         """
         Initialize the environment with agent paths.
         """
         self.data_handler = DataHandler()
         self.portfolio = portfolio
+        self.portfolio.rise_w = self.rise_w = rise_w
+        self.portfolio.fall_w = self.fall_w = fall_w
         self.agents_path = agent_paths
         self.agents = {
             name.split("_")[0]: self._load_agent(path)
@@ -388,24 +392,29 @@ trend for the upcoming week is {strength}. {explain}"
         # Display the portfolio figure
         for deno in ["USD", "BTC", "ETH"]:
             port_fig(
-                self.portfolio.cs_agg_ret,
+                self.portfolio.cs_agg_ret.copy(),
                 deno=deno,
                 path=f"{FIGURE_PATH}/port_{deno}.pdf",
             )
 
         # Display the portfolio table
-        port_table(
-            port_eval(
-                boom_bust_split(
-                    self.portfolio.cs_agg_ret,
-                    boom_bust_list=pickle.load(
-                        open(f"{PROCESSED_DATA_PATH}/boom_bust.pkl", "rb")
-                    ),
+        port_eval_res = port_eval(
+            boom_bust_split(
+                self.portfolio.cs_agg_ret.copy(),
+                boom_bust_list=pickle.load(
+                    open(f"{PROCESSED_DATA_PATH}/boom_bust.pkl", "rb")
                 ),
-                col=["Long", "CMKT", "1/N", "BTC", "ETH"],
-                sharpe_annul=True,
-                weekly=True,
-            )
+            ),
+            col=["Long", "CMKT", "1/N", "BTC", "ETH"],
+            sharpe_annul=True,
+            weekly=True,
+        )
+        port_table(port_eval_res)
+        portfolio.eval.record_cum_sr(
+            self.rise_w,
+            self.fall_w,
+            port_eval_res[0]["Long"]["Long_cum"],
+            port_eval_res[0]["Long"]["Long_sr"],
         )
 
         # Display the asset pricing table

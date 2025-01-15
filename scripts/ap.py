@@ -3,8 +3,12 @@ Script to implement the asset pricing
 """
 
 import pandas as pd
-from environ.constants import AP_LABEL, DATA_PATH
+import json
+import pickle
+
+from environ.constants import AP_LABEL, PROCESSED_DATA_PATH
 from environ.data_loader import DataLoader
+from environ.utils import port_eval
 
 port_method = "equal-weight"
 
@@ -27,20 +31,25 @@ df = env[["id", "time", "year", "week", "daily_ret"]].merge(
 
 df.sort_values(["id", "time"], ascending=True, inplace=True)
 df.dropna(inplace=True)
-df = df.loc[df["time"] >= "2023-11-01"]
+df = df.loc[df["time"] >= "2023-10-30"]
 
-mom_factor = [_ for _ in df.columns if "mom_" in _]
-size_factor = [_ for _ in df.columns if "size_" in _]
-vol_factor = [_ for _ in df.columns if "volume_" in _]
-volatility_factor = [_ for _ in df.columns if "vol_" in _]
+# mom_factor = [_ for _ in df.columns if "mom_" in _]
+# size_factor = [_ for _ in df.columns if "size_" in _]
+# vol_factor = [_ for _ in df.columns if "volume_" in _]
+# volatility_factor = [_ for _ in df.columns if "vol_" in _]
+
+# factors = {
+#     "mom": mom_factor,
+#     "size": size_factor,
+#     "vol": vol_factor,
+#     "volatility": volatility_factor,
+# }
 
 factors = {
-    "mom": mom_factor,
-    "size": size_factor,
-    "vol": vol_factor,
-    "volatility": volatility_factor,
+    "mom": ["mom_1_0", "mom_4_0", "mom_4_1"],
 }
 
+res_list = []
 
 for factor, factor_cols in factors.items():
     for f in factor_cols:
@@ -57,49 +66,60 @@ for factor, factor_cols in factors.items():
 
         # calculate the weekly return for the portfolio
         df_port.sort_values(["time", f], ascending=True, inplace=True)
-        df_port["daily_ret"] = df_port["daily_ret"] + 1
-        df_port["weekly_ret"] = df_port.groupby(["year", "week", f])[
-            "daily_ret"
-        ].transform("prod")
-        df_port = df_port.drop_duplicates(subset=["year", "week", f])[
-            ["year", "week", "time", f, "weekly_ret"]
-        ]
-        df_port["weekly_ret"] = df_port["weekly_ret"] - 1
+        # df_port["daily_ret"] = df_port["daily_ret"] + 1
+        # df_port["weekly_ret"] = df_port.groupby(["year", "week", f])[
+        #     "daily_ret"
+        # ].transform("prod")
+        # df_port = df_port.drop_duplicates(subset=["year", "week", f])[
+        #     ["year", "week", "time", f, "weekly_ret"]
+        # ]
+        # df_port["weekly_ret"] = df_port["weekly_ret"] - 1
         ret_tab = df_port.copy()
 
         ap_tab = (
             ret_tab.copy()
-            .pivot(index="time", columns=f, values="weekly_ret")
+            .pivot(index=["year", "week", "time"], columns=f, values="daily_ret")
             .reset_index()
         )
 
         ap_tab["HML"] = ap_tab["Very High"] - ap_tab["Very Low"]
 
-        df_res = pd.DataFrame()
+        res_list.append(ap_tab)
 
-        def asterisk(t: float) -> str:
-            """
-            Function to get the asterisk
-            """
-            if t > 2.58:
-                return "***"
-            elif t > 1.96:
-                return "**"
-            elif t > 1.64:
-                return "*"
-            else:
-                return ""
+        # df_res = pd.DataFrame()
 
-        for label in AP_LABEL + ["HML"]:
-            res_dict = {}
-            res_dict["label"] = label
-            res_dict["mean"] = ap_tab[label].mean()
-            res_dict["std"] = ap_tab[label].std()
-            res_dict["t"] = res_dict["mean"] / (res_dict["std"] / len(ap_tab) ** 0.5)
-            res_dict["asterisk"] = asterisk(res_dict["t"])
+        # def asterisk(t: float) -> str:
+        #     """
+        #     Function to get the asterisk
+        #     """
+        #     if t > 2.58:
+        #         return "***"
+        #     elif t > 1.96:
+        #         return "**"
+        #     elif t > 1.64:
+        #         return "*"
+        #     else:
+        #         return ""
 
-            df_res = pd.concat([df_res, pd.DataFrame([res_dict])])
+        # for label in AP_LABEL + ["HML"]:
+        #     res_dict = {}
+        #     res_dict["label"] = label
+        #     res_dict["mean"] = ap_tab[label].mean()
+        #     res_dict["std"] = ap_tab[label].std()
+        #     res_dict["t"] = res_dict["mean"] / (res_dict["std"] / len(ap_tab) ** 0.5)
+        #     res_dict["asterisk"] = asterisk(res_dict["t"])
 
-        df_res
-        print(f"Factor: {factor} - {f}")
-        print(df_res)
+        #     df_res = pd.concat([df_res, pd.DataFrame([res_dict])])
+
+        # df_res
+        # print(f"Factor: {factor} - {f}")
+        # print(df_res)
+
+res_dict = port_eval(
+    res_list,
+    weekly=True,
+)
+
+
+with open(f"{PROCESSED_DATA_PATH}/trad_ap.json", "w", encoding="utf-8") as f:
+    json.dump(res_dict, f, indent=4)

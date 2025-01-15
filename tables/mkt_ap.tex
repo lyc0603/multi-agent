@@ -1,0 +1,13 @@
+\renewcommand{\maxnum}{0.0264}
+\begin{tabularx}{\linewidth}{*4{X}}
+
+\toprule
+&\textbf{\makecell[c]{Single GPT-4o\\without\\fine-tuning}} &\textbf{\makecell[c]{Single GPT-4o\\with\\fine-tuning}} & \textbf{\makecell[c]{Multi-agent\\framework\\(Ours)}}\\
+\midrule
+\textbf{Rise}&\multicolumn{1}{|@{}l@{}|}{\databar{0.0210}} & \multicolumn{1}{|@{}l@{}|}{\databar{0.0186}} & \multicolumn{1}{|@{}l@{}|}{\databar{0.0264}}\\
+\midrule
+\textbf{Fall}&\multicolumn{1}{|@{}l@{}|}{\databar{0.0104}} & \multicolumn{1}{|@{}l@{}|}{\databar{0.0051}} & \multicolumn{1}{|@{}l@{}|}{\databar{0.0032}}\\
+\midrule
+\textbf{Diff}&\multicolumn{1}{|@{}l@{}|}{\databar{0.0106}} & \multicolumn{1}{|@{}l@{}|}{\databar{0.0135}} & \multicolumn{1}{|@{}l@{}|}{\databar{0.0232}}\\
+\bottomrule
+\end{tabularx}
