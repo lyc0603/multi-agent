@@ -55,8 +55,8 @@
         <mxCell id="QFGbSMdmEsPIztJWTTJ_-114" value="Crypto Data Provider" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
           <mxGeometry x="321" y="726.5" width="67.5" height="25" as="geometry" />
         </mxCell>
-        <mxCell id="QFGbSMdmEsPIztJWTTJ_-118" value="Data" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=none;fillColor=none;fontStyle=1" vertex="1" parent="1">
-          <mxGeometry x="266.5" y="696.5" width="33.5" height="20" as="geometry" />
+        <mxCell id="QFGbSMdmEsPIztJWTTJ_-118" value="Work&lt;div&gt;Flow&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=none;fillColor=none;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="266.5" y="679.5" width="33.5" height="20" as="geometry" />
         </mxCell>
         <mxCell id="QFGbSMdmEsPIztJWTTJ_-119" value="" style="group;fillColor=none;" vertex="1" connectable="0" parent="1">
           <mxGeometry x="442" y="654.5" width="70" height="70" as="geometry" />
