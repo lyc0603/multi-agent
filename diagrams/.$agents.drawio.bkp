@@ -271,8 +271,8 @@
         <mxCell id="Ngva30sNd5TfSqiLdM4c-159" value="&lt;b&gt;Prediction&lt;/b&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="1766.1" y="610" width="70" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="Ngva30sNd5TfSqiLdM4c-164" value="&lt;u&gt;Single Agent System&lt;/u&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1" parent="1" vertex="1">
-          <mxGeometry x="1814.25" y="260" width="121.5" height="14.5" as="geometry" />
+        <mxCell id="Ngva30sNd5TfSqiLdM4c-164" value="&lt;u&gt;Single-Agent System&lt;/u&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1" parent="1" vertex="1">
+          <mxGeometry x="1814.25" y="260" width="125.75" height="14.5" as="geometry" />
         </mxCell>
         <mxCell id="Ngva30sNd5TfSqiLdM4c-165" value="&lt;u&gt;Multi-Agent System&lt;/u&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1" parent="1" vertex="1">
           <mxGeometry x="1805" y="495.5" width="121.5" height="14.5" as="geometry" />
