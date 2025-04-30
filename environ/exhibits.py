@@ -25,17 +25,17 @@ from environ.utils import boom_bust_periods
 FONT_SIZE = 13
 WIDTH = 0.25
 METHODS = {
-    "Single GPT-4o without fine-tuning": {
-        "color": "grey",
-        "newline": "Single GPT-4o without fine-tuning",
+    "Multi-agent framework (Ours)": {
+        "color": "blue",
+        "newline": "Multi-agent framework (Ours)",
     },
     "Single GPT-4o with fine-tuning": {
         "color": "purple",
         "newline": "Single GPT-4o with fine-tuning",
     },
-    "Multi-agent framework (Ours)": {
-        "color": "blue",
-        "newline": "Multi-agent framework (Ours)",
+    "Single GPT-4o without fine-tuning": {
+        "color": "grey",
+        "newline": "Single GPT-4o without fine-tuning",
     },
 }
 
@@ -758,59 +758,59 @@ def radar_factory(num_vars, frame="circle"):
 
 if __name__ == "__main__":
 
-    with open(f"{PROCESSED_DATA_PATH}/ap.json", "r", encoding="utf-8") as f:
-        ap_list = json.load(f)
+    # with open(f"{PROCESSED_DATA_PATH}/ap.json", "r", encoding="utf-8") as f:
+    #     ap_list = json.load(f)
 
-    with open(f"{PROCESSED_DATA_PATH}/trad_ap.json", "r", encoding="utf-8") as f:
-        benchmark = json.load(f)
+    # with open(f"{PROCESSED_DATA_PATH}/trad_ap.json", "r", encoding="utf-8") as f:
+    #     benchmark = json.load(f)
 
-    ap_table(res_list=ap_list, benchmark=benchmark)
+    # ap_table(res_list=ap_list, benchmark=benchmark)
 
-    # def example_data():
-    #     return [
-    #         [
-    #             "Professionalism",
-    #             "Objectiveness",
-    #             "Clarity & Coherence",
-    #             "Consistency",
-    #             "Rationale",
-    #         ],
-    #         [
-    #             [0.90, 0.91, 0.86, 0.85, 0.90],
-    #             [0.86, 0.81, 0.84, 0.67, 0.86],
-    #             [0.53, 0.56, 0.75, 0.78, 0.56],
-    #         ],
-    #     ]
+    def example_data():
+        return [
+            [
+                "Professionalism",
+                "Objectiveness",
+                "Clarity & Coherence",
+                "Consistency",
+                "Rationale",
+            ],
+            [
+                [0.90, 0.91, 0.86, 0.85, 0.90],
+                [0.86, 0.81, 0.84, 0.67, 0.86],
+                [0.53, 0.56, 0.75, 0.78, 0.56],
+            ],
+        ]
 
-    # N = 5
-    # theta = radar_factory(N, frame="circle")
+    N = 5
+    theta = radar_factory(N, frame="circle")
 
-    # spoke_labels, data = example_data()
+    spoke_labels, data = example_data()
 
-    # fig, ax = plt.subplots(subplot_kw=dict(projection="radar"))
+    fig, ax = plt.subplots(subplot_kw=dict(projection="radar"))
 
-    # colors = [_["color"] for _, _ in METHODS.items()]
-    # for d, color in zip(data, colors):
-    #     ax.plot(theta, d, color=color)
-    #     ax.fill(theta, d, facecolor=color, alpha=0.10, label="_nolegend_")
+    colors = [_["color"] for _, _ in METHODS.items()]
+    for d, color in zip(data, colors):
+        ax.plot(theta, d, color=color)
+        ax.fill(theta, d, facecolor=color, alpha=0.10, label="_nolegend_")
 
-    # ax.set_varlabels(spoke_labels)
+    ax.set_varlabels(spoke_labels)
 
-    # legend = plt.legend(
-    #     METHODS,
-    #     loc="upper center",
-    #     bbox_to_anchor=(0.5, -0.02),
-    #     frameon=False,
-    #     prop={"weight": "bold", "size": FONT_SIZE},
-    # )
-    # # Update tick labels
-    # ax.tick_params(
-    #     axis="both", labelsize=FONT_SIZE, labelrotation=0, which="major", length=6
-    # )
-    # for label in ax.get_xticklabels():
-    #     label.set_fontweight("bold")
-    # for label in ax.get_yticklabels():
-    #     label.set_fontweight("bold")
+    legend = plt.legend(
+        METHODS,
+        loc="upper center",
+        bbox_to_anchor=(0.5, -0.02),
+        frameon=False,
+        prop={"weight": "bold", "size": FONT_SIZE},
+    )
+    # Update tick labels
+    ax.tick_params(
+        axis="both", labelsize=FONT_SIZE, labelrotation=0, which="major", length=6
+    )
+    for label in ax.get_xticklabels():
+        label.set_fontweight("bold")
+    for label in ax.get_yticklabels():
+        label.set_fontweight("bold")
 
-    # plt.tight_layout()
-    # plt.savefig(f"{FIGURE_PATH}/radar_cs.pdf")
+    plt.tight_layout()
+    plt.savefig(f"{FIGURE_PATH}/radar_cs.pdf")
