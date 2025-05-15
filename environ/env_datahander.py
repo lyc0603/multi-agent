@@ -22,6 +22,8 @@ class DataHandler:
         self.mkt_test_data = self.load_mkt_test_data()
         self.vision_test_data = self.load_vision_test_data()
         self.news_test_data = self.load_news_test_data()
+        self.mkt_news_test_data = self.load_mkt_news_test_data()
+        self.cs_vision_test_data = self.load_cs_vision_test_data()
 
     def load_cs_test_data(self) -> Dict[Any, Any]:
         """
@@ -53,6 +55,21 @@ class DataHandler:
 
         return vision_test
 
+    def load_cs_vision_test_data(self) -> Dict:
+        """
+        Load the cross-sectional vision test set
+        """
+        cs_vision_test = {}
+        for yw, crypto, line in self.pg.get_cs_prompt(
+            data_type="both",
+            start_date="2023-11-01",
+            end_date="2025-01-01",
+            train_test="test",
+        ):
+            cs_vision_test.setdefault(yw, {})[crypto] = line
+
+        return cs_vision_test
+
     def load_mkt_test_data(self) -> Dict:
         """
         Load the market test set
@@ -83,6 +100,22 @@ class DataHandler:
 
         return news_test
 
+    def load_mkt_news_test_data(self) -> Dict:
+        """
+        Load the market news test set
+        """
+        mkt_news_test = {}
+        for yw, line in self.pg.get_mkt_prompt(
+            data_type="both",
+            strategy=["attn", "net", "news"],
+            start_date="2023-11-01",
+            end_date="2025-01-01",
+            train_test="test",
+        ):
+            mkt_news_test[yw] = line
+
+        return mkt_news_test
+
     def get_yw_list(self) -> List[Tuple[str, str]]:
         """
         Get the list of year-weeks in ascending order
@@ -103,4 +136,5 @@ class DataHandler:
 
 if __name__ == "__main__":
     dh = DataHandler()
-    print(dh.news_test_data)
+    print(dh.cs_vision_test_data)
+    print(dh.mkt_news_test_data)

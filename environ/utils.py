@@ -189,7 +189,7 @@ def port_eval(
     ap: pd.DataFrame | Iterable,
     col: list = AP_LABEL + ["HML"],
     sharpe_annul: bool = False,
-    weekly: bool = False,
+    weekly: bool = True,
 ) -> list:
     """
     Function to evaluate the portfolio

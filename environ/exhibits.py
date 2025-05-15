@@ -29,9 +29,13 @@ METHODS = {
         "color": "blue",
         "newline": "Multi-agent framework (Ours)",
     },
-    "Single GPT-4o with fine-tuning": {
+    "Ensemble single-agent system with fine-tuning": {
         "color": "purple",
-        "newline": "Single GPT-4o with fine-tuning",
+        "newline": "Ensemble single-agent system with fine-tuning",
+    },
+    "Single-agent system with fine-tuning": {
+        "color": "skyblue",
+        "newline": "Single-agent system with fine-tuning",
     },
     "Single GPT-4o without fine-tuning": {
         "color": "grey",
@@ -778,6 +782,7 @@ if __name__ == "__main__":
             [
                 [0.90, 0.91, 0.86, 0.85, 0.90],
                 [0.86, 0.81, 0.84, 0.67, 0.86],
+                [0.88, 0.83, 0.80, 0.63, 0.84],
                 [0.53, 0.56, 0.75, 0.78, 0.56],
             ],
         ]

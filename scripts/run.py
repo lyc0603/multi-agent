@@ -2,11 +2,12 @@
 Script to run the multi-agent environment
 """
 
-from environ.constants import PROCESSED_DATA_PATH
-from environ.env import Environment
 import numpy as np
 
-# # Control group
+from environ.constants import PROCESSED_DATA_PATH
+from environ.env import Environment
+
+# # # Control group
 # # Single GPT-4o without fine-tuning
 # env = Environment(
 #     cs_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/gpt_4o.pkl",
@@ -25,7 +26,31 @@ import numpy as np
 #     news_record_path=f"{PROCESSED_DATA_PATH}/record/record_news_gpt_4o_1125.json",
 # )
 
-# # Single GPT-4o with fine-tuning
+# # Sigle agent with fine-tuning
+# env = Environment(
+#     mkt_news_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/mkt_news_0510.pkl",
+#     cs_vision_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/cs_vision_0510.pkl",
+# )
+
+# # env.run(
+# #     "mkt_news",
+# #     f"{PROCESSED_DATA_PATH}/record/record_mkt_news_0510.json",
+# # )
+
+# # env.run(
+# #     "cs_vision",
+# #     f"{PROCESSED_DATA_PATH}/record/record_cs_vision_0510.json",
+# # )
+
+
+# env.replay(
+#     mkt_news_record_path=f"{PROCESSED_DATA_PATH}/record/record_mkt_news_0510.json",
+#     cs_vision_record_path=f"{PROCESSED_DATA_PATH}/record/record_cs_vision_0510.json",
+#     sigle_without_ensemble=True,
+# )
+
+
+# # Ensemble single GPT-4o with fine-tuning
 # env = Environment(
 #     cs_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/comb_1126.pkl",
 #     mkt_agent_path=f"{PROCESSED_DATA_PATH}/checkpoints/comb_1126.pkl",

@@ -164,11 +164,9 @@ class FTAgent(OpenAIAgent):
 
         # If the message has more than 2 parts
         # Then the parts before the last two are the context
-        if len(msg) > 2:
+        if len(msg) > 3:
             context = msg[:2]
             msg = msg[2:]
-            print(context)
-            print(msg)
         else:
             context = None
 
@@ -194,7 +192,7 @@ class FTAgent(OpenAIAgent):
 
         # If the message has more than 2 parts
         # Then the parts before the last two are the context
-        if len(msg) > 2:
+        if len(msg) > 3:
             context = msg[:2]
             msg = msg[2:]
         else:

@@ -5,6 +5,7 @@ Class to evaluate portfolio performance
 import json
 
 import pandas as pd
+import numpy as np
 
 from environ.constants import PROCESSED_DATA_PATH
 from environ.utils import msd
@@ -45,7 +46,12 @@ class Evaluator:
 
         self.ap_res.append(ap_tab)
 
-    def record_agg(self, cs_agg: pd.DataFrame, mkt_agg: pd.DataFrame) -> None:
+    def record_agg(
+        self,
+        cs_agg: pd.DataFrame,
+        mkt_agg: pd.DataFrame,
+        sigle_without_ensemble: bool = False,
+    ) -> None:
         """
         Record the aggregated results
         """
@@ -59,7 +65,7 @@ class Evaluator:
             self.cmkt[["year", "week", "cmkt"]], on=["year", "week"], how="left"
         )
         self.mkt_agg.append(mkt_agg)
-        self.mkt_ap(mkt_agg)
+        self.mkt_ap(mkt_agg, sigle_without_ensemble)
 
     def record_cum_sr(
         self, rise_w: float, fall_w: float, cum_ret: float, sr: float
@@ -81,17 +87,33 @@ class Evaluator:
         with open(path, "w", encoding="utf-8") as f:
             json.dump(self.ap_res, f, indent=4)
 
-    def mkt_ap(self, mkt_agg: pd.DataFrame) -> None:
+    def mkt_ap(
+        self,
+        mkt_agg: pd.DataFrame,
+        sigle_without_ensemble: bool = False,
+        log: bool = True,
+    ) -> None:
         """
         Asset pricing for the market
         """
 
         df = mkt_agg.copy()
-        for type in ["_x", "_y", ""]:
+        df.sort_values(["year", "week"], ascending=[True, True], inplace=True)
+
+        for type in ["_x", "_y", ""] if not sigle_without_ensemble else ["", "", ""]:
             df[f"strength{type}"] = df[f"lin_prob{type}"].apply(
                 lambda x: "Rise" if x > 0.5 else "Fall"
             )
-            mkt_ap_df = df.groupby([f"strength{type}"])["cmkt"].mean().reset_index()
+            # calculate the average log return
+            if log:
+                mkt_ap_df = (
+                    df.groupby([f"strength{type}"])["cmkt"]
+                    .apply(lambda x: np.mean(np.log1p(x)))
+                    .reset_index()
+                )
+            else:
+                mkt_ap_df = df.groupby([f"strength{type}"])["cmkt"].mean().reset_index()
+
             rise_ret = mkt_ap_df.loc[
                 mkt_ap_df[f"strength{type}"] == "Rise", "cmkt"
             ].values[0]

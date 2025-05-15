@@ -3,6 +3,7 @@ Class for the crypto market environment
 """
 
 import json
+import os
 import pickle
 from typing import Any, Literal
 
@@ -15,9 +16,8 @@ from environ.agent import FTAgent
 from environ.constants import FIGURE_PATH, LABEL, PROCESSED_DATA_PATH
 from environ.env_datahander import DataHandler
 from environ.env_portfolio import Portfolio
-from environ.utils import predict_explain_split, port_eval, boom_bust_split
-from environ.exhibits import port_fig, port_table, plot_lin_scatter
-
+from environ.exhibits import plot_lin_scatter, port_fig, port_table
+from environ.utils import boom_bust_split, port_eval, predict_explain_split
 
 # Initialize the portfolio
 portfolio = Portfolio()
@@ -41,10 +41,12 @@ class Environment:
         self.portfolio.fall_w = self.fall_w = fall_w
         self.agents_path = agent_paths
         self.agents = {
-            name.split("_")[0]: self._load_agent(path)
+            name.removesuffix("_agent_path"): self._load_agent(path)
             for name, path in agent_paths.items()
         }
-        self.records = {name.split("_")[0]: {} for name, _ in agent_paths.items()}
+        self.records = {
+            name.removesuffix("_agent_path"): {} for name, _ in agent_paths.items()
+        }
 
     def _load_agent(self, path: str) -> Any:
         """
@@ -74,7 +76,9 @@ class Environment:
 
     def _get_state(
         self,
-        data_type: Literal["ret", "cs", "mkt", "vision", "news"],
+        data_type: Literal[
+            "ret", "cs", "mkt", "vision", "news", "cs_vision", "mkt_news"
+        ],
         year: str,
         week: str,
         crypto: str | None = None,
@@ -96,6 +100,12 @@ class Environment:
                 f"{year}{week}", {}
             ).get(crypto),
             "news": lambda: self.data_handler.news_test_data.get(f"{year}{week}"),
+            "cs_vision": lambda: self.data_handler.cs_vision_test_data.get(
+                f"{year}{week}", {}
+            ).get(crypto),
+            "mkt_news": lambda: self.data_handler.mkt_news_test_data.get(
+                f"{year}{week}", {}
+            ),
         }
         return data_sources[data_type]()
 
@@ -103,12 +113,20 @@ class Environment:
         """
         Get the action from the corresponding agent.
         """
-        action_method = {
-            "cs": self.agents["cs"].predict_from_prompt,
-            "mkt": self.agents["mkt"].predict_from_prompt,
-            "vision": self.agents["vision"].predict_from_image,
-            "news": self.agents["news"].predict_from_prompt,
-        }
+        # With Ensemble
+        if data_type in ["cs", "mkt", "vision", "news"]:
+            action_method = {
+                "cs": self.agents["cs"].predict_from_prompt,
+                "mkt": self.agents["mkt"].predict_from_prompt,
+                "vision": self.agents["vision"].predict_from_image,
+                "news": self.agents["news"].predict_from_prompt,
+            }
+        # Without Ensemble
+        else:
+            action_method = {
+                "cs_vision": self.agents["cs_vision"].predict_from_prompt,
+                "mkt_news": self.agents["mkt_news"].predict_from_prompt,
+            }
         return action_method[data_type](state, log_probs=True, top_logprobs=10)
 
     def _record_action(
@@ -171,7 +189,7 @@ trend for the upcoming week is {strength}. {explain}"
         self,
         year: str,
         week: str,
-        data_type: Literal["cs", "mkt", "vision", "news"],
+        data_type: Literal["cs", "mkt", "vision", "news", "cs_vision", "mkt_news"],
         crypto: str | None = None,
         collab: bool = False,
     ) -> None:
@@ -200,27 +218,16 @@ trend for the upcoming week is {strength}. {explain}"
         self._record_action(data_type, year, week, crypto, action, log_prob, state)
         true_value = state["messages"][-1]["content"]
 
-        if data_type in ["cs", "vision"]:
-            self.portfolio.update(
-                component=data_type,
-                year=year,
-                week=week,
-                name=crypto,
-                strength=strength,
-                true_label=true_value,
-                prob=log_prob,
-                state_ret=ret_state,
-            )
-        else:
-            self.portfolio.update(
-                component=data_type,
-                year=year,
-                week=week,
-                strength=strength,
-                true_label=true_value,
-                prob=log_prob,
-                state_ret=ret_state,
-            )
+        self.portfolio.update(
+            component=data_type,
+            year=year,
+            week=week,
+            name=crypto,
+            strength=strength,
+            true_label=true_value,
+            prob=log_prob,
+            state_ret=ret_state,
+        )
 
     def _save_record(self, record_type: str, path: str) -> None:
         """
@@ -231,7 +238,7 @@ trend for the upcoming week is {strength}. {explain}"
 
     def run(
         self,
-        data_type: Literal["cs", "mkt", "vision", "news"],
+        data_type: Literal["cs", "mkt", "vision", "news", "cs_vision", "mkt_news"],
         record_path: str,
         collab: bool = False,
         # For collaboration replay
@@ -242,13 +249,18 @@ trend for the upcoming week is {strength}. {explain}"
         Run the environment for a specific data type.
         """
 
+        # default record path
+        if os.path.exists(record_path):
+            self.load_record(data_type, record_path)
+
+        # interteam collaboration record collection
         if (mkt_record_path is not None) & (news_record_path is not None):
             self.load_record("mkt", str(mkt_record_path))
             self.load_record("news", str(news_record_path))
         else:
             self.portfolio.reset()
 
-        PLOT = True
+        fetch = True
 
         yw_crypto_done_list = [
             yw + crypto
@@ -259,32 +271,32 @@ trend for the upcoming week is {strength}. {explain}"
         for year, week in tqdm(self.data_handler.get_yw_list()):
             cryptos = (
                 self.data_handler.get_crypto_list(year, week)
-                if data_type in ["cs", "vision"]
+                if data_type in ["cs", "vision", "cs_vision"]
                 else [None]
             )
             for crypto in cryptos:
-                if data_type in ["cs", "vision"]:
+                if data_type in ["cs", "vision", "cs_vision"]:
                     if year + week + str(crypto) in yw_crypto_done_list:
-                        print(f"Skipping {year}{week}{crypto}")
-                        PLOT = False
+                        fetch = False
+                        print(
+                            f"Skip fetching {year} {week} {crypto} data, already done"
+                        )
                         continue
+                    else:
+                        fetch = True
                 else:
                     # market team does not receive collaboration
                     collab = False
-
                 self._step(year, week, data_type, crypto, collab)
 
-            if (data_type in ["cs", "vision"]) & PLOT:
+            if (data_type in ["cs", "vision", "cs_vision"]) & fetch:
                 self.portfolio.asset_pricing(data_type)
                 clear_output(wait=True)
-                plt.clf()
-                self.portfolio.plot(data_type)
-
-        self._save_record(data_type, record_path)
+                self._save_record(data_type, record_path)
 
     def _process_replay(
         self,
-        agent_type: Literal["cs", "mkt", "vision", "news"],
+        agent_type: Literal["cs", "mkt", "vision", "news", "cs_vision", "mkt_news"],
         yw: str,
         crypto: str | None,
         ret_state: Any = None,
@@ -334,7 +346,12 @@ trend for the upcoming week is {strength}. {explain}"
     #         for crypto, _ in crypto_info.items():
     #             ret_state = self._get_state("ret", year, week, crypto)
 
-    def replay(self, ablation: str | None = None, **record_paths: str) -> None:
+    def replay(
+        self,
+        ablation: str | None = None,
+        sigle_without_ensemble: bool = False,
+        **record_paths: str,
+    ) -> None:
         """
         Replay the record
         """
@@ -343,51 +360,66 @@ trend for the upcoming week is {strength}. {explain}"
         # load the records
         for record_type, _ in self.agents_path.items():
             self.load_record(
-                record_type.split("_")[0],
-                record_paths[record_type.split("_")[0] + "_record_path"],
+                record_type.removesuffix("_agent_path"),
+                record_paths[record_type.removesuffix("_agent_path") + "_record_path"],
             )
 
         for year, week in tqdm(self.data_handler.get_yw_list()):
             yw = f"{year}{week}"
             crypto_info = self.data_handler.cs_test_data.get(yw, {})
 
-            for mkt_agent in ["mkt", "news"]:
+            for mkt_agent in (
+                ["mkt", "news"] if not sigle_without_ensemble else ["mkt_news"]
+            ):
                 self._process_replay(mkt_agent, yw, None)
 
             for crypto, _ in crypto_info.items():
                 ret_state = self._get_state("ret", year, week, crypto)
 
-                for crypto_agent in ["cs", "vision"]:
+                for crypto_agent in (
+                    ["cs", "vision"] if not sigle_without_ensemble else ["cs_vision"]
+                ):
                     self._process_replay(crypto_agent, yw, crypto, ret_state)
 
             self.portfolio.merge_cs(
-                ablation=ablation if ablation in ["cs", "vision"] else None
+                ablation=ablation if ablation in ["cs", "vision"] else None,
+                sigle_without_ensemble=sigle_without_ensemble,
             )
             self.portfolio.merge_mkt(
-                ablation=ablation if ablation in ["mkt", "news"] else None
+                ablation=ablation if ablation in ["mkt", "news"] else None,
+                sigle_without_ensemble=sigle_without_ensemble,
             )
 
-            for data_type in ["cs", "vision", "cs_agg"]:
-                # print(data_type)
+            for data_type in (
+                ["cs", "vision", "cs_agg"]
+                if not sigle_without_ensemble
+                else ["cs_vision", "cs_agg"]
+            ):
                 self.portfolio.asset_pricing(data_type)
-                # self.portfolio.plot(data_type)
 
         # Display the metrics
-        metrics = [
-            ("CS", self.portfolio.cs),
-            ("VS", self.portfolio.vision),
-            ("CS AGG", self.portfolio.cs_agg),
-            ("MKT", self.portfolio.mkt),
-            ("NEWS", self.portfolio.news),
-            ("NEWS AGG", self.portfolio.mkt_agg),
-        ]
+        metrics = (
+            [
+                ("CS", self.portfolio.cs),
+                ("VS", self.portfolio.vision),
+                ("CS AGG", self.portfolio.cs_agg),
+                ("MKT", self.portfolio.mkt),
+                ("NEWS", self.portfolio.news),
+                ("MKT AGG", self.portfolio.mkt_agg),
+            ]
+            if not sigle_without_ensemble
+            else [
+                ("CS AGG", self.portfolio.cs_vision),
+                ("MKT AGG", self.portfolio.mkt_news),
+            ]
+        )
 
         for name, component in metrics:
             scores = self.portfolio.score(component)
             print(f"{name} ACC: {scores['ACC']:.6f} | {name} MCC: {scores['MCC']:.6f}")
 
         # Integrate the cash-crypto allocation
-        self.portfolio.mkt_cs_comb()
+        self.portfolio.mkt_cs_comb(sigle_without_ensemble)
 
         # Display the portfolio figure
         for deno in ["USD", "BTC", "ETH"]:
@@ -409,7 +441,7 @@ trend for the upcoming week is {strength}. {explain}"
             sharpe_annul=True,
             weekly=True,
         )
-        port_table(port_eval_res)
+        # port_table(port_eval_res)
         portfolio.eval.record_cum_sr(
             self.rise_w,
             self.fall_w,
@@ -419,28 +451,35 @@ trend for the upcoming week is {strength}. {explain}"
 
         # Display the asset pricing table
         ap_table_data = {}
-        for data_type, data_name in zip(
-            ["cs", "vision", "cs_agg"],
-            ["Factor", "Chart", "Emsemble"],
+        for data_type, data_name in (
+            zip(
+                ["cs", "vision", "cs_agg"],
+                ["Factor", "Chart", "Emsemble"],
+            )
+            if not sigle_without_ensemble
+            else zip(
+                ["cs_agg"],
+                ["Emsemble"],
+            )
         ):
             ap_table_data[data_name] = self.portfolio.asset_pricing_table(data_type)
 
         portfolio.eval.record_ap(ap_table_data)
-        # portfolio.eval.store_ap()
+        portfolio.eval.store_ap()
 
-        # Display the disagreement
-        self.portfolio.mad()
+        # # Display the disagreement
+        # self.portfolio.mad()
 
-        # Display the scatter
-        plot_lin_scatter(
-            self.portfolio.eval.cs_agg,
-            "Crypto Factor Expert",
-            "Technical Expert",
-            f"{FIGURE_PATH}/scatter_cs.pdf",
-        )
-        plot_lin_scatter(
-            self.portfolio.eval.mkt_agg,
-            "Market Expert",
-            "News Expert",
-            f"{FIGURE_PATH}/scatter_mkt.pdf",
-        )
+        # # Display the scatter
+        # plot_lin_scatter(
+        #     self.portfolio.eval.cs_agg,
+        #     "Crypto Factor Expert",
+        #     "Technical Expert",
+        #     f"{FIGURE_PATH}/scatter_cs.pdf",
+        # )
+        # plot_lin_scatter(
+        #     self.portfolio.eval.mkt_agg,
+        #     "Market Expert",
+        #     "News Expert",
+        #     f"{FIGURE_PATH}/scatter_mkt.pdf",
+        # )

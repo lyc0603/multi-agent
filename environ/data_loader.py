@@ -263,7 +263,7 @@ class DataLoader:
         Get the market data
         """
 
-        cmkt = nasdaq_df
+        cmkt = nasdaq_df.copy()
         cmkt["time"] = pd.to_datetime(cmkt["time"])
         cmkt["time"] = cmkt["time"] - pd.Timedelta(days=7)
 
@@ -299,10 +299,10 @@ class DataLoader:
 if __name__ == "__main__":
     dl = DataLoader()
     # d = dl.get_mkt_data()
-    # d = dl.get_cs_data(
-    #     start_date="2023-06-01",
-    #     end_date="2024-01-01",
-    # )
+    d = dl.get_cs_data(
+        start_date="2023-06-01",
+        end_date="2024-01-01",
+    )
     # for i in dl.get_cs_prompt():
     #     print(i)
 
@@ -312,4 +312,5 @@ if __name__ == "__main__":
     #     end_date="2024-01-01",
     # )
 
-    d = dl.get_n_data()
+    # d = dl.get_n_data()
+    # d = dl.get_literature_data("crypto_factors")

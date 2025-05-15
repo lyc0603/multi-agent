@@ -60,6 +60,35 @@ Investment knowledge: {knowledge}
 {Target}: {trend}
 (End of {target})"""
 
+CROSS_SECTIONAL_PLUS_VISION_ANNOTATION_PROMPT = """Learn the following cryptocurrency investment \
+knowledge. Using this knowledge, explain the predicted {target} of {crypto} for the \
+upcoming week based on the provided indicators and candlestick chart. The data for the top {num} cryptocurrencies, \
+including {crypto}, have been categorized into Very High, High, Medium, Low, and Very Low. \
+Their respective predicted {target} has been categorized into {categories}.
+
+Investment knowledge: {knowledge}
+(End of knowledge)
+
+Information: {info}
+(End of information)
+
+{Target}: {trend}
+(End of {target})"""
+
+MARKET_PLUS_NEWS_ANNOTATION_PROMPT = """Learn the following cryptocurrency investment \
+knowledge. Using this knowledge, explain the predicted {target} for the upcoming \
+week based on the provided indicators and news headlines. The market information data have been \
+categorized into Very High, High, Medium, Low, and Very Low using first \
+two years of data. The predicted market return has been categorized into {categories}.
+
+Investment knowledge: {knowledge}
+(End of knowledge)
+
+Information: {info}
+(End of information)
+
+{Target}: {trend}
+(End of {target})"""
 
 # Prediction prompts
 CROSS_SECTIONAL_PROMPT = """Analyze the following information of {crypto} to determine its \
@@ -83,6 +112,20 @@ Information: {info}
 NEWS_PROMPT = """Analyze the following news headlines to determine the strength of the \
 {target} in a week. Please respond with {categories} and provide your reasoning for the \
 prediction.
+
+Information: {info}
+(End of information)"""
+
+CROSS_SECTIONAL_PLUS_VISION_PROMPT = """Analyze the following indicators and candlestick \
+chart of {crypto} to determine its {target} in a week. Please respond with {categories} \
+and provide your reasoning for the prediction.:
+
+Information: {info}
+(End of information)"""
+
+MARKET_PLUS_NEWS_PROMPT = """Analyze the following indicators and news headlines to \
+determine the strength of the {target} in a week. Please respond with {categories} \
+and provide your reasoning for the prediction.
 
 Information: {info}
 (End of information)"""

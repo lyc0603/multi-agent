@@ -8,11 +8,10 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import accuracy_score, matthews_corrcoef
 
-from environ.evaluator import Evaluator
 from environ.constants import AP_LABEL
 from environ.data_loader import DataLoader
+from environ.evaluator import Evaluator
 from environ.utils import port_eval
-
 
 # initialize the evaluator
 eval = Evaluator()
@@ -38,7 +37,7 @@ class Portfolio:
         Method to reset the portfolio
         """
 
-        components = ["port", "cs", "vision", "mkt", "news", "cs_agg", "mkt_agg"]
+        components = ["port", "cs", "vision", "mkt", "news", "cs_vision", "mkt_news", "cs_agg", "mkt_agg"]
         for attr in components + [f"{x}_ret" for x in components]:
             setattr(self, attr, pd.DataFrame())
 
@@ -79,7 +78,7 @@ class Portfolio:
         )
 
     def update(
-        self, component: Literal["cs", "vision", "mkt", "news"], **kwargs
+        self, component: Literal["cs", "vision", "mkt", "news", "cs_vision", "mkt_news"], **kwargs
     ) -> None:
         """
         Generic method to update the portfolio
@@ -167,7 +166,7 @@ class Portfolio:
 
         return df_port
 
-    def merge_cs(self, ablation: str| None = None) -> None:
+    def merge_cs(self, ablation: str| None = None, sigle_without_ensemble: bool = False) -> None:
         """
         Method to merge the cross-sectional data
         """
@@ -178,15 +177,18 @@ class Portfolio:
             case "vision":
                 self.cs_agg = self.vision.copy()
             case _:
-                keys = [_ for _ in self.cs.columns if _ not in ["lin_prob", "strength"]]
-                df_merge = self.cs.merge(self.vision, on=keys, how="inner")
-                df_merge["lin_prob"] = (df_merge["lin_prob_x"] + df_merge["lin_prob_y"]) / 2
-                df_merge["strength"] = df_merge["lin_prob"].apply(
-                    lambda x: "Rise" if x >= 0.5 else "Fall"
-                )
-                self.cs_agg = df_merge.copy()
+                if sigle_without_ensemble:
+                    self.cs_agg = self.cs_vision.copy()
+                else:
+                    keys = [_ for _ in self.cs.columns if _ not in ["lin_prob", "strength"]]
+                    df_merge = self.cs.merge(self.vision, on=keys, how="inner")
+                    df_merge["lin_prob"] = (df_merge["lin_prob_x"] + df_merge["lin_prob_y"]) / 2
+                    df_merge["strength"] = df_merge["lin_prob"].apply(
+                        lambda x: "Rise" if x >= 0.5 else "Fall"
+                    )
+                    self.cs_agg = df_merge.copy()
 
-    def merge_mkt(self, ablation: str|None = None) -> None:
+    def merge_mkt(self, ablation: str|None = None, sigle_without_ensemble: bool = False) -> None:
         """
         Method to merge the market data
         """
@@ -197,14 +199,16 @@ class Portfolio:
             case "news":
                 self.mkt_agg = self.news.copy()
             case _:
-                keys = [_ for _ in self.mkt.columns if _ not in ["lin_prob", "strength"]]
-                df_merge = self.mkt.merge(self.news, on=keys, how="inner")
-                df_merge["lin_prob"] = (df_merge["lin_prob_x"] + df_merge["lin_prob_y"]) / 2
-                df_merge["strength"] = df_merge["lin_prob"].apply(
-                    lambda x: "Rise" if x >= 0.5 else "Fall"
-                )
-
-                self.mkt_agg = df_merge.copy()
+                if sigle_without_ensemble:
+                    self.mkt_agg = self.mkt_news.copy()
+                else:
+                    keys = [_ for _ in self.mkt.columns if _ not in ["lin_prob", "strength"]]
+                    df_merge = self.mkt.merge(self.news, on=keys, how="inner")
+                    df_merge["lin_prob"] = (df_merge["lin_prob_x"] + df_merge["lin_prob_y"]) / 2
+                    df_merge["strength"] = df_merge["lin_prob"].apply(
+                        lambda x: "Rise" if x >= 0.5 else "Fall"
+                    )
+                    self.mkt_agg = df_merge.copy()
 
     def asset_pricing(self, component: str) -> None:
         """
@@ -232,12 +236,12 @@ class Portfolio:
             "MCC": matthews_corrcoef(df[truth_col], df[pred_col]),
         }
 
-    def mkt_cs_comb(self) -> None:
+    def mkt_cs_comb(self, sigle_without_ensemble: bool = False) -> None:
         """
         Method to combine the market and cross-sectional data
         """
 
-        eval.record_agg(self.cs_agg.copy(), self.mkt_agg.copy())
+        eval.record_agg(self.cs_agg.copy(), self.mkt_agg.copy(), sigle_without_ensemble)
 
         self.cs_agg_ret["time"] = pd.to_datetime(self.cs_agg_ret["time"])
         self.cs_agg_ret["year"] = self.cs_agg_ret["time"].dt.year.astype(int)
