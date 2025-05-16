@@ -1,12 +1,6 @@
 # multi-agent
 Project to study the multi-agent crypto fund management.
 
-Clone this repository
-
-```bash
-git clone https://github.com/dlt-science/multi-agent.git
-```
-
 Navigate to the directory of the cloned repo
 
 ```bash
@@ -54,20 +48,6 @@ venv\Scripts\activate.bat
 ```
 pip install -e ".[dev]"
 ```
-## Connect to a full node to fetch on-chain data
-
-Connect to a full node using `ssh` with port forwarding flag `-L` on:
-
-```zsh
-ssh -L 8545:localhost:8545 satoshi.doc.ic.ac.uk
-```
-
-Assign URI value to `WEB3_PROVIDER_URI` in a new terminal:
-
-```zsh
-set -xg WEB3_PROVIDER_URI http://localhost:8545
-```
-
 ---
 
 ## Git Large File Storage (Git LFS)

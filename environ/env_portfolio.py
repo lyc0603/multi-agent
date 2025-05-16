@@ -90,7 +90,7 @@ class Portfolio:
         self,
         df: pd.DataFrame,
         df_port: pd.DataFrame,
-        port_method: Literal["equal", "mcap"] = "equal",
+        port_method: Literal["equal", "mcap", "prob"] = "prob",
     ) -> pd.DataFrame:
         """
         Utility to implement the asset pricing
@@ -123,26 +123,6 @@ class Portfolio:
                     )
                     .reset_index()
                 )
-                # df_port = (
-                #     (
-                #         df.copy()
-                #         .groupby(["year", "week", "time", "quitiles"])["daily_ret"]
-                #         .mean()
-                #         .reset_index()
-                #     )
-                # )
-
-                # # calculate the weekly return for the portfolio
-                # df_port.sort_values(["time", "quitiles"], ascending=True, inplace=True)
-                # df_port["daily_ret"] = df_port["daily_ret"] + 1
-                # df_port["weekly_ret"] = df_port.groupby(["year", "week", "quitiles"])["daily_ret"].transform(
-                #     "prod"
-                # )
-                # df_port = df_port.drop_duplicates(subset=["year", "week", "quitiles"])[
-                #     ["year", "week", "time", "quitiles", "weekly_ret"]
-                # ]
-                # df_port["weekly_ret"] = df_port["weekly_ret"] - 1
-                # df_port = df_port.pivot(index="time", columns="quitiles", values="weekly_ret").reset_index()
             case "mcap":
                 df["mcap_ret"] = df["daily_ret"] * df["market_caps"]
                 df_port = (
@@ -154,6 +134,21 @@ class Portfolio:
                     )
                 )
                 df_port["daily_ret"] = df_port["mcap_ret"] / df_port["market_caps"]
+                df_port = (
+                    df_port.pivot(index="time", columns="quitiles", values="daily_ret")
+                    .reset_index()
+                )
+            case "prob":
+                df["prob_ret"] = df["daily_ret"] * df["lin_prob"]
+                df_port = (
+                    (
+                        df.copy()
+                        .groupby(["time", "quitiles"])
+                        .agg({"lin_prob": "sum", "prob_ret": "sum"})
+                        .reset_index()
+                    )
+                )
+                df_port["daily_ret"] = df_port["prob_ret"] / df_port["lin_prob"]
                 df_port = (
                     df_port.pivot(index="time", columns="quitiles", values="daily_ret")
                     .reset_index()
