@@ -1,6 +1,6 @@
-<mxfile host="Electron" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.7.17 Chrome/128.0.6613.36 Electron/32.0.1 Safari/537.36" version="24.7.17">
+<mxfile host="Electron" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/28.0.6 Chrome/138.0.7204.100 Electron/37.2.3 Safari/537.36" version="28.0.6">
   <diagram name="Page-1" id="ofzxBS9mfT8VJ1EvsjLv">
-    <mxGraphModel dx="1728" dy="1056" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3000" pageHeight="3000" math="1" shadow="0">
+    <mxGraphModel dx="976" dy="674" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3000" pageHeight="3000" math="1" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -178,10 +178,10 @@
         <mxCell id="9KuVI_jvf3gzu6XgL75O-72" value="Market Factor Expert" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="400.45" y="870" width="80" height="10" as="geometry" />
         </mxCell>
-        <mxCell id="z3g2mKbsLRmnf9mlgZ3w-10" value="Crypto Team" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fillColor=#E6E6E6;fontStyle=1" parent="1" vertex="1">
+        <mxCell id="z3g2mKbsLRmnf9mlgZ3w-10" value="Market Team" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fillColor=#E6E6E6;fontStyle=1" parent="1" vertex="1">
           <mxGeometry x="399.88" y="582.5" width="81.15" height="15" as="geometry" />
         </mxCell>
-        <mxCell id="z3g2mKbsLRmnf9mlgZ3w-12" value="Market Team" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fillColor=#E6E6E6;fontStyle=1" parent="1" vertex="1">
+        <mxCell id="z3g2mKbsLRmnf9mlgZ3w-12" value="Crypto Team" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fillColor=#E6E6E6;fontStyle=1" parent="1" vertex="1">
           <mxGeometry x="620.48" y="580" width="81.15" height="15" as="geometry" />
         </mxCell>
         <mxCell id="9KuVI_jvf3gzu6XgL75O-109" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="9KuVI_jvf3gzu6XgL75O-90" target="9KuVI_jvf3gzu6XgL75O-108" edge="1">
