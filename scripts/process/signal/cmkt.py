@@ -2,14 +2,18 @@
 Script to generate the value-weighted index of the cryptocurrency market.
 """
 
+import os
+
 import pandas as pd
 
-from environ.constants import DATA_PATH, PROCESSED_DATA_PATH
+from environ.constants import PROCESSED_DATA_PATH
 
-df = pd.read_csv(f"{DATA_PATH}/gecko_all.csv")
+os.makedirs(f"{PROCESSED_DATA_PATH}/market", exist_ok=True)
+
+df = pd.read_csv(f"{PROCESSED_DATA_PATH}/gecko_all.csv")
+df.rename(columns={"date": "time"}, inplace=True)
 df = df[["id", "time", "prices", "market_caps", "total_volumes"]]
 df["time"] = pd.to_datetime(df["time"])
-
 
 # only keep crypto with market cap > 1e6
 df = df[df["market_caps"] >= 1e6]

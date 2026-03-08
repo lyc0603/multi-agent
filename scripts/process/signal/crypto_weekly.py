@@ -5,7 +5,6 @@ Script to create a fine-tuning dataset from the original dataset.
 import pandas as pd
 
 from environ.constants import CROSS_SECTIONAL_CRYPTO_NUMBER, PROCESSED_DATA_PATH
-from scripts.fetch.stablecoin import stablecoins
 
 df_crypto = pd.read_csv(f"{PROCESSED_DATA_PATH}/signal/weekly_features.csv")
 df_crypto["time"] = pd.to_datetime(df_crypto["time"])
@@ -35,10 +34,6 @@ df_weekly.sort_values(["year", "week", "market_caps"], ascending=False, inplace=
 df_weekly.dropna(how="any", inplace=True)
 df_weekly = df_weekly.groupby(["year", "week"]).head(CROSS_SECTIONAL_CRYPTO_NUMBER)
 
-# # add the name of the coin
-# coin_list = pd.read_csv(f"{DATA_PATH}/coin_list.csv")
-# df_weekly = pd.merge(df_weekly, coin_list, on="id")
-
 df_weekly = df_weekly.loc[df_weekly["time"] >= "2023-01-01"]
 # only keep the weeks with 10 coins
 # df_10_count = df_weekly.groupby(["year", "week"])["id"].count().reset_index().copy()
@@ -66,5 +61,5 @@ for var in VAR_LIST:
 
 df_weekly["ret_signal"] = df_weekly["ret"].apply(lambda x: "Rise" if x > 0 else "Fall")
 # df_weekly["ret_signal"] = df_weekly["ret"]
-df_weekly.drop(columns=["_id", "daily_ret"], inplace=True)
+df_weekly.drop(columns=["daily_ret"], inplace=True)
 df_weekly.to_csv(f"{PROCESSED_DATA_PATH}/signal/gecko_signal.csv", index=False)

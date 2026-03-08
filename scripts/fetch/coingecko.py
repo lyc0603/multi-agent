@@ -6,8 +6,8 @@ import os
 import requests
 import pandas as pd
 from tqdm import tqdm
-from governenv.settings import COINGECKO_API_KEY
-from governenv.constants import DATA_DIR
+from environ.settings import COINGECKO_API_KEY
+from environ.constants import DATA_PATH
 
 
 class CoinGecko:
@@ -21,14 +21,14 @@ class CoinGecko:
 
     def _get_coins_list(self) -> pd.DataFrame:
         """Fetch the list of coins from Coingecko."""
-        if os.path.exists(DATA_DIR / "coingecko_coins.csv"):
-            return pd.read_csv(DATA_DIR / "coingecko_coins.csv")
+        if os.path.exists(DATA_PATH / "coingecko_coins.csv"):
+            return pd.read_csv(DATA_PATH / "coingecko_coins.csv")
         url = f"{self.BASE_URL}/coins/list"
         response = requests.get(url, headers=self.HEADERS, timeout=60)
         response.raise_for_status()
         data = response.json()
         coins_df = pd.DataFrame(data)
-        coins_df.to_csv(DATA_DIR / "coingecko_coins.csv", index=False)
+        coins_df.to_csv(DATA_PATH / "coingecko_coins.csv", index=False)
         return coins_df
 
     # Fetch market chart data
@@ -67,7 +67,7 @@ class CoinGecko:
         vs_currency: str = "usd",
         days: int | str = "max",
         interval: str = "daily",
-        save_dir: str = DATA_DIR / "coingecko" / "market_charts",
+        save_dir: str = DATA_PATH / "coingecko" / "market_charts",
     ) -> None:
         """Fetch market chart data for multiple coins."""
         os.makedirs(save_dir, exist_ok=True)
@@ -90,7 +90,7 @@ class CoinGecko:
 
     def get_coins_data(
         self,
-        save_dir: str = DATA_DIR / "coingecko" / "coins",
+        save_dir: str = DATA_PATH / "coingecko" / "coins",
     ) -> None:
         """Fetch data for multiple coins."""
         os.makedirs(save_dir, exist_ok=True)
@@ -105,7 +105,27 @@ class CoinGecko:
                 print(f"Failed to fetch data for {coin_id}")
                 time.sleep(10)
 
+    def market(self, category: str, save_dir: str = DATA_PATH) -> list:
+        """Fetch market data for a specific category."""
+        url = f"{self.BASE_URL}/coins/markets?vs_currency=usd&category={category}"
+        response = requests.get(url, headers=self.HEADERS, timeout=60)
+        response.raise_for_status()
+        data = response.json()
+        with open(save_dir / f"coingecko_{category}.json", "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=4)
+
 
 if __name__ == "__main__":
-    coingecko = CoinGecko()
-    coingecko.get_coins_market_charts()
+    # coingecko = CoinGecko()
+    # coingecko.get_coins_market_charts()
+    # coingecko.market("stablecoins")
+
+    with open(
+        DATA_PATH / "coingecko" / "market_charts" / "bitcoin.json",
+        "r",
+        encoding="utf-8",
+    ) as f:
+        data = json.load(f)
+
+    df = pd.DataFrame(data["prices"], columns=["timestamp", "price"])
+    df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms")

@@ -11,7 +11,7 @@ import pandas as pd
 from langchain_community.document_loaders.pdf import PyPDFLoader
 from sklearn.linear_model import LinearRegression
 
-from environ.constants import AP_LABEL, PROCESSED_DATA_PATH
+from environ.constants import PROCESSED_DATA_PATH
 
 warnings.filterwarnings("ignore")
 
@@ -187,7 +187,7 @@ def msd(df: pd.DataFrame, col1: str, col2: str) -> float:
 
 def port_eval(
     ap: pd.DataFrame | Iterable,
-    col: list = AP_LABEL + ["HML"],
+    col: list = ["HML"],
     sharpe_annul: bool = False,
     weekly: bool = True,
 ) -> list:

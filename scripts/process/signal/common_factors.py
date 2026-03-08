@@ -2,21 +2,17 @@
 Script to perform feature engineering on the data
 """
 
-from typing import Callable
-
 import numpy as np
 import pandas as pd
 from pandarallel import pandarallel
-from tqdm import tqdm
 
 from environ.constants import (
     CROSS_SECTIONAL_CRYPTO_NUMBER,
-    DATA_PATH,
     PROCESSED_DATA_PATH,
 )
 from environ.utils import cal_vol
 
-pandarallel.initialize(progress_bar=True, nb_workers=30)
+pandarallel.initialize(progress_bar=True, nb_workers=25)
 
 df = pd.read_csv(f"{PROCESSED_DATA_PATH}/signal/gecko_daily.csv")
 df["time"] = pd.to_datetime(df["time"])

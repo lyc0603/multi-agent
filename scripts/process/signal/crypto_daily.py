@@ -2,18 +2,22 @@
 Script to process the crypto data
 """
 
+import os
+
 import numpy as np
 import pandas as pd
 
-from environ.constants import DATA_PATH, PROCESSED_DATA_PATH
+from environ.constants import PROCESSED_DATA_PATH
 from scripts.fetch.stablecoin import stablecoins
 
+os.makedirs(PROCESSED_DATA_PATH / "signal", exist_ok=True)
+
 df_crypto = pd.read_csv(
-    DATA_PATH / "gecko_all.csv",
+    PROCESSED_DATA_PATH / "gecko_all.csv",
 )
 
 # minus the date by 1
-df_crypto.rename(columns={"time": "date"}, inplace=True)
+# df_crypto.rename(columns={"time": "date"}, inplace=True)
 df_crypto["date"] = pd.to_datetime(df_crypto["date"])
 df_crypto = df_crypto.loc[df_crypto["date"] != df_crypto["date"].max()]
 
@@ -46,10 +50,6 @@ df_crypto.dropna(
 df_crypto[["year", "week", "day"]] = df_crypto["time"].dt.isocalendar()
 df_crypto.sort_values(["id", "year", "week", "day"], ascending=True, inplace=True)
 
-
-# add the name of the coin
-coin_list = pd.read_csv(f"{DATA_PATH}/coin_list.csv")
-df_crypto = pd.merge(df_crypto, coin_list, on="id")
 
 # winsorize the daily returns
 df_crypto["daily_ret"] = df_crypto.groupby("id")["daily_ret"].transform(

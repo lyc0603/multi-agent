@@ -2,8 +2,11 @@
 Script to fetch the list of stablecoins
 """
 
-from environ.constants import COINGECKO_API_KEY
-from environ.fetch.coingecko import CoinGecko
+import json
+from environ.constants import DATA_PATH
 
-cg = CoinGecko()
-stablecoins = [_["id"] for _ in cg.market("stablecoins", COINGECKO_API_KEY[0])]
+
+with open(DATA_PATH / "coingecko_stablecoins.json", "r", encoding="utf-8") as f:
+    stablecoins = json.load(f)
+
+stablecoins = [_["id"] for _ in stablecoins]

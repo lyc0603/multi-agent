@@ -4,11 +4,10 @@ Script to process the market factors
 
 import json
 import warnings
-from pathlib import Path
 
 import pandas as pd
 
-from environ.constants import DATA_PATH, PROCESSED_DATA_PATH
+from environ.constants import DATA_PATH
 from environ.utils import load_attn
 
 warnings.filterwarnings("ignore")

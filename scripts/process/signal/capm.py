@@ -5,10 +5,11 @@ Script to perform feature engineering on the data
 import pandas as pd
 import numpy as np
 
-from environ.constants import PROCESSED_DATA_PATH, DATA_PATH
+from environ.constants import PROCESSED_DATA_PATH
 from scripts.process.signal.rf import rf
 
-df = pd.read_csv(f"{DATA_PATH}/gecko_all.csv")
+df = pd.read_csv(f"{PROCESSED_DATA_PATH}/gecko_all.csv")
+df.rename(columns={"date": "time"}, inplace=True)
 df["time"] = pd.to_datetime(df["time"])
 df.sort_values(["id", "time"], ascending=True, inplace=True)
 
