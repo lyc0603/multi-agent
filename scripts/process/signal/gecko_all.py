@@ -1,16 +1,22 @@
 """Script to merge Coingecko chart data."""
 
+from pathlib import Path
 import json
 import pandas as pd
 from tqdm import tqdm
 import numpy as np
 
-from environ.constants import DATA_PATH, PROCESSED_DATA_PATH
+from environ.constants import PROCESSED_DATA_PATH
+
+DATA_PATH = Path("/home/yichen/coingecko/data")
 
 DATA_START_DATE = "2016-01-01"
-DATA_END_DATE = "2026-01-01"
+DATA_END_DATE = "2026-03-01"
 
-coingecko_coins = pd.read_csv(DATA_PATH / "coingecko_coins.csv")
+with open(DATA_PATH / "coingecko" / "coin_list.json", "r", encoding="utf-8") as f:
+    coin_list = json.load(f)
+
+coingecko_coins = pd.DataFrame(coin_list)
 
 panel = []
 

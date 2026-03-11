@@ -2,9 +2,12 @@
 Script to generate environment data
 """
 
+import os
 import pandas as pd
 
 from environ.constants import PROCESSED_DATA_PATH
+
+os.makedirs(PROCESSED_DATA_PATH / "env", exist_ok=True)
 
 dfc = pd.read_csv(PROCESSED_DATA_PATH / "signal" / "gecko_daily.csv")
 

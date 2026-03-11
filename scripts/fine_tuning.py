@@ -8,10 +8,11 @@ import pickle
 
 from environ.agent import FTAgent
 from environ.constants import PROCESSED_DATA_PATH
-from environ.env import Environment
-from environ.prompt_generator import PromptGenerator
 
-pg = PromptGenerator()
+# from environ.env import Environment
+# from environ.prompt_generator import PromptGenerator
+
+# pg = PromptGenerator()
 
 
 # # Single-Agent System
@@ -68,21 +69,21 @@ pg = PromptGenerator()
 #         prompt = json.loads(line)
 #         aggregated_prompts.append(prompt)
 
-agent_name = "single_0510"
-# with open(
-#     f"{PROCESSED_DATA_PATH}/train/{agent_name}.jsonl", "w", encoding="utf-8"
-# ) as f:
-#     logging.info("Generating prompts for single agent training")
-#     for prompt in aggregated_prompts:
-#         json_line = json.dumps(prompt)
-#         f.write(json_line + "\n")
+# agent_name = "single_0510"
+# # with open(
+# #     f"{PROCESSED_DATA_PATH}/train/{agent_name}.jsonl", "w", encoding="utf-8"
+# # ) as f:
+# #     logging.info("Generating prompts for single agent training")
+# #     for prompt in aggregated_prompts:
+# #         json_line = json.dumps(prompt)
+# #         f.write(json_line + "\n")
 
-agent = FTAgent(model="gpt-4o-2024-08-06")
-agent.fine_tuning(f"{PROCESSED_DATA_PATH}/train/{agent_name}.jsonl")
+# agent = FTAgent(model="gpt-4o-2024-08-06")
+# agent.fine_tuning(f"{PROCESSED_DATA_PATH}/train/{agent_name}.jsonl")
 
-for agent_name in ["cs_vision_0510", "mkt_news_0510"]:
-    with open(f"{PROCESSED_DATA_PATH}/checkpoints/{agent_name}.pkl", "wb") as f:
-        pickle.dump(agent, f)
+# for agent_name in ["cs_vision_0510", "mkt_news_0510"]:
+#     with open(f"{PROCESSED_DATA_PATH}/checkpoints/{agent_name}.pkl", "wb") as f:
+#         pickle.dump(agent, f)
 
 ## Multi-Agent System
 # agent_name = "cs_1125"
@@ -149,11 +150,17 @@ for agent_name in ["cs_vision_0510", "mkt_news_0510"]:
 #         json_line = json.dumps(prompt)
 #         f.write(json_line + "\n")
 
-# # Fine-tune the agent
-# agent = FTAgent(model="gpt-4o-2024-08-06")
-# agent.fine_tuning(f"{PROCESSED_DATA_PATH}/train/{agent_name}.jsonl")
-# with open(f"{PROCESSED_DATA_PATH}/checkpoints/{agent_name}.pkl", "wb") as f:
-#     pickle.dump(agent, f)
+# Fine-tune the agent
+for agent_name in [
+    # "cs_1125",
+    # "vs_1124",
+    # "mkt_1124",
+    "news_1124"
+]:
+    agent = FTAgent(model="gpt-4o-2024-08-06")
+    agent.fine_tuning(f"{PROCESSED_DATA_PATH}/train/{agent_name}.jsonl")
+    with open(f"{PROCESSED_DATA_PATH}/checkpoints/{agent_name}.pkl", "wb") as f:
+        pickle.dump(agent, f)
 
 # # Run the env
 # env = Environment(

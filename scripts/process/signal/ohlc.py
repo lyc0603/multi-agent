@@ -2,16 +2,20 @@
 Script to process the OHLC data
 """
 
+import os
 import glob
 import json
 
 import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+from tqdm import tqdm
 
 from environ.constants import DATA_PATH, FIGURE_PATH, PROCESSED_DATA_PATH
 
 CANDLESTICKS_DAYS = 30
+
+os.makedirs(FIGURE_PATH / "ohlc", exist_ok=True)
 
 env = pd.read_csv(PROCESSED_DATA_PATH / "env" / "gecko_daily_env.csv")
 env["time"] = pd.to_datetime(env["time"])
@@ -33,7 +37,7 @@ df_olhc["time"] = pd.to_datetime(df_olhc["time"], unit="s")
 df_olhc = pd.merge(df_olhc, env, on=["id", "time"], how="inner")
 yw_list = (
     df_olhc.loc[
-        (df_olhc["time"] >= "2023-05-29") & (df_olhc["time"] <= "2024-08-25"),
+        (df_olhc["time"] > "2024-08-25") & (df_olhc["time"] < "2026-03-01"),
         ["year", "week"],
     ]
     .drop_duplicates()
@@ -47,7 +51,7 @@ df_olhc["ma"] = df_olhc.groupby("id")["close"].transform(
     lambda x: x.rolling(window=CANDLESTICKS_DAYS).mean()
 )
 
-for year, week in yw_list:
+for year, week in tqdm(yw_list):
     eow = df_olhc.loc[
         (df_olhc["year"] == year) & (df_olhc["week"] == week) & (df_olhc["day"] == 7),
         "time",

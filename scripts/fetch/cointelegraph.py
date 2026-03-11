@@ -175,3 +175,9 @@ if __name__ == "__main__":
 
     if results and past_date is not None:
         save_results(results, past_date, output_dir)
+
+    # Merge all files
+    all_files = glob.glob(str(output_dir / "*.csv"))
+    df_all = pd.concat((pd.read_csv(file) for file in all_files), ignore_index=True)
+    df_all.sort_values("update_timestamp", ascending=True, inplace=True)
+    df_all.to_csv(DATA_PATH / "cointelegraph.csv", index=False)

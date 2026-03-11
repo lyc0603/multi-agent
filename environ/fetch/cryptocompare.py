@@ -2,6 +2,7 @@
 Script to fetch data from cryptocompare API
 """
 
+import os
 import json
 import time
 
@@ -11,23 +12,23 @@ from tqdm import tqdm
 from environ.constants import CC_API_KEY, DATA_PATH
 
 cg_cc_mapping = {
-    # "bitcoin": "BTC",
-    # "ethereum": "ETH",
-    # "binancecoin": "BNB",
-    # "solana": "SOL",
-    # "ripple": "XRP",
-    # "staked-ether": "STETH",
-    # "dogecoin": "DOGE",
-    # "the-open-network": "TON",
-    # "tron": "TRX",
-    # "cardano": "ADA",
-    # "avalanche-2": "AVAX",
-    # "shiba-inu": "SHIB",
-    # "chainlink": "LINK",
-    # "polkadot": "DOT",
-    # "matic-network": "MATIC",
-    # "litecoin": "LTC",
-    # "okb": "OKB",
+    "bitcoin": "BTC",
+    "ethereum": "ETH",
+    "binancecoin": "BNB",
+    "solana": "SOL",
+    "ripple": "XRP",
+    "staked-ether": "STETH",
+    "dogecoin": "DOGE",
+    "the-open-network": "TON",
+    "tron": "TRX",
+    "cardano": "ADA",
+    "avalanche-2": "AVAX",
+    "shiba-inu": "SHIB",
+    "chainlink": "LINK",
+    "polkadot": "DOT",
+    "matic-network": "MATIC",
+    "litecoin": "LTC",
+    "okb": "OKB",
     "bitcoin-cash": "BCH",
     "bitcoin-cash-sv": "BSV",
     "crypto-com-chain": "CRO",
@@ -45,6 +46,34 @@ cg_cc_mapping = {
     "theta-token": "THETA",
     "uniswap": "UNI",
     "wrapped-bitcoin": "WBTC",
+    "aave": "AAVE",
+    "aptos": "APT",
+    "binance-bridged-usdt-bnb-smart-chain": "BUSD",
+    "bitget-token": "BGB",
+    "bittensor": "TAO",
+    "blockstack": "STX",
+    "cosmos": "ATOM",
+    "fetch-ai": "FET",
+    "hedera-hashgraph": "HBAR",
+    "immutable-x": "IMX",
+    "injective-protocol": "INJ",
+    "kaspa": "KAS",
+    "leo-token": "LEO",
+    "maker": "MKR",
+    "mantle": "MANTLE",
+    "mantra-dao": "OM",
+    "near": "NEAR",
+    "pepe": "PEPE",
+    "render-token": "RENDER",
+    "sui": "SUI",
+    "the-graph": "GRT",
+    "vechain": "VET",
+    "weth": "WETH",
+    "whitebit": "WBT",
+    "wrapped-beacon-eth": "WBETH",
+    "wrapped-eeth": "WEETH",
+    "wrapped-steth": "STETH",
+    "zcash": "ZEC",
 }
 
 
@@ -78,6 +107,7 @@ class CryptoCompare:
 
 
 if __name__ == "__main__":
+    os.makedirs(f"{DATA_PATH}/cryptocompare", exist_ok=True)
     cc = CryptoCompare()
     for k, v in tqdm(cg_cc_mapping.items()):
         data = cc.get_ohlcv(v, "USD")

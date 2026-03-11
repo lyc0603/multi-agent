@@ -127,6 +127,9 @@ for idx, row in df_full.loc[df_full["year"] >= 2022].iterrows():
 # merge the cointelegraph data
 crypto_news = pd.read_csv(f"{DATA_PATH}/cointelegraph.csv")
 
+crypto_news["date"] = pd.to_datetime(
+    crypto_news["create_timestamp"], utc=True
+).dt.strftime("%Y-%m-%d")
 crypto_news["date"] = pd.to_datetime(crypto_news["date"])
 crypto_news[["year", "week", "day"]] = crypto_news["date"].dt.isocalendar()
 crypto_news = (

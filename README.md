@@ -50,60 +50,55 @@ pip install -e ".[dev]"
 ```
 ---
 
-## Git Large File Storage (Git LFS)
+# Run
 
-All files in [`data/`](data/) are stored with `lfs`.
+## CoinGecko
 
-To initialize Git LFS:
-
+- Merge Coingecko chart data
 ```bash
-git lfs install
+python scripts/process/signal/gecko_all.py
 ```
 
+- Process crypto daily data
 ```bash
-git lfs track data/**/*
+python scripts/process/signal/crypto_daily.py
 ```
 
-To pull data files, use
-
+- Process common factors
 ```bash
-git lfs pull
+python scripts/process/signal/common_factors.py
 ```
 
-## Synchronize with the repo
-
-Always pull latest code first
-
+- Process weekly data
 ```bash
-git pull
+python scripts/process/signal/crypto_weekly.py
 ```
 
-Make changes locally, save. And then add, commit and push
-
+- Process CAPM data
 ```bash
-git add [file-to-add]
-git commit -m "update message"
-git push
+python scripts/process/signal/capm.py
 ```
 
-# Best practice
+- Process crypto market data
+```bash
+python scripts/process/signal/cmkt.py
+```
 
-## Coding Style
+## CryptoCompare
 
-We follow [PEP8](https://www.python.org/dev/peps/pep-0008/) coding format.
-The most important rules above all:
+- Fetch Cryptocompare data
+```bash
+python scripts/environ/fetch/cryptocompare.py
+```
 
-1. Keep code lines length below 80 characters. Maximum 120. Long code lines are NOT readable.
-1. We use snake_case to name function, variables. CamelCase for classes.
-1. We make our code as DRY (Don't repeat yourself) as possible.
-1. We give a description to classes, methods and functions.
-1. Variables should be self explaining and just right long:
-   - `implied_volatility` is preferred over `impl_v`
-   - `implied_volatility` is preferred over `implied_volatility_from_broker_name`
+- Process OHLC data
+```bash
+python scripts/process/signal/ohlc.py
+```
 
-## Do not
 
-1. Do not place .py files at root level (besides setup.py)!
-1. Do not upload big files > 100 MB.
-1. Do not upload log files.
-1. Do not declare constant variables in the MIDDLE of a function
+## Environ
+- Process the environment data
+```bash 
+python scripts/process/env_data.py
+```

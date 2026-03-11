@@ -32,7 +32,7 @@ class DataHandler:
         cs_test = {}
         for yw, crypto, line in self.pg.get_cs_prompt(
             start_date="2023-11-01",
-            end_date="2025-01-01",
+            end_date="2026-02-28",
             train_test="test",
         ):
             cs_test.setdefault(yw, {})[crypto] = line
@@ -48,7 +48,7 @@ class DataHandler:
             data_type="vision",
             strategy="image_url",
             start_date="2023-11-01",
-            end_date="2025-01-01",
+            end_date="2026-02-28",
             train_test="test",
         ):
             vision_test.setdefault(yw, {})[crypto] = line
@@ -63,7 +63,7 @@ class DataHandler:
         for yw, crypto, line in self.pg.get_cs_prompt(
             data_type="both",
             start_date="2023-11-01",
-            end_date="2025-01-01",
+            end_date="2026-02-28",
             train_test="test",
         ):
             cs_vision_test.setdefault(yw, {})[crypto] = line
@@ -77,7 +77,7 @@ class DataHandler:
         mkt_test = {}
         for yw, line in self.pg.get_mkt_prompt(
             start_date="2023-11-01",
-            end_date="2025-01-01",
+            end_date="2026-02-28",
             train_test="test",
         ):
             mkt_test[yw] = line
@@ -93,7 +93,7 @@ class DataHandler:
             data_type="text",
             strategy="news",
             start_date="2023-11-01",
-            end_date="2025-01-01",
+            end_date="2026-02-28",
             train_test="test",
         ):
             news_test[yw] = line
@@ -109,7 +109,7 @@ class DataHandler:
             data_type="both",
             strategy=["attn", "net", "news"],
             start_date="2023-11-01",
-            end_date="2025-01-01",
+            end_date="2026-02-28",
             train_test="test",
         ):
             mkt_news_test[yw] = line
@@ -136,5 +136,6 @@ class DataHandler:
 
 if __name__ == "__main__":
     dh = DataHandler()
-    print(dh.cs_vision_test_data)
-    print(dh.mkt_news_test_data)
+    data = dh.cs_vision_test_data
+    # print(dh.cs_vision_test_data)
+    # print(dh.mkt_news_test_data)
